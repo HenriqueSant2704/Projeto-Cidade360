@@ -18,7 +18,7 @@
 }
 
 .card-resumo {
-    width: 23%;
+    width: 23.5%;
     background-color: #fff;
     border-radius: 12px;
     border: 1px solid #f3f4f6; 
@@ -74,7 +74,8 @@
 
 .card-textos span {
     font-size: 12px;
-    color: #6b7280;
+    color: #798192;
+    font-weight: 500;
 }
 
 
@@ -107,3 +108,139 @@
 
 .cor-roxo { background-color: #faf5ff; }
 .link-roxo { color: #9333ea; }
+
+
+
+/*===================================================================
+
+    Análises de Ocorrências
+ 
+ ===================================================================*/  
+
+
+.container-analises-ocorrencias{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center; 
+    gap: 20px; 
+    font-family: 'Inter', sans-serif;
+    box-sizing: border-box;
+}
+
+.container-mapa-ocorrencias {
+    width: 48.5%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch; 
+    gap: 20px; 
+    font-family: 'Inter', sans-serif;
+    box-sizing: border-box;
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 24px; 
+    box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.06); 
+}
+
+.titulo-mapa {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.titulo-mapa h1 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e1e1e;
+    margin: 0;
+}
+
+.titulo-mapa button {
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1a73e8; 
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.titulo-mapa button:hover {
+    background-color: #f8f9fa;
+}
+
+.titulo-mapa button img {
+    width: 13px;
+    height: 13px;
+    margin-left: 8px;
+    object-fit: contain;
+    user-select: none;
+}
+
+.mapa-ocorrencias {
+    width: 100%;
+    border-radius: 8px; 
+    overflow: hidden; 
+    display: flex;
+}
+
+.mapa-ocorrencias img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    display: block;
+}
+
+
+.legendas-mapa-ocorrencias {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    width: 100%;
+    padding-top: 4px;
+    flex-wrap: wrap; 
+    gap: 12px;
+}
+
+.legenda-item {
+    display: flex;
+    align-items: center;
+    gap: 8px; 
+}
+
+.legenda-item span {
+    font-size: 13px;
+    font-weight: 600;
+    color: #3c4043;
+}
+
+
+.circulo-ocorrencia {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%; 
+}
+
+.cor-azul-ocorrencia {
+    background-color: #1a73e8;
+}
+
+.cor-laranja-ocorrencia {
+    background-color: #fbbc04;
+}
+
+.cor-verde-ocorrencia {
+    background-color: #34a853;
+}
+
+.cor-roxo-ocorrencia {
+    background-color: #9333ea;
+}
