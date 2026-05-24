@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./FrontEnd/painel.css">
     <link rel="stylesheet" href="./FrontEnd/global.css">
-    <title>Cidade360-Home</title>
+    <title>Cidade360 Painel</title>
 </head>
 
 <body>
@@ -62,13 +62,13 @@
                         <button>
                             <img src="./assets/icons/global/configuracoes.png" alt="">
                         </button>
-                        
+
                     </div>
                     <div class="menu-acoes">
                         <button>
                             <img src="./assets/icons/global/notificacao.png" alt="">
                         </button>
-                        
+
                     </div>
 
                     <div class="perfil-usuario">
@@ -150,11 +150,11 @@
             </div>
 
             <div class="container-analises-ocorrencias">
-                <div class="container-mapa-ocorrencias">
-                    <div class="titulo-mapa">
+                <div class="container-ocorrencias">
+                    <div class="titulo-analises">
                         <h1>Ocorrencias perto de você</h1>
                         <button>
-                            Ver mapa completo 
+                            Ver mapa completo
                             <img src="./assets/icons/painel/ocorrencia/expandir-setas.png" alt="">
                         </button>
                     </div>
@@ -178,43 +178,95 @@
                             <div class="circulo-ocorrencia cor-roxo-ocorrencia"></div>
                             <span>Resolvidas</span>
                         </div>
-                    </div>           
+                    </div>
                 </div>
 
-                <div class="container-mapa-ocorrencias">
-                    <div class="titulo-mapa">
-                        <h1>Ocorrencias perto de você</h1>
-                        <button>
-                            Ver mapa completo &rarr;
+                <div class="container-ocorrencias">
+                    <div class="titulo-analises">
+                        <h1>Minhas ocorrências recentes</h1>
+                        <button class="btn-ver-todas">
+                            Ver todas
                         </button>
                     </div>
-                    <div class="mapa-ocorrencias">
-                        <img src="./assets/img/painel/mapa-ocorrencias.png" alt="">
+                    <div class="container-lista-ocorrencias">
+                        <div class="item-ocorrencia">
+                            <div class="icone-ocorrencia ocorrencia-azul">
+                                <img src="./assets/icons/painel/ocorrencia/estrada.png" alt="">
+                            </div>
+                            <div class="info-ocorrencia">
+                                <h3>Buraco na via</h3>
+                                <p>Rua Ausonia, 123 - Centro</p>
+                            </div>
+                            <div class="status status-atendimento">Em atendimento</div>
+                            <div class="data-ocorrencia">
+                                <span>02/02/2026</span>
+                                <img src="./assets/icons/painel/ocorrencia/proximo.png" alt="">
+                            </div>
+                        </div>
+
+                        <div class="item-ocorrencia">
+                            <div class="icone-ocorrencia ocorrencia-laranja">
+                                <img src="./assets/icons/painel/ocorrencia/iluminacao-publica.png" alt="">
+                            </div>
+                            <div class="info-ocorrencia">
+                                <h3>Iluminação pública</h3>
+                                <p>Av. Jaime, 456 - Centro</p>
+                            </div>
+                            <div class="status status-analise">Em análise</div>
+                            <div class="data-ocorrencia">
+                                <span>10/03/2026</span>
+                                <img src="./assets/icons/painel/ocorrencia/proximo.png" alt="">
+                            </div>
+                        </div>
+
+                        <div class="item-ocorrencia">
+                            <div class="icone-ocorrencia ocorrencia-verde">
+                                <img src="./assets/icons/painel/ocorrencia/lixeira-de-reciclagem.png" alt="">
+                            </div>
+                            <div class="info-ocorrencia">
+                                <h3>Lixo acumulado</h3>
+                                <p>Rua Netuno, 789 - Centro</p>
+                            </div>
+                            <div class="status status-resolvido">Resolvido</div>
+                            <div class="data-ocorrencia">
+                                <span>28/01/2026</span>
+                                <img src="./assets/icons/painel/ocorrencia/proximo.png" alt="">
+                            </div>
+                        </div>
+
+                        <div class="item-ocorrencia">
+                            <div class="icone-ocorrencia ocorrencia-vermelho">
+                                <img src="./assets/icons/painel/ocorrencia/controle-de-pragas.png" alt="">
+                            </div>
+                            <div class="info-ocorrencia">
+                                <h3>Pragas Urbanas</h3>
+                                <p>Praça Central - Centro</p>
+                            </div>
+                            <div class="status status-resolvido">Resolvido</div>
+                            <div class="data-ocorrencia">
+                                <span>27/05/2026</span>
+                                <img src="./assets/icons/painel/ocorrencia/proximo.png" alt="">
+                            </div>
+                        </div>
+
+                        <div class="item-ocorrencia">
+                            <div class="icone-ocorrencia ocorrencia-cinza">
+                                <img src="./assets/icons/painel/ocorrencia/manutencao.png" alt="">
+                            </div>
+                            <div class="info-ocorrencia">
+                                <h3>Manutenção urbana</h3>
+                                <p>Rua justino, 321 - Centro</p>
+                            </div>
+                            <div class="status status-atendimento">Em atendimento</div>
+                            <div class="data-ocorrencia">
+                                <span>10/06/2026</span>
+                                <img src="./assets/icons/painel/ocorrencia/proximo.png" alt="">
+                            </div>
+                        </div>
                     </div>
-                    <div class="legendas-mapa-ocorrencias">
-                        <div class="legenda-item">
-                            <div class="circulo-ocorrencia cor-azul-ocorrencia"></div>
-                            <span>Recebido</span>
-                        </div>
-                        <div class="legenda-item">
-                            <div class="circulo-ocorrencia cor-laranja-ocorrencia"></div>
-                            <span>Em análise</span>
-                        </div>
-                        <div class="legenda-item">
-                            <div class="circulo-ocorrencia cor-verde-ocorrencia"></div>
-                            <span>Em andamento</span>
-                        </div>
-                        <div class="legenda-item">
-                            <div class="circulo-ocorrencia cor-roxo-ocorrencia"></div>
-                            <span>Resolvidas</span>
-                        </div>
-                    </div>           
                 </div>
             </div>
 
-               
-
-                
         </div>
 </body>
 
