@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./FrontEnd/painel.css">
-    <link rel="stylesheet" href="./FrontEnd/global.css">
+    <link rel="stylesheet" href="./FrontEnd/global/global.css">
+    <link rel="stylesheet" href="./FrontEnd/painel/painel.css">
     <title>Cidade360 Painel</title>
 </head>
 
@@ -31,20 +31,30 @@
                             <span>Ocorrencias</span>
                         </a>
                     </li>
+                </ul>
+                <div class="menu-secao">Comunicação</div>
+                <ul class="menu-lista">
+
                     <li class="menu-item">
                         <a href="../../../Frontend/pages/Clientes/clientes.html">
-                            <img src="./assets/icons/global/campanha.png">
+                            <img src="./assets/icons/global/tag.png">
                             <span>Campanhas</span>
                         </a>
                     </li>
 
                     <li class="menu-item">
                         <a href="#">
-                            <img src="../../../Assets/Icons/Menu Lateral/carrinho-de-mao.png">
-                            <span>Estoque</span>
+                            <img src="./assets/icons/global/campanha.png">
+                            <span>Avisos</span>
                         </a>
                     </li>
 
+                    <li class="menu-item">
+                        <a href="#">
+                            <img src="./assets/icons/global/agenda.png">
+                            <span>Eventos</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -149,8 +159,8 @@
                 </div>
             </div>
 
-            <div class="container-analises-ocorrencias">
-                <div class="container-ocorrencias">
+            <div class="container-analises">
+                <div class="card-analises">
                     <div class="titulo-analises">
                         <h1>Ocorrencias perto de você</h1>
                         <button>
@@ -181,7 +191,7 @@
                     </div>
                 </div>
 
-                <div class="container-ocorrencias">
+                <div class="card-analises">
                     <div class="titulo-analises">
                         <h1>Minhas ocorrências recentes</h1>
                         <button class="btn-ver-todas">
@@ -260,6 +270,74 @@
                             <div class="status status-atendimento">Em atendimento</div>
                             <div class="data-ocorrencia">
                                 <span>10/06/2026</span>
+                                <img src="./assets/icons/painel/ocorrencia/proximo.png" alt="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="container-analises">
+                <div class="card-analises">
+                    <div class="titulo-analises">
+                        <h1>Avisos e comunicados</h1>
+                        <button class="btn-ver-todas">
+                            Ver todas
+                        </button>
+                    </div>
+                    <div class="container-lista-avisos">
+                        <div class="item-avisos">
+                            <div class="icone-avisos avisos-azul">
+                                <img src="./assets/icons/painel/Avisos e comunicado/avisos-azul.png" alt="">
+                            </div>
+                            <div class="info-avisos">
+                                <h3>Interdição de via</h3>
+                                <p>Tránsito devido a obras</p>
+                            </div>
+                            <div class="data-avisos">
+                                <span>02/02/2026</span>
+                                <img src="./assets/icons/painel/ocorrencia/proximo.png" alt="">
+                            </div>
+                        </div>
+
+                        <div class="item-avisos">
+                            <div class="icone-avisos avisos-laranja">
+                                <img src="./assets/icons/painel/Avisos e comunicado/campanha-laranja.png" alt="">
+                            </div>
+                            <div class="info-avisos">
+                                <h3>Campanha de vacinação</h3>
+                                <p>Vacinação contra a gripe</p>
+                            </div>
+                            <div class="data-avisos">
+                                <span>10/03/2026</span>
+                                <img src="./assets/icons/painel/ocorrencia/proximo.png" alt="">
+                            </div>
+                        </div>
+
+                        <div class="item-avisos">
+                            <div class="icone-avisos avisos-verde">
+                                <img src="./assets/icons/painel/Avisos e comunicado/lixeira-verde.png" alt="">
+                            </div>
+                            <div class="info-avisos">
+                                <h3>Coleta de lixo</h3>
+                                <p>Coleta programada para esta semana</p>
+                            </div>
+                            <div class="data-avisos">
+                                <span>28/01/2026</span>
+                                <img src="./assets/icons/painel/ocorrencia/proximo.png" alt="">
+                            </div>
+                        </div>
+
+                        <div class="item-avisos">
+                            <div class="icone-avisos avisos-vermelho">
+                                <img src="./assets/icons/painel/Avisos e comunicado/festa-vermelho.png" alt="">
+                            </div>
+                            <div class="info-avisos">
+                                <h3>Festa Dias das crianças</h3>
+                                <p>Local: Praça Central</p>
+                            </div>
+                            <div class="data-avisos">
+                                <span>27/05/2026</span>
                                 <img src="./assets/icons/painel/ocorrencia/proximo.png" alt="">
                             </div>
                         </div>

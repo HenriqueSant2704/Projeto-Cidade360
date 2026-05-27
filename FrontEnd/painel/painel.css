@@ -118,7 +118,7 @@
  ===================================================================*/  
 
 
-.container-analises-ocorrencias{
+.container-analises{
     width: 100%;
     height: 440px;
     display: flex;
@@ -129,7 +129,7 @@
     box-sizing: border-box;
 }
 
-.container-ocorrencias {
+.card-analises {
     width: 48.5%;
     height: 100%;
     display: flex;
@@ -285,6 +285,7 @@
     padding: 18px 0;
     border-bottom: 1px solid #f1f3f4;
     gap: 16px;
+    cursor: pointer;
 }
 
 .item-ocorrencia:last-child {
@@ -365,5 +366,127 @@
     width: 12px;
     height: 12px;
     object-fit: contain;
+    user-select: none;          
+}    
+
+/*===================================================================
+
+    Lista de Avisos
+
+===================================================================*/
+
+
+.titulo-analises .btn-ver-todas {
+    border: none;
+    background: transparent;
+    padding: 0;
+    color: #1a73e8;
+}
+
+.titulo-analises .btn-ver-todas:hover {
+    background: transparent;
+    text-decoration: underline;
+}
+
+.container-lista-avisos {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    margin-top: 8px;
+    width: 100%;
+    overflow-y: auto;
+    padding-right: 8px;
+    -webkit-overflow-scrolling: touch; 
+    scrollbar-width: thin; 
+    scrollbar-color: #cdd1d5 transparent;
+}
+
+.item-avisos {
+    display: flex;
+    align-items: center;
+    padding: 18px 0;
+    border-bottom: 1px solid #f1f3f4;
+    gap: 16px;
+    cursor: pointer;
+}
+
+.item-avisos:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+
+.icone-avisos {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.icone-avisos img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
     user-select: none;
 }
+
+.avisos-azul { background-color: #EFF6FF; color: #1a73e8; }
+.avisos-laranja { background-color: #FFF7ED; color: #ffffff; }
+.avisos-verde { background-color: #F0FDF4; color: #1e8e3e; }
+.avisos-vermelho { background-color: #fce8e6; color: #d93025; }
+.avisos-cinza { background-color: #f1f3f4; color: #5f6368; }
+
+
+.info-avisos {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.info-avisos h3 {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #202124;
+}
+
+.info-avisos p {
+    margin: 0;
+    font-size: 13px;
+    color: #70757a;
+}
+
+
+.status {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-atendimento { background-color: #e6f4ea; color: #1e8e3e; }
+.status-analise { background-color: #fff8e6; color: #f29900; }
+.status-resolvido { background-color: #f3e8fd; color: #9333ea; }
+
+
+.data-avisos {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: #5f6368;
+    min-width: 100px;
+    font-weight: 600;
+    justify-content: flex-end;
+}
+
+.data-avisos img {
+    width: 12px;
+    height: 12px;
+    object-fit: contain;
+    user-select: none;          
+}    
