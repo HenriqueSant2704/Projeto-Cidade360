@@ -123,7 +123,7 @@
     min-height: 440px;
     display: flex;
     justify-content: center;
-    align-items: center; 
+    align-items: flex-start; 
     gap: 20px; 
     font-family: 'Inter', sans-serif;
     box-sizing: border-box;
