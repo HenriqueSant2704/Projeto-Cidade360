@@ -1,0 +1,238 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
+
+* {
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+
+}
+
+.container-login {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.container-login img {
+    width:45%;
+    height: 100vh;
+    object-fit: cover;
+    user-select: none;
+}
+
+.area-login {
+    width: 55%;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.caixa-titulo {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.caixa-titulo h1 {
+    color: #333;
+    margin: 8px;
+}
+
+.caixa-titulo span {
+    font-size: 15px;
+    color: #757575;
+    font-weight: 500;
+  
+}
+
+.caixa-login {
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+}
+
+.caixa-input {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    user-select: none;
+    position: relative;
+}
+
+.caixa-input label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #585858;
+}
+
+
+.caixa-input img:first-of-type {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    width: 18px;
+    height: 18px;
+    z-index: 1;
+}
+
+
+.caixa-input img:last-of-type {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    width: 18px;
+    height: 18px;
+    z-index: 1;
+    cursor: pointer;
+}
+
+.caixa-input input {
+    padding: 10px 10px 10px 42px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    color: #5a5a5a;
+}
+
+.caixa-input input:focus {
+    border-color: #007BFF;
+    border-width: 2px;  
+    outline: none;
+}
+
+.caixa-input input::placeholder {
+    color: #929292;
+    font-size: 14px;
+    font-style: italic;
+    font-weight: 500;
+}
+
+
+
+.caixa-lembrete-esqueci {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.caixa-lembrete {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+}
+
+.caixa-lembrete input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.caixa-lembrete label {
+    font-size: 14px;
+    color: #535353;
+    font-weight: 600;
+}
+
+
+.caixa-lembrete-esqueci a {
+    font-size: 14px;
+    font-weight: 600;
+    color: #007BFF;
+    text-decoration: none;
+ 
+
+    &:hover {
+        text-decoration: underline;
+        text-decoration-thickness: 1.2px;
+        text-underline-offset: 4px;
+    }
+}
+
+.caixa-login button {
+    width: 90%;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    user-select: none;
+}
+
+.caixa-login button:hover {
+    background-color: #0056b3;
+}
+
+.caixa-login button img {
+    width: 14px;
+    height: 14px;
+    margin-bottom: 2px;
+}
+
+.caixa-ou {
+    width: 72%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+    font-size: 14px;
+    color: #666;
+    user-select: none;
+}
+
+.caixa-ou::before,
+.caixa-ou::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: #d9d9d9;
+}
+
+.caixa-criar-conta {
+    width: 72%;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    border: solid #007BFF 2px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    background-color: transparent;
+    color: #007BFF;
+    user-select: none;
+
+    &:hover {
+        background-color: #f2f8ff;
+        color:  #007BFF;
+        border-color: #007BFF;
+    }
+
+}
+
+
+.caixa-criar-conta img {
+    width: 16px;
+    height: 16px;
+}
+
