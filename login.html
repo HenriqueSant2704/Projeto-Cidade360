@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../../FrontEnd/pages/login/login.css">
+    <title>Cidade360-Login</title>
+</head>
+<body>
+    <div class="container-login">
+        <img src="../../../assets/img/login/Fundo-cidade360.png" alt="">
+        <div class="area-login">
+            <div class="caixa-titulo">
+                <h1>Bem-vindo de volta!</h1>
+                <span>Acesse sua conta para continuar.</span>
+            </div>
+
+            <div class="caixa-login" id="formLogin">
+                <div class="caixa-input">
+                    <label for="email">Email</label>
+                    <img src="../../../assets/icons/login/e-mail.png" alt="">
+                    <input type="email" id="email" placeholder="Digite seu email">
+                </div>
+
+                <div class="caixa-input">
+                    <label for="password">Senha</label>
+                    <img src="../../../assets/icons/login/trancar.png" alt="">
+                    <input type="password" id="password" placeholder="Digite sua senha">
+                    <img src="../../../assets/icons/login/olho.png" alt="" id="mostrarSenha">
+                </div>
+
+                <div class="caixa-lembrete-esqueci">
+                    <div class="caixa-lembrete">
+                        <input type="checkbox" id="remember" name="remember">
+                        <label for="remember">Lembrar-me</label>
+                    </div>
+                    <a href="#">Esqueceu sua senha?</a>
+                </div>
+
+                <p id="mensagemLogin" style="display: none; margin: -10px 0 0 0; font-size: 14px; font-weight: 600;"></p>
+
+                <button type="button" id="btnEntrar">
+                    <img src="../../../assets/icons/login/usuario.png" alt="">
+                    Entrar
+                </button>
+            </div>
+            
+            <p class="caixa-ou">ou</p>
+
+            <button class="caixa-criar-conta" type="button" id="btnCriarConta">
+                <img src="../../../assets/icons/login/adicionar-usuario.png" alt="">
+                Criar nova conta
+            </button>
+        </div>
+    </div>
+
+    <script src="../../../FrontEnd/pages/login/login.js"></script>
+</body>
+</html>

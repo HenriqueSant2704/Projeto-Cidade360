@@ -1,0 +1,7 @@
+Cor de Azul= 2563EB
+
+cor dos Iconis cinza= #616880e7
+
+Cor de Preto= #000000b3
+
+filter azul: filter: brightness(0) saturate(100%) invert(32%) sepia(96%) saturate(4200%) hue-rotate(215deg) brightness(95%) contrast(105%);
