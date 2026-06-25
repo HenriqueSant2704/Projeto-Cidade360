@@ -311,7 +311,7 @@ function renderizarEtapaCadastro() {
         camposCadastro.innerHTML = `
     <div class="caixa-input">
         <label for="nomeCadastro">Nome Completo</label>
-        <img src="../../../assets/icons/login/usuario.png" alt="">
+        <img src="../../../assets/icons/login/nome-cinza.png" alt="">
         <input
             type="text"
             id="nomeCadastro"
@@ -320,7 +320,7 @@ function renderizarEtapaCadastro() {
 
     <div class="caixa-input">
         <label for="cpfCadastro">CPF</label>
-        <img src="../../../assets/icons/login/usuario.png" alt="">
+        <img src="../../../assets/icons/login/cpf.png" alt="">
         <input
             type="text"
             id="cpfCadastro"
@@ -344,7 +344,7 @@ function renderizarEtapaCadastro() {
 
     <div class="caixa-input">
         <label for="telefoneCadastro">Telefone</label>
-        <img src="../../../assets/icons/login/usuario.png" alt="">
+        <img src="../../../assets/icons/login/telefone.png" alt="">
         <input
             type="text"
             id="telefoneCadastro"
@@ -372,7 +372,7 @@ function renderizarEtapaCadastro() {
             Confirmar Senha
         </label>
 
-        <img src="../../../assets/icons/login/trancar.png" alt="">
+        <img src="../../../assets/icons/login/confirmar-senha.png" alt="">
         <input
             type="password"
             id="confirmarSenhaCadastro"
