@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/FrontEnd/pages/global/global.css">
+    <link rel="stylesheet" href="/FrontEnd/pages/painel/painel.css">
+    <title>Cidade360-Painel</title>
+</head>
+
+<body>
+    <div class="container-sistema">
+        <div class="menu-lateral">
+            <div class="logo">
+                <img src="/assets/img/global/logo/logo-cidade360.png" alt="">
+            </div>
+
+            <div class="menu-corpo">
+                <div class="menu-secao">Principal</div>
+                <ul class="menu-lista">
+                    <li class="menu-item" id="meu-ativo">
+                        <a href="../../../index.html">
+                            <img src="/assets/icons/global/painel-de-controle.png ">
+                            <span>Painel</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="../../../Frontend/pages/Produtos/produtos.html">
+                            <img src="/assets/icons/global/aviso-previo.png">
+                            <span>Ocorrencias</span>
+                        </a>
+                    </li>
+                </ul>
+                <div class="menu-secao">Comunicação</div>
+                <ul class="menu-lista">
+
+                    <li class="menu-item">
+                        <a href="../../../Frontend/pages/Clientes/clientes.html">
+                            <img src="/assets/icons/global/tag.png">
+                            <span>Campanhas</span>
+                        </a>
+                    </li>
+
+                    <li class="menu-item">
+                        <a href="#">
+                            <img src="/assets/icons/global/campanha.png">
+                            <span>Avisos</span>
+                        </a>
+                    </li>
+
+                    <li class="menu-item">
+                        <a href="#">
+                            <img src="/assets/icons/global/agenda.png">
+                            <span>Eventos</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="container-conteudo">
+            <div class="menu-topo">
+                <div class="titulo-pagina">
+                    <button class="minimizar-menu">
+                        <img src="/assets/icons/global/cardapio.png" alt="">
+                    </button>
+                    <h1>Painel</h1>
+                </div>
+
+                <div class="opcoes-menu-topo">
+                    <div class="menu-acoes">
+                        <button>
+                            <img src="/assets/icons/global/configuracoes.png" alt="">
+                        </button>
+
+                    </div>
+                    <div class="menu-acoes">
+                        <button>
+                            <img src="/assets/icons/global/notificacao.png" alt="">
+                        </button>
+
+                    </div>
+
+                    <div class="perfil-usuario">
+                        <div class="usuario">
+                            <span>Miguel Santana</span>
+                            <p>Administrador</p>
+                        </div>
+                        <div class="foto-usuario">
+                            <img src="/assets/icons/global/do-utilizador.png" alt="">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="container-resumo">
+                <div class="card-resumo">
+                    <div class="card-conteudo">
+                        <div class="circulo-resumo cor-azul">
+                            <img src="/assets/icons/painel/resumo/prancheta.png">
+                        </div>
+                        <div class="card-textos">
+                            <h1>7</h1>
+                            <p>Minhas ocorrências</p>
+                            <span>Total registradas</span>
+                        </div>
+                    </div>
+                    <div class="card-acao">
+                        <a href="#" class="link-azul">Ver todas &rarr;</a>
+                    </div>
+                </div>
+
+                <div class="card-resumo">
+                    <div class="card-conteudo">
+                        <div class="circulo-resumo cor-laranja">
+                            <img src="/assets/icons/painel/resumo/prancheta-analise.png">
+                        </div>
+                        <div class="card-textos">
+                            <h1>3</h1>
+                            <p>Em andamento</p>
+                            <span>Aguardando atendimento</span>
+                        </div>
+                    </div>
+                    <div class="card-acao">
+                        <a href="#" class="link-laranja">Ver todas &rarr;</a>
+                    </div>
+                </div>
+
+                <div class="card-resumo">
+                    <div class="card-conteudo">
+                        <div class="circulo-resumo cor-verde">
+                            <img src="/assets/icons/painel/resumo/prancheta-concluidas.png">
+                        </div>
+                        <div class="card-textos">
+                            <h1>3</h1>
+                            <p>Resolvidas</p>
+                            <span>Ocorrências concluídas</span>
+                        </div>
+                    </div>
+                    <div class="card-acao">
+                        <a href="#" class="link-verde">Ver todas &rarr;</a>
+                    </div>
+                </div>
+
+                <div class="card-resumo">
+                    <div class="card-conteudo">
+                        <div class="circulo-resumo cor-roxo">
+                            <img src="/assets/icons/painel/resumo/estrela.png">
+                        </div>
+                        <div class="card-textos">
+                            <h1>1.250</h1>
+                            <p>Pontos acumulados</p>
+                            <span>Nível: Cidadão Ativo</span>
+                        </div>
+                    </div>
+                    <div class="card-acao">
+                        <a href="#" class="link-roxo">Ver meu nível &rarr;</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="container-analises">
+                <div class="card-analises">
+                    <div class="titulo-analises">
+                        <h1>Ocorrencias perto de você</h1>
+                        <button>
+                            Ver mapa completo
+                            <img src="/assets/icons/painel/ocorrencia/expandir-setas.png" alt="">
+                        </button>
+                    </div>
+                    <div class="mapa-ocorrencias">
+                        <img src="/assets/img/painel/mapa-ocorrencias.png" alt="">
+                    </div>
+                    <div class="legendas-mapa-ocorrencias">
+                        <div class="legenda-item">
+                            <div class="circulo-ocorrencia cor-azul-ocorrencia"></div>
+                            <span>Recebido</span>
+                        </div>
+                        <div class="legenda-item">
+                            <div class="circulo-ocorrencia cor-laranja-ocorrencia"></div>
+                            <span>Em análise</span>
+                        </div>
+                        <div class="legenda-item">
+                            <div class="circulo-ocorrencia cor-verde-ocorrencia"></div>
+                            <span>Em andamento</span>
+                        </div>
+                        <div class="legenda-item">
+                            <div class="circulo-ocorrencia cor-roxo-ocorrencia"></div>
+                            <span>Resolvidas</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-analises">
+                    <div class="titulo-analises">
+                        <h1>Minhas ocorrências recentes</h1>
+                        <button class="btn-ver-todas">
+                            Ver todas
+                        </button>
+                    </div>
+                    <div class="container-lista-ocorrencias">
+                        <div class="item-ocorrencia">
+                            <div class="icone-ocorrencia ocorrencia-azul">
+                                <img src="/assets/icons/painel/ocorrencia/estrada.png" alt="">
+                            </div>
+                            <div class="info-ocorrencia">
+                                <h3>Buraco na via</h3>
+                                <p>Rua Ausonia, 123 - Centro</p>
+                            </div>
+                            <div class="status status-atendimento">Em atendimento</div>
+                            <div class="data-ocorrencia">
+                                <span>02/02/2026</span>
+                                <img src="/assets/icons/painel/ocorrencia/proximo.png" alt="">
+                            </div>
+                        </div>
+
+                        <div class="item-ocorrencia">
+                            <div class="icone-ocorrencia ocorrencia-laranja">
+                                <img src="/assets/icons/painel/ocorrencia/iluminacao-publica.png" alt="">
+                            </div>
+                            <div class="info-ocorrencia">
+                                <h3>Iluminação pública</h3>
+                                <p>Av. Jaime, 456 - Centro</p>
+                            </div>
+                            <div class="status status-analise">Em análise</div>
+                            <div class="data-ocorrencia">
+                                <span>10/03/2026</span>
+                                <img src="/assets/icons/painel/ocorrencia/proximo.png" alt="">
+                            </div>
+                        </div>
+
+                        <div class="item-ocorrencia">
+                            <div class="icone-ocorrencia ocorrencia-verde">
+                                <img src="/assets/icons/painel/ocorrencia/lixeira-de-reciclagem.png" alt="">
+                            </div>
+                            <div class="info-ocorrencia">
+                                <h3>Lixo acumulado</h3>
+                                <p>Rua Netuno, 789 - Centro</p>
+                            </div>
+                            <div class="status status-resolvido">Resolvido</div>
+                            <div class="data-ocorrencia">
+                                <span>28/01/2026</span>
+                                <img src="/assets/icons/painel/ocorrencia/proximo.png" alt="">
+                            </div>
+                        </div>
+
+                        <div class="item-ocorrencia">
+                            <div class="icone-ocorrencia ocorrencia-vermelho">
+                                <img src="/assets/icons/painel/ocorrencia/controle-de-pragas.png" alt="">
+                            </div>
+                            <div class="info-ocorrencia">
+                                <h3>Pragas Urbanas</h3>
+                                <p>Praça Central - Centro</p>
+                            </div>
+                            <div class="status status-resolvido">Resolvido</div>
+                            <div class="data-ocorrencia">
+                                <span>27/05/2026</span>
+                                <img src="/assets/icons/painel/ocorrencia/proximo.png" alt="">
+                            </div>
+                        </div>
+
+                        <div class="item-ocorrencia">
+                            <div class="icone-ocorrencia ocorrencia-cinza">
+                                <img src="/assets/icons/painel/ocorrencia/manutencao.png" alt="">
+                            </div>
+                            <div class="info-ocorrencia">
+                                <h3>Manutenção urbana</h3>
+                                <p>Rua justino, 321 - Centro</p>
+                            </div>
+                            <div class="status status-atendimento">Em atendimento</div>
+                            <div class="data-ocorrencia">
+                                <span>10/06/2026</span>
+                                <img src="/assets/icons/painel/ocorrencia/proximo.png" alt="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="container-analises">
+                <div class="card-analises">
+                    <div class="titulo-analises">
+                        <h1>Avisos e comunicados</h1>
+                        <button class="btn-ver-todas">
+                            Ver todas
+                        </button>
+                    </div>
+                    <div class="container-lista-avisos">
+                        <div class="item-avisos">
+                            <div class="icone-avisos avisos-azul">
+                                <img src="/assets/icons/painel/Avisos e comunicado/avisos-azul.png" alt="">
+                            </div>
+                            <div class="info-avisos">
+                                <h3>Interdição de via</h3>
+                                <p>Tránsito devido a obras</p>
+                            </div>
+                            <div class="data-avisos">
+                                <span>02/02/2026</span>
+                                <img src="/assets/icons/painel/ocorrencia/proximo.png" alt="">
+                            </div>
+                        </div>
+
+                        <div class="item-avisos">
+                            <div class="icone-avisos avisos-laranja">
+                                <img src="/assets/icons/painel/Avisos e comunicado/campanha-laranja.png" alt="">
+                            </div>
+                            <div class="info-avisos">
+                                <h3>Campanha de vacinação</h3>
+                                <p>Vacinação contra a gripe</p>
+                            </div>
+                            <div class="data-avisos">
+                                <span>10/03/2026</span>
+                                <img src="/assets/icons/painel/ocorrencia/proximo.png" alt="">
+                            </div>
+                        </div>
+
+                        <div class="item-avisos">
+                            <div class="icone-avisos avisos-verde">
+                                <img src="/assets/icons/painel/Avisos e comunicado/lixeira-verde.png" alt="">
+                            </div>
+                            <div class="info-avisos">
+                                <h3>Coleta de lixo</h3>
+                                <p>Coleta programada para esta semana</p>
+                            </div>
+                            <div class="data-avisos">
+                                <span>28/01/2026</span>
+                                <img src="/assets/icons/painel/ocorrencia/proximo.png" alt="">
+                            </div>
+                        </div>
+
+                        <div class="item-avisos">
+                            <div class="icone-avisos avisos-vermelho">
+                                <img src="/assets/icons/painel/Avisos e comunicado/festa-vermelho.png" alt="">
+                            </div>
+                            <div class="info-avisos">
+                                <h3>Festa Dias das crianças</h3>
+                                <p>Local: Praça Central</p>
+                            </div>
+                            <div class="data-avisos">
+                                <span>27/05/2026</span>
+                                <img src="/assets/icons/painel/ocorrencia/proximo.png" alt="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-analises">
+                    <div class="titulo-analises">
+                        <h1>Ações rápidas</h1>
+                    </div>
+
+                    <div class="container-acoes-rapidas">
+                        <div class="card-acao-rapida">
+                            <img src="/assets/icons/painel/acoes-rapidas/mais-azul.png" alt="">
+                            <h2>Nova<br>Ocorrência</h2>
+                        </div>
+
+                        <div class="card-acao-rapida">
+                            <img src="/assets/icons/painel/acoes-rapidas/avisos-verde.png" alt="">
+                            <h2>Ver<br>Avisos</h2>
+                        </div>
+
+                        <div class="card-acao-rapida">
+                            <img src="/assets/icons/painel/acoes-rapidas/ocorrencia-laranja.png" alt="">
+                            <h2>Minhas<br>Ocorrências</h2> 
+                        </div>
+
+                        <div class="card-acao-rapida">
+                            <img src="/assets/icons/painel/acoes-rapidas/evento-roxo.png" alt="">
+                            <h2>Ver<br>Eventos</h2>
+                        </div>
+                    </div>
+
+                    <div class="titulo-categorias">
+                        <h1>Categorias mais registradas</h1>
+                        <a href="#">Ver todas</a>
+                    </div>
+
+                    <div class="container-categorias">
+                        <div class="card-categoria">
+                            <img src="/assets/icons/painel/ocorrencia/estrada.png" alt="">
+                            <p>Buracos</p>
+                            <span>182</span>
+                        </div>
+
+                        <div class="card-categoria">
+                            <img src="/assets/icons/painel/ocorrencia/iluminacao-publica.png" alt="">
+                            <p>Iluminação</p>
+                            <span>148</span>
+                        </div>
+
+                        <div class="card-categoria">
+                            <img src="/assets/icons/painel/ocorrencia/lixeira-de-reciclagem.png" alt="">
+                            <p>Lixo urbano</p>
+                            <span>97</span>
+                        </div>
+
+                        <div class="card-categoria">
+                            <img src="/assets/icons/painel/ocorrencia/controle-de-pragas.png" alt="">
+                            <p>Pragas Urbanas</p>
+                            <span>56</span>
+                        </div>
+
+                        <div class="card-categoria">
+                            <img src="/assets/icons/painel/ocorrencia/3-pontos.png" alt="">
+                            <p>Outros</p>
+                            <span>23</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+</body>
+
+</html>
