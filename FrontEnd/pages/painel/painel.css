@@ -512,7 +512,7 @@
 .card-acao-rapida{
     min-width: 140px;
     flex: 1;
-    height: 105px;
+    height: 95px;
     border-radius: 14px;
     display: flex;
     flex-direction: column;
@@ -529,8 +529,8 @@
 }
 
 .card-acao-rapida img{
-    width: 26px;
-    height: 26px;
+    width: 25px;
+    height: 25px;
     margin-bottom: 10px;
     object-fit: contain;
 }
