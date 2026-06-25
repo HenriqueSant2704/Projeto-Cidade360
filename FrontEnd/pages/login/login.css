@@ -125,6 +125,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: -70px;
 }
 
 .caixa-lembrete {
@@ -236,3 +237,96 @@ body {
     height: 16px;
 }
 
+
+/*========================================================================================================
+
+    Cadastro de usuario
+
+==========================================================================================================*/
+
+.progresso-cadastro {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.linha-progresso {
+    display: flex;
+    align-items: center;
+    width: 450px;
+}
+
+.etapa {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #dcdcdc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px #dcdcdc;
+    transition: all 0.3s ease;
+}
+
+.nomes-etapas {
+    position: relative;
+    width: 100%;
+    height: 20px;
+    margin-top: 0px;
+}
+
+.nomes-etapas span {
+    position: absolute;
+    transform: translateX(-50%);
+    font-size: 13px;
+    color: #b0b0b0;
+    font-weight: 600;
+}
+
+#textoEtapa1 {
+    left: 3%;
+}
+
+#textoEtapa2 {
+    left: 50%;
+}
+
+#textoEtapa3 {
+    left: 97%;
+}
+
+.nomes-etapas span.ativo {
+    color: #007bff;
+}
+
+.etapa.ativa {
+    background: #007bff;
+    box-shadow: 0 0 0 2px #007bff;
+}
+
+.barra {
+    flex: 1;
+    height: 3px;
+    background: #dcdcdc;
+}
+
+.barra.ativa {
+    background: #007bff;
+}
+
+#camposCadastro {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    margin: 30px 0px 50px 0px;
+}
+
+#camposCadastro .caixa-input {
+    width: 100%;
+}
