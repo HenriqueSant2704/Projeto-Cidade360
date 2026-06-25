@@ -9,7 +9,6 @@
 body {
     margin: 0;
     padding: 0;
-
 }
 
 .container-login {
@@ -21,7 +20,7 @@ body {
 }
 
 .container-login img {
-    width:45%;
+    width: 45%;
     height: 100vh;
     object-fit: cover;
     user-select: none;
@@ -50,7 +49,6 @@ body {
     font-size: 15px;
     color: #757575;
     font-weight: 500;
-  
 }
 
 .caixa-login {
@@ -77,29 +75,35 @@ body {
     color: #585858;
 }
 
-
+/* Ícone da esquerda: email, cadeado, nome, CPF etc */
 .caixa-input img:first-of-type {
     position: absolute;
     left: 12px;
-    bottom: 12px;
+    right: auto;
+    top: 38px;
+    bottom: auto;
     width: 18px;
     height: 18px;
-    z-index: 1;
+    z-index: 2;
 }
 
-
-.caixa-input img:last-of-type {
+/* Ícone da direita: olho da senha */
+/* O :not(:first-of-type) impede que inputs com só 1 ícone joguem ele para a direita */
+.caixa-input img:last-of-type:not(:first-of-type) {
     position: absolute;
     right: 12px;
-    bottom: 12px;
+    left: auto;
+    top: 38px;
+    bottom: auto;
     width: 18px;
     height: 18px;
-    z-index: 1;
+    z-index: 2;
     cursor: pointer;
 }
 
 .caixa-input input {
-    padding: 10px 10px 10px 42px;
+    width: 100%;
+    padding: 10px 42px 10px 42px;
     border: 1px solid #ccc;
     border-radius: 8px;
     color: #5a5a5a;
@@ -117,8 +121,6 @@ body {
     font-style: italic;
     font-weight: 500;
 }
-
-
 
 .caixa-lembrete-esqueci {
     width: 100%;
@@ -147,19 +149,17 @@ body {
     font-weight: 600;
 }
 
-
 .caixa-lembrete-esqueci a {
     font-size: 14px;
     font-weight: 600;
     color: #007BFF;
     text-decoration: none;
- 
+}
 
-    &:hover {
-        text-decoration: underline;
-        text-decoration-thickness: 1.2px;
-        text-underline-offset: 4px;
-    }
+.caixa-lembrete-esqueci a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 1.2px;
+    text-underline-offset: 4px;
 }
 
 .caixa-login button {
@@ -222,15 +222,13 @@ body {
     background-color: transparent;
     color: #007BFF;
     user-select: none;
-
-    &:hover {
-        background-color: #f2f8ff;
-        color:  #007BFF;
-        border-color: #007BFF;
-    }
-
 }
 
+.caixa-criar-conta:hover {
+    background-color: #f2f8ff;
+    color: #007BFF;
+    border-color: #007BFF;
+}
 
 .caixa-criar-conta img {
     width: 16px;
@@ -329,4 +327,23 @@ body {
 
 #camposCadastro .caixa-input {
     width: 100%;
+}
+
+/* Input com erro */
+.caixa-input input.input-erro,
+.input-erro {
+    border-color: #ff3b3b !important;
+    border-width: 2px !important;
+}
+
+/* Mensagem de erro abaixo do input */
+.erro-input {
+    display: none;
+    width: 100%;
+    color: #ff3b3b;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 3px;
+    padding-left: 2px;
+    line-height: 1.2;
 }

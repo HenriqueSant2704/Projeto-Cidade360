@@ -1,68 +1,25 @@
-import dotenv from "dotenv";
-import sql from "mssql";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+// Importa o MySQL com suporte a Promise, permitindo usar async/await
+const mysql = require("mysql2/promise");
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+// Importa o path para montar caminhos de arquivos de forma segura
+const path = require("path");
 
-dotenv.config({
-  path: resolve(__dirname, "../../.env"),
+// Carrega o arquivo .env que está dentro da pasta BackEnd
+require("dotenv").config({
+  path: path.resolve(__dirname, "../../.env")
 });
 
-let pool;
+// Cria uma pool de conexão com o banco.
+// Pool é melhor do que abrir uma conexão nova para cada consulta.
+const db = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD || "",
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: Number(process.env.DB_CONNECTION_LIMIT) || 10,
+  queueLimit: 0
+});
 
-function getRequiredEnv(name) {
-  const value = process.env[name];
-
-  if (!value) {
-    throw new Error(`Variavel de ambiente ausente: ${name}`);
-  }
-
-  return value;
-}
-
-function getDbConfig() {
-  const port = Number(process.env.DB_PORT);
-  const database = process.env.DB_DATABASE?.trim();
-  const instanceName = process.env.DB_INSTANCE?.trim();
-
-  const config = {
-    user: getRequiredEnv("DB_USER"),
-    password: getRequiredEnv("DB_PASS"),
-    server: getRequiredEnv("DB_SERVER"),
-    options: {
-      encrypt: process.env.DB_ENCRYPT === "true",
-      trustServerCertificate: process.env.DB_TRUST_SERVER_CERTIFICATE !== "false",
-    },
-    pool: {
-      max: 10,
-      min: 0,
-      idleTimeoutMillis: 30000,
-    },
-  };
-
-  if (database) {
-    config.database = database;
-  }
-
-  if (Number.isInteger(port) && port > 0) {
-    config.port = port;
-  }
-
-  if (instanceName) {
-    config.options.instanceName = instanceName;
-  }
-
-  return config;
-}
-
-export async function connectDB() {
-  if (pool?.connected) {
-    return pool;
-  }
-
-  pool = await sql.connect(getDbConfig());
-  return pool;
-}
-
-export { sql };
+// Exporta a conexão para ser usada nos models
+module.exports = db;

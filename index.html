@@ -4,6 +4,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script>
+        (async function protegerHome() {
+            const API_URL = "http://localhost:3000/api";
+            const LOGIN_PAGE = "/pages/login/login.html";
+
+            const token =
+                localStorage.getItem("cidade360_token") ||
+                sessionStorage.getItem("cidade360_token");
+
+            function limparLogin() {
+                localStorage.removeItem("cidade360_token");
+                localStorage.removeItem("cidade360_usuario");
+                sessionStorage.removeItem("cidade360_token");
+                sessionStorage.removeItem("cidade360_usuario");
+            }
+
+            if (!token) {
+                limparLogin();
+                window.location.replace(LOGIN_PAGE);
+                return;
+            }
+
+            try {
+                const resposta = await fetch(`${API_URL}/me`, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                const dados = await resposta.json();
+
+                if (!resposta.ok || !dados.sucesso) {
+                    limparLogin();
+                    window.location.replace(LOGIN_PAGE);
+                    return;
+                }
+
+                window.usuarioLogado = dados.usuario;
+
+            } catch (error) {
+                limparLogin();
+                window.location.replace(LOGIN_PAGE);
+            }
+        })();
+    </script>
+
     <link rel="stylesheet" href="./FrontEnd/pages/global/global.css">
     <link rel="stylesheet" href="./FrontEnd/pages/painel/painel.css">
     <title>Cidade360-Painel</title>
@@ -412,6 +460,11 @@
             </div>
 
         </div>
+
+        <!--Script para controlar o Login do usuário, e redirecionar para a página de login caso não esteja logado.-->
+        <script src="/pages/global/authGuard.js"></script>
+        <script src="/pages/global/logout.js"></script>
+
 </body>
 
 </html>

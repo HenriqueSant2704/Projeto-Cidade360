@@ -69,6 +69,11 @@
 
                 <div class="opcoes-menu-topo">
                     <div class="menu-acoes">
+                        <button id="btnSair" class="btn-sair">
+                            <img src="/assets/icons/global/sair.png" alt="sair">
+                        </button>
+                    </div>
+                    <div class="menu-acoes">
                         <button>
                             <img src="/assets/icons/global/configuracoes.png" alt="">
                         </button>
@@ -412,6 +417,11 @@
             </div>
 
         </div>
+
+        <!--Script para controlar o Login do usuário, e redirecionar para a página de login caso não esteja logado.-->
+        <script src="/pages/global/authGuard.js"></script>
+        <script src="/pages/global/logout.js"></script>
+
 </body>
 
 </html>
