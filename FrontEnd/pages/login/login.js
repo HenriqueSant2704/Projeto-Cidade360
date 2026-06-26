@@ -1,4 +1,5 @@
 const API_URL = "http://localhost:3000/api";
+const EMAIL_LEMBRADO_KEY = "cidade360_email_lembrado";
 
 /*========================================================================================================
 
@@ -59,18 +60,17 @@ EVENTOS INICIAIS
 
 =========================================================================================================*/
 
-// Se já estiver logado, manda direto para a home
 document.addEventListener("DOMContentLoaded", () => {
-    const token =
-        localStorage.getItem("cidade360_token") ||
-        sessionStorage.getItem("cidade360_token");
+    const token = buscarTokenSalvo();
 
     if (token) {
         window.location.href = "/";
+        return;
     }
+
+    carregarEmailLembrado();
 });
 
-// Mostrar ou esconder senha
 mostrarSenha.addEventListener("click", () => {
     if (passwordInput.type === "password") {
         passwordInput.type = "text";
@@ -79,7 +79,6 @@ mostrarSenha.addEventListener("click", () => {
     }
 });
 
-// Botão principal
 btnEntrar.addEventListener("click", () => {
     if (modoCadastro) {
         avancarCadastro();
@@ -88,7 +87,6 @@ btnEntrar.addEventListener("click", () => {
     }
 });
 
-// Enter no campo senha
 passwordInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
         if (modoCadastro) {
@@ -99,7 +97,6 @@ passwordInput.addEventListener("keydown", (event) => {
     }
 });
 
-// Enter no campo email
 emailInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
         if (modoCadastro) {
@@ -110,12 +107,10 @@ emailInput.addEventListener("keydown", (event) => {
     }
 });
 
-// Limpar erro enquanto digita no email
 emailInput.addEventListener("input", () => {
     limparErroCampo(emailInput);
 });
 
-// Limpar erro enquanto digita na senha
 passwordInput.addEventListener("input", () => {
     limparErroCampo(passwordInput);
 });
@@ -154,23 +149,11 @@ async function fazerLogin() {
         const dados = await resposta.json();
 
         if (!resposta.ok || !dados.sucesso) {
-            mostrarMensagem("Email ou senha inválidos.", "erro");
+            mostrarMensagem(dados.mensagem || "Email ou senha inválidos.", "erro");
             return;
         }
 
-        if (rememberInput.checked) {
-            localStorage.setItem("cidade360_token", dados.token);
-            localStorage.setItem("cidade360_usuario", JSON.stringify(dados.usuario));
-
-            sessionStorage.removeItem("cidade360_token");
-            sessionStorage.removeItem("cidade360_usuario");
-        } else {
-            sessionStorage.setItem("cidade360_token", dados.token);
-            sessionStorage.setItem("cidade360_usuario", JSON.stringify(dados.usuario));
-
-            localStorage.removeItem("cidade360_token");
-            localStorage.removeItem("cidade360_usuario");
-        }
+        salvarLogin(dados.token, dados.usuario, email);
 
         mostrarMensagem("Login realizado com sucesso!", "sucesso");
 
@@ -224,6 +207,54 @@ function validarLogin(email, senha) {
 
 /*========================================================================================================
 
+LEMBRAR-ME DO LOGIN
+
+=========================================================================================================*/
+
+function salvarLogin(token, usuario, email) {
+    if (rememberInput.checked) {
+        localStorage.setItem("cidade360_token", token);
+        localStorage.setItem("cidade360_usuario", JSON.stringify(usuario));
+        localStorage.setItem("cidade360_lembrar", "true");
+        localStorage.setItem(EMAIL_LEMBRADO_KEY, email);
+
+        sessionStorage.removeItem("cidade360_token");
+        sessionStorage.removeItem("cidade360_usuario");
+    } else {
+        sessionStorage.setItem("cidade360_token", token);
+        sessionStorage.setItem("cidade360_usuario", JSON.stringify(usuario));
+
+        localStorage.removeItem("cidade360_token");
+        localStorage.removeItem("cidade360_usuario");
+        localStorage.removeItem("cidade360_lembrar");
+        localStorage.removeItem(EMAIL_LEMBRADO_KEY);
+    }
+}
+
+function carregarEmailLembrado() {
+    const lembrar = localStorage.getItem("cidade360_lembrar");
+    const emailLembrado = localStorage.getItem(EMAIL_LEMBRADO_KEY);
+
+    rememberInput.checked = false;
+
+    if (lembrar === "true" && emailLembrado) {
+        emailInput.value = emailLembrado;
+        rememberInput.checked = true;
+    } else {
+        emailInput.value = "";
+        rememberInput.checked = false;
+    }
+}
+
+function buscarTokenSalvo() {
+    return (
+        localStorage.getItem("cidade360_token") ||
+        sessionStorage.getItem("cidade360_token")
+    );
+}
+
+/*========================================================================================================
+
 MENSAGENS GERAIS
 
 =========================================================================================================*/
@@ -267,15 +298,8 @@ function mostrarErroCampo(input, mensagem) {
 
     input.classList.add("input-erro");
 
-    input.style.borderColor = "#ff3b3b";
-    input.style.borderWidth = "2px";
-
     erro.textContent = mensagem;
     erro.style.display = "block";
-    erro.style.color = "#ff3b3b";
-    erro.style.fontSize = "12px";
-    erro.style.fontWeight = "600";
-    erro.style.marginTop = "3px";
 }
 
 function limparErroCampo(input) {
@@ -288,9 +312,6 @@ function limparErroCampo(input) {
     const erro = caixaInput.querySelector(".erro-input");
 
     input.classList.remove("input-erro");
-
-    input.style.borderColor = "";
-    input.style.borderWidth = "";
 
     if (erro) {
         erro.textContent = "";
@@ -394,7 +415,6 @@ function atualizarProgresso() {
 
     if (etapaCadastro === 1) {
         etapa1.classList.add("ativa");
-
         textoEtapa1.classList.add("ativo");
     }
 
