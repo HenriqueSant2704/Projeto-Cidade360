@@ -647,10 +647,11 @@ function avancarCadastro() {
             atualizarProgresso();
             renderizarEtapaCadastro();
 
-        });
 
-        btnVoltarEtapa.style.display =
-            etapaCadastro > 1 ? "block" : "none";
+
+            btnVoltarEtapa.style.display =
+                etapaCadastro > 1 ? "block" : "none";
+        });
 
         if (etapaCadastro === 3) {
             btnEntrar.textContent = "Finalizar Cadastro";
@@ -954,20 +955,18 @@ function avancarRecuperacao() {
             atualizarProgressoRecuperacao();
             renderizarRecuperacao();
 
+            btnVoltarEtapa.style.display =
+                etapaRecuperacao > 1 ? "block" : "none";
+
         });
 
-        btnVoltarEtapa.style.display =
-            etapaRecuperacao > 1 ? "block" : "none";
-
-
-        if (etapaRecuperacao === 2) {
+        if (etapaRecuperacao === 1) {
             btnEntrar.textContent = "Validar código";
         }
 
-        if (etapaRecuperacao === 3) {
+        if (etapaRecuperacao === 2) {
             btnEntrar.textContent = "Alterar senha";
         }
-
     } else {
 
         alert("Senha alterada!");
