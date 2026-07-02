@@ -23,28 +23,38 @@ if (linkEsqueciSenha) {
 }
 
 function entrarModoRecuperarSenha() {
-    modoCadastro = false;
-    modoRecuperarSenha = true;
-    etapaRecuperacaoSenha = 1;
+    trocarTela(() => {
+        modoCadastro = false;
+        modoRecuperarSenha = true;
+        etapaRecuperacaoSenha = 1;
 
-    limparDadosRecuperacaoSenha();
-    limparMensagemGeral();
-    limparErroCampo(emailInput);
-    limparErroCampo(passwordInput);
+        limparDadosRecuperacaoSenha();
+        limparMensagemGeral();
+        limparErroCampo(emailInput);
+        limparErroCampo(passwordInput);
 
-    tituloFormulario.textContent = "Recuperar Senha";
-    subtituloFormulario.textContent = "Informe o email cadastrado para receber um código de recuperação.";
+        tituloFormulario.textContent = "Recuperar Senha";
+        subtituloFormulario.textContent = "Informe o email cadastrado para receber um código de recuperação.";
 
-    indicadorEtapa.style.display = "none";
-    areaLembrete.style.display = "none";
+        indicadorEtapa.style.display = "none";
+        areaLembrete.style.display = "none";
 
-    campoEmailLogin.style.display = "none";
-    campoSenhaLogin.style.display = "none";
+        campoEmailLogin.style.display = "none";
+        campoSenhaLogin.style.display = "none";
 
-    btnEntrar.textContent = "Enviar código";
-    btnCriarConta.textContent = "Voltar para Login";
+        if (btnVoltarEtapa) {
+            btnVoltarEtapa.style.display = "none";
+        }
 
-    renderizarEtapaRecuperacaoSenha();
+        btnEntrar.innerHTML = 'Enviar código <span class="seta-btn">➔</span>';
+
+        btnCriarConta.innerHTML = `
+            <img src="../../../assets/icons/login/adicionar-usuario.png" alt="">
+            Voltar para Login
+        `;
+
+        renderizarEtapaRecuperacaoSenha();
+    });
 }
 
 function renderizarEtapaRecuperacaoSenha() {
@@ -89,6 +99,11 @@ function renderizarEtapaRecuperacaoSenha() {
                     maxlength="72"
                     autocomplete="new-password"
                     value="${escaparValorInputRecuperacao(dadosRecuperacaoSenha.novaSenha)}">
+                <img
+                    class="mostrar-senha-recuperacao"
+                    data-target="novaSenhaRecuperacao"
+                    src="../../../assets/icons/login/olho.png"
+                    alt="Mostrar senha">
             </div>
 
             <div class="caixa-input">
@@ -101,11 +116,17 @@ function renderizarEtapaRecuperacaoSenha() {
                     maxlength="72"
                     autocomplete="new-password"
                     value="${escaparValorInputRecuperacao(dadosRecuperacaoSenha.confirmarNovaSenha)}">
+                <img
+                    class="mostrar-senha-recuperacao"
+                    data-target="confirmarNovaSenhaRecuperacao"
+                    src="../../../assets/icons/login/olho.png"
+                    alt="Mostrar senha">
             </div>
         `;
     }
 
     adicionarEventosRecuperacaoSenha();
+    adicionarEventosMostrarSenhaRecuperacao();
 }
 
 function adicionarEventosRecuperacaoSenha() {
@@ -120,8 +141,26 @@ function adicionarEventosRecuperacaoSenha() {
 
         input.addEventListener("keydown", (event) => {
             if (event.key === "Enter") {
+                event.preventDefault();
                 avancarRecuperacaoSenha();
             }
+        });
+    });
+}
+
+function adicionarEventosMostrarSenhaRecuperacao() {
+    const botoes = camposCadastro.querySelectorAll(".mostrar-senha-recuperacao");
+
+    botoes.forEach((botao) => {
+        botao.addEventListener("click", (event) => {
+            event.preventDefault();
+
+            const target = botao.getAttribute("data-target");
+            const input = document.getElementById(target);
+
+            if (!input) return;
+
+            input.type = input.type === "password" ? "text" : "password";
         });
     });
 }
@@ -162,6 +201,23 @@ function avancarRecuperacaoSenha() {
     if (etapaRecuperacaoSenha === 2) {
         redefinirSenha();
     }
+}
+
+function voltarEtapaRecuperacaoSenha() {
+    if (etapaRecuperacaoSenha <= 1) {
+        return;
+    }
+
+    trocarTela(() => {
+        etapaRecuperacaoSenha = 1;
+        btnEntrar.innerHTML = 'Enviar código <span class="seta-btn">➔</span>';
+
+        if (btnVoltarEtapa) {
+            btnVoltarEtapa.style.display = "none";
+        }
+
+        renderizarEtapaRecuperacaoSenha();
+    });
 }
 
 async function enviarCodigoRecuperacao() {
@@ -208,14 +264,20 @@ async function enviarCodigoRecuperacao() {
             "sucesso"
         );
 
-        etapaRecuperacaoSenha = 2;
+        trocarTela(() => {
+            etapaRecuperacaoSenha = 2;
 
-        tituloFormulario.textContent = "Criar nova senha";
-        subtituloFormulario.textContent = "Digite o código recebido e escolha uma nova senha segura.";
+            tituloFormulario.textContent = "Criar nova senha";
+            subtituloFormulario.textContent = "Digite o código recebido e escolha uma nova senha segura.";
 
-        btnEntrar.textContent = "Redefinir senha";
+            btnEntrar.innerHTML = 'Redefinir senha <span class="seta-btn">➔</span>';
 
-        renderizarEtapaRecuperacaoSenha();
+            if (btnVoltarEtapa) {
+                btnVoltarEtapa.style.display = "block";
+            }
+
+            renderizarEtapaRecuperacaoSenha();
+        });
 
     } catch (error) {
         console.error("Erro ao enviar código:", error);
@@ -229,7 +291,7 @@ async function enviarCodigoRecuperacao() {
         btnEntrar.disabled = false;
 
         if (modoRecuperarSenha && etapaRecuperacaoSenha === 1) {
-            btnEntrar.textContent = "Enviar código";
+            btnEntrar.innerHTML = 'Enviar código <span class="seta-btn">➔</span>';
         }
     }
 }
@@ -324,7 +386,7 @@ async function redefinirSenha() {
         btnEntrar.disabled = false;
 
         if (modoRecuperarSenha) {
-            btnEntrar.textContent = "Redefinir senha";
+            btnEntrar.innerHTML = 'Redefinir senha <span class="seta-btn">➔</span>';
         }
     }
 }

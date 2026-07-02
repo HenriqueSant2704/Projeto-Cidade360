@@ -22,23 +22,12 @@ const dadosCadastro = {
 
 /*========================================================================================================
 
-INICIALIZAÇÃO DO CADASTRO
+BOTÃO CRIAR CONTA / VOLTAR PARA LOGIN
 
 =========================================================================================================*/
 
-document.addEventListener("DOMContentLoaded", () => {
-    inicializarEventosCadastro();
-});
-
-function inicializarEventosCadastro() {
-    const botaoCriarConta = document.getElementById("btnCriarConta");
-
-    if (!botaoCriarConta) {
-        console.warn("Botão de criar conta não encontrado. Verifique se existe id='btnCriarConta' no HTML.");
-        return;
-    }
-
-    botaoCriarConta.addEventListener("click", (event) => {
+if (btnCriarConta) {
+    btnCriarConta.addEventListener("click", (event) => {
         event.preventDefault();
 
         if (modoRecuperarSenha) {
@@ -61,120 +50,80 @@ ENTRAR / SAIR DO MODO CADASTRO
 =========================================================================================================*/
 
 function entrarModoCadastro() {
-    modoCadastro = true;
-    modoRecuperarSenha = false;
-    etapaCadastro = 1;
+    trocarTela(() => {
+        modoCadastro = true;
+        modoRecuperarSenha = false;
+        etapaCadastro = 1;
 
-    limparDadosCadastro();
+        limparDadosCadastro();
 
-    limparMensagemGeral();
-    limparErroCampo(document.getElementById("email"));
-    limparErroCampo(document.getElementById("password"));
+        limparMensagemGeral();
+        limparErroCampo(emailInput);
+        limparErroCampo(passwordInput);
 
-    atualizarProgresso();
-    renderizarEtapaCadastro();
+        atualizarProgresso();
+        renderizarEtapaCadastro();
 
-    const tituloFormulario = document.getElementById("tituloFormulario");
-    const subtituloFormulario = document.getElementById("subtituloFormulario");
-    const indicadorEtapa = document.getElementById("indicadorEtapa");
-    const areaLembrete = document.getElementById("areaLembrete");
-    const campoEmailLogin = document.getElementById("campoEmailLogin");
-    const campoSenhaLogin = document.getElementById("campoSenhaLogin");
-    const btnEntrar = document.getElementById("btnEntrar");
-    const btnCriarConta = document.getElementById("btnCriarConta");
-
-    if (tituloFormulario) {
         tituloFormulario.textContent = "Criar Conta";
-    }
-
-    if (subtituloFormulario) {
         subtituloFormulario.textContent = "Informe seus dados para continuar.";
-    }
 
-    if (indicadorEtapa) {
         indicadorEtapa.style.display = "flex";
-    }
-
-    if (areaLembrete) {
         areaLembrete.style.display = "none";
-    }
 
-    if (campoEmailLogin) {
         campoEmailLogin.style.display = "none";
-    }
-
-    if (campoSenhaLogin) {
         campoSenhaLogin.style.display = "none";
-    }
 
-    if (btnEntrar) {
-        btnEntrar.textContent = "Próximo";
-    }
+        if (btnVoltarEtapa) {
+            btnVoltarEtapa.style.display = "none";
+        }
 
-    if (btnCriarConta) {
-        btnCriarConta.textContent = "Voltar para Login";
-    }
+        btnEntrar.innerHTML = 'Próximo <span class="seta-btn">➔</span>';
+
+        btnCriarConta.innerHTML = `
+            <img src="../../../assets/icons/login/adicionar-usuario.png" alt="">
+            Voltar para Login
+        `;
+    });
 }
 
 function voltarModoLogin() {
-    modoCadastro = false;
-    modoRecuperarSenha = false;
-    etapaCadastro = 1;
+    trocarTela(() => {
+        modoCadastro = false;
+        modoRecuperarSenha = false;
+        etapaCadastro = 1;
 
-    limparDadosCadastro();
-    limparMensagemGeral();
+        limparDadosCadastro();
+        limparMensagemGeral();
 
-    const tituloFormulario = document.getElementById("tituloFormulario");
-    const subtituloFormulario = document.getElementById("subtituloFormulario");
-    const indicadorEtapa = document.getElementById("indicadorEtapa");
-    const areaLembrete = document.getElementById("areaLembrete");
-    const campoEmailLogin = document.getElementById("campoEmailLogin");
-    const campoSenhaLogin = document.getElementById("campoSenhaLogin");
-    const camposCadastro = document.getElementById("camposCadastro");
-    const btnEntrar = document.getElementById("btnEntrar");
-    const btnCriarConta = document.getElementById("btnCriarConta");
-
-    if (tituloFormulario) {
         tituloFormulario.textContent = "Bem-vindo de volta!";
-    }
-
-    if (subtituloFormulario) {
         subtituloFormulario.textContent = "Acesse sua conta para continuar.";
-    }
 
-    if (indicadorEtapa) {
+        if (textoEtapa1) textoEtapa1.textContent = "Dados";
+        if (textoEtapa2) textoEtapa2.textContent = "Contato";
+        if (textoEtapa3) textoEtapa3.textContent = "Segurança";
+
         indicadorEtapa.style.display = "none";
-    }
-
-    if (areaLembrete) {
         areaLembrete.style.display = "flex";
-    }
 
-    if (campoEmailLogin) {
         campoEmailLogin.style.display = "flex";
-    }
-
-    if (campoSenhaLogin) {
         campoSenhaLogin.style.display = "flex";
-    }
 
-    if (camposCadastro) {
+        if (btnVoltarEtapa) {
+            btnVoltarEtapa.style.display = "none";
+        }
+
         camposCadastro.innerHTML = "";
-    }
 
-    if (btnEntrar) {
         btnEntrar.innerHTML = `
             <img src="../../../assets/icons/login/usuario.png" alt="">
             Entrar
         `;
-    }
 
-    if (btnCriarConta) {
         btnCriarConta.innerHTML = `
             <img src="../../../assets/icons/login/adicionar-usuario.png" alt="">
             Criar nova conta
         `;
-    }
+    });
 }
 
 /*========================================================================================================
@@ -184,21 +133,6 @@ BARRA DE PROGRESSO DO CADASTRO
 =========================================================================================================*/
 
 function atualizarProgresso() {
-    const etapa1 = document.getElementById("etapa1");
-    const etapa2 = document.getElementById("etapa2");
-    const etapa3 = document.getElementById("etapa3");
-
-    const textoEtapa1 = document.getElementById("textoEtapa1");
-    const textoEtapa2 = document.getElementById("textoEtapa2");
-    const textoEtapa3 = document.getElementById("textoEtapa3");
-
-    const barra1 = document.getElementById("barra1");
-    const barra2 = document.getElementById("barra2");
-
-    if (!etapa1 || !etapa2 || !etapa3 || !textoEtapa1 || !textoEtapa2 || !textoEtapa3 || !barra1 || !barra2) {
-        return;
-    }
-
     etapa1.classList.remove("ativa");
     etapa2.classList.remove("ativa");
     etapa3.classList.remove("ativa");
@@ -255,13 +189,6 @@ RENDERIZAR CAMPOS DO CADASTRO
 =========================================================================================================*/
 
 function renderizarEtapaCadastro() {
-    const camposCadastro = document.getElementById("camposCadastro");
-
-    if (!camposCadastro) {
-        console.warn("Área de cadastro não encontrada. Verifique se existe id='camposCadastro' no HTML.");
-        return;
-    }
-
     if (etapaCadastro === 1) {
         camposCadastro.innerHTML = `
             <div class="caixa-input">
@@ -369,6 +296,11 @@ function renderizarEtapaCadastro() {
                     maxlength="72"
                     autocomplete="new-password"
                     value="${escaparValorInput(dadosCadastro.senha)}">
+                <img
+                    class="mostrar-senha-cadastro"
+                    data-target="senhaCadastro"
+                    src="../../../assets/icons/login/olho.png"
+                    alt="Mostrar senha">
             </div>
 
             <div class="caixa-input">
@@ -381,16 +313,22 @@ function renderizarEtapaCadastro() {
                     maxlength="72"
                     autocomplete="new-password"
                     value="${escaparValorInput(dadosCadastro.confirmarSenha)}">
+                <img
+                    class="mostrar-senha-cadastro"
+                    data-target="confirmarSenhaCadastro"
+                    src="../../../assets/icons/login/olho.png"
+                    alt="Mostrar senha">
             </div>
         `;
     }
 
     adicionarEventosNosInputsCadastro();
+    adicionarEventosMostrarSenhaCadastro();
 }
 
 /*========================================================================================================
 
-AVANÇAR CADASTRO
+AVANÇAR / VOLTAR CADASTRO
 
 =========================================================================================================*/
 
@@ -416,20 +354,45 @@ async function avancarCadastro() {
     }
 
     if (etapaCadastro < 3) {
-        etapaCadastro++;
+        trocarTela(() => {
+            etapaCadastro++;
 
-        atualizarProgresso();
-        renderizarEtapaCadastro();
+            atualizarProgresso();
+            renderizarEtapaCadastro();
 
-        const btnEntrar = document.getElementById("btnEntrar");
+            if (btnVoltarEtapa) {
+                btnVoltarEtapa.style.display = etapaCadastro > 1 ? "block" : "none";
+            }
 
-        if (etapaCadastro === 3 && btnEntrar) {
-            btnEntrar.textContent = "Finalizar Cadastro";
-        }
+            if (etapaCadastro === 3) {
+                btnEntrar.innerHTML = 'Finalizar Cadastro <span class="seta-btn">➔</span>';
+            } else {
+                btnEntrar.innerHTML = 'Próximo <span class="seta-btn">➔</span>';
+            }
+        });
 
     } else {
         finalizarCadastro();
     }
+}
+
+function voltarEtapaCadastro() {
+    if (etapaCadastro <= 1) {
+        return;
+    }
+
+    trocarTela(() => {
+        etapaCadastro--;
+
+        atualizarProgresso();
+        renderizarEtapaCadastro();
+
+        if (btnVoltarEtapa) {
+            btnVoltarEtapa.style.display = etapaCadastro > 1 ? "block" : "none";
+        }
+
+        btnEntrar.innerHTML = 'Próximo <span class="seta-btn">➔</span>';
+    });
 }
 
 /*========================================================================================================
@@ -480,12 +443,6 @@ function salvarDadosDaEtapaAtual() {
 }
 
 function adicionarEventosNosInputsCadastro() {
-    const camposCadastro = document.getElementById("camposCadastro");
-
-    if (!camposCadastro) {
-        return;
-    }
-
     const inputs = camposCadastro.querySelectorAll("input");
 
     inputs.forEach((input) => {
@@ -508,6 +465,23 @@ function adicionarEventosNosInputsCadastro() {
                 event.preventDefault();
                 avancarCadastro();
             }
+        });
+    });
+}
+
+function adicionarEventosMostrarSenhaCadastro() {
+    const botoes = camposCadastro.querySelectorAll(".mostrar-senha-cadastro");
+
+    botoes.forEach((botao) => {
+        botao.addEventListener("click", (event) => {
+            event.preventDefault();
+
+            const target = botao.getAttribute("data-target");
+            const input = document.getElementById(target);
+
+            if (!input) return;
+
+            input.type = input.type === "password" ? "text" : "password";
         });
     });
 }
@@ -631,15 +605,9 @@ async function finalizarCadastro() {
         return;
     }
 
-    const btnEntrar = document.getElementById("btnEntrar");
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-
     try {
-        if (btnEntrar) {
-            btnEntrar.disabled = true;
-            btnEntrar.textContent = "Cadastrando...";
-        }
+        btnEntrar.disabled = true;
+        btnEntrar.textContent = "Cadastrando...";
 
         const resposta = await fetch(`${API_URL}/cadastrar`, {
             method: "POST",
@@ -669,13 +637,8 @@ async function finalizarCadastro() {
 
         mostrarMensagem("Conta criada com sucesso! Agora você já pode fazer login.", "sucesso");
 
-        if (emailInput) {
-            emailInput.value = dadosCadastro.email;
-        }
-
-        if (passwordInput) {
-            passwordInput.value = "";
-        }
+        emailInput.value = dadosCadastro.email;
+        passwordInput.value = "";
 
         limparDadosCadastro();
 
@@ -692,12 +655,10 @@ async function finalizarCadastro() {
         );
 
     } finally {
-        if (btnEntrar) {
-            btnEntrar.disabled = false;
+        btnEntrar.disabled = false;
 
-            if (modoCadastro) {
-                btnEntrar.textContent = "Finalizar Cadastro";
-            }
+        if (modoCadastro) {
+            btnEntrar.innerHTML = 'Finalizar Cadastro <span class="seta-btn">➔</span>';
         }
     }
 }
@@ -723,13 +684,9 @@ ENVIO E CONFIRMAÇÃO DE CÓDIGO DE EMAIL
 =========================================================================================================*/
 
 async function enviarCodigoEmailCadastro() {
-    const btnEntrar = document.getElementById("btnEntrar");
-
     try {
-        if (btnEntrar) {
-            btnEntrar.disabled = true;
-            btnEntrar.textContent = "Enviando código...";
-        }
+        btnEntrar.disabled = true;
+        btnEntrar.textContent = "Enviando código...";
 
         const resposta = await fetch(`${API_URL}/cadastro/email/enviar-codigo`, {
             method: "POST",
@@ -760,9 +717,7 @@ async function enviarCodigoEmailCadastro() {
 
         renderizarEtapaCadastro();
 
-        if (btnEntrar) {
-            btnEntrar.textContent = "Verificar Email";
-        }
+        btnEntrar.innerHTML = 'Verificar Email <span class="seta-btn">➔</span>';
 
         return true;
 
@@ -777,19 +732,16 @@ async function enviarCodigoEmailCadastro() {
         return false;
 
     } finally {
-        if (btnEntrar) {
-            btnEntrar.disabled = false;
+        btnEntrar.disabled = false;
 
-            if (modoCadastro && etapaCadastro === 2 && dadosCadastro.aguardandoCodigoEmail) {
-                btnEntrar.textContent = "Verificar Email";
-            }
+        if (modoCadastro && etapaCadastro === 2 && dadosCadastro.aguardandoCodigoEmail) {
+            btnEntrar.innerHTML = 'Verificar Email <span class="seta-btn">➔</span>';
         }
     }
 }
 
 async function confirmarCodigoEmailCadastro() {
     const codigoEmailCadastro = document.getElementById("codigoEmailCadastro");
-    const btnEntrar = document.getElementById("btnEntrar");
 
     limparErroCampo(codigoEmailCadastro);
 
@@ -804,10 +756,8 @@ async function confirmarCodigoEmailCadastro() {
     }
 
     try {
-        if (btnEntrar) {
-            btnEntrar.disabled = true;
-            btnEntrar.textContent = "Verificando...";
-        }
+        btnEntrar.disabled = true;
+        btnEntrar.textContent = "Verificando...";
 
         const resposta = await fetch(`${API_URL}/cadastro/email/confirmar-codigo`, {
             method: "POST",
@@ -849,12 +799,10 @@ async function confirmarCodigoEmailCadastro() {
         return false;
 
     } finally {
-        if (btnEntrar) {
-            btnEntrar.disabled = false;
+        btnEntrar.disabled = false;
 
-            if (modoCadastro && etapaCadastro === 2) {
-                btnEntrar.textContent = "Verificar Email";
-            }
+        if (modoCadastro && etapaCadastro === 2) {
+            btnEntrar.innerHTML = 'Verificar Email <span class="seta-btn">➔</span>';
         }
     }
 }

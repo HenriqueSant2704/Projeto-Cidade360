@@ -9,6 +9,7 @@ VARIÁVEIS GERAIS
 
 var modoCadastro = false;
 var modoRecuperarSenha = false;
+var transicaoTelaAtiva = false;
 
 var formLogin = document.getElementById("formLogin");
 var emailInput = document.getElementById("email");
@@ -47,6 +48,8 @@ EVENTOS INICIAIS
 =========================================================================================================*/
 
 document.addEventListener("DOMContentLoaded", () => {
+    prepararAnimacoesLogin();
+
     const token = buscarTokenSalvo();
 
     if (token) {
@@ -80,11 +83,7 @@ if (mostrarSenha && passwordInput) {
     mostrarSenha.addEventListener("click", (event) => {
         event.preventDefault();
 
-        if (passwordInput.type === "password") {
-            passwordInput.type = "text";
-        } else {
-            passwordInput.type = "password";
-        }
+        passwordInput.type = passwordInput.type === "password" ? "text" : "password";
     });
 }
 
@@ -337,6 +336,94 @@ function buscarTokenSalvo() {
         localStorage.getItem("cidade360_token") ||
         sessionStorage.getItem("cidade360_token")
     );
+}
+
+/*========================================================================================================
+
+ANIMAÇÕES DE TROCA DE TELA
+
+=========================================================================================================*/
+
+function prepararAnimacoesLogin() {
+    if (document.getElementById("cidade360-login-animacoes")) {
+        return;
+    }
+
+    const style = document.createElement("style");
+    style.id = "cidade360-login-animacoes";
+    style.textContent = `
+        .caixa-login.animacao-saida {
+            opacity: 0;
+            transform: translateX(-18px) scale(0.985);
+            transition: opacity 260ms ease, transform 260ms ease;
+        }
+
+        .caixa-login.animacao-entrada {
+            opacity: 0;
+            transform: translateX(18px) scale(0.985);
+        }
+
+        .caixa-login.animacao-entrada.ativa {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+            transition: opacity 260ms ease, transform 260ms ease;
+        }
+
+        .seta-btn {
+            display: inline-block;
+            margin-left: 8px;
+            transition: transform 180ms ease;
+        }
+
+        #btnEntrar:hover .seta-btn {
+            transform: translateX(3px);
+        }
+
+        .mostrar-senha-cadastro,
+        .mostrar-senha-recuperacao {
+            cursor: pointer;
+            user-select: none;
+        }
+    `;
+
+    document.head.appendChild(style);
+}
+
+function trocarTela(callback) {
+    const caixa = document.querySelector(".caixa-login");
+
+    if (!caixa || typeof callback !== "function") {
+        if (typeof callback === "function") {
+            callback();
+        }
+
+        return;
+    }
+
+    if (transicaoTelaAtiva) {
+        return;
+    }
+
+    transicaoTelaAtiva = true;
+
+    caixa.classList.remove("animacao-entrada", "ativa");
+    caixa.classList.add("animacao-saida");
+
+    setTimeout(() => {
+        callback();
+
+        caixa.classList.remove("animacao-saida");
+        caixa.classList.add("animacao-entrada");
+
+        requestAnimationFrame(() => {
+            caixa.classList.add("ativa");
+        });
+
+        setTimeout(() => {
+            caixa.classList.remove("animacao-entrada", "ativa");
+            transicaoTelaAtiva = false;
+        }, 280);
+    }, 260);
 }
 
 /*========================================================================================================
