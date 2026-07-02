@@ -22,22 +22,37 @@ const dadosCadastro = {
 
 /*========================================================================================================
 
-BOTÃO CRIAR CONTA / VOLTAR PARA LOGIN
+INICIALIZAÇÃO DO CADASTRO
 
 =========================================================================================================*/
 
-btnCriarConta.addEventListener("click", () => {
-    if (modoRecuperarSenha) {
-        voltarModoLogin();
+document.addEventListener("DOMContentLoaded", () => {
+    inicializarEventosCadastro();
+});
+
+function inicializarEventosCadastro() {
+    const botaoCriarConta = document.getElementById("btnCriarConta");
+
+    if (!botaoCriarConta) {
+        console.warn("Botão de criar conta não encontrado. Verifique se existe id='btnCriarConta' no HTML.");
         return;
     }
 
-    if (!modoCadastro) {
-        entrarModoCadastro();
-    } else {
-        voltarModoLogin();
-    }
-});
+    botaoCriarConta.addEventListener("click", (event) => {
+        event.preventDefault();
+
+        if (modoRecuperarSenha) {
+            voltarModoLogin();
+            return;
+        }
+
+        if (!modoCadastro) {
+            entrarModoCadastro();
+        } else {
+            voltarModoLogin();
+        }
+    });
+}
 
 /*========================================================================================================
 
@@ -53,23 +68,52 @@ function entrarModoCadastro() {
     limparDadosCadastro();
 
     limparMensagemGeral();
-    limparErroCampo(emailInput);
-    limparErroCampo(passwordInput);
+    limparErroCampo(document.getElementById("email"));
+    limparErroCampo(document.getElementById("password"));
 
     atualizarProgresso();
     renderizarEtapaCadastro();
 
-    tituloFormulario.textContent = "Criar Conta";
-    subtituloFormulario.textContent = "Informe seus dados para continuar.";
+    const tituloFormulario = document.getElementById("tituloFormulario");
+    const subtituloFormulario = document.getElementById("subtituloFormulario");
+    const indicadorEtapa = document.getElementById("indicadorEtapa");
+    const areaLembrete = document.getElementById("areaLembrete");
+    const campoEmailLogin = document.getElementById("campoEmailLogin");
+    const campoSenhaLogin = document.getElementById("campoSenhaLogin");
+    const btnEntrar = document.getElementById("btnEntrar");
+    const btnCriarConta = document.getElementById("btnCriarConta");
 
-    indicadorEtapa.style.display = "flex";
-    areaLembrete.style.display = "none";
+    if (tituloFormulario) {
+        tituloFormulario.textContent = "Criar Conta";
+    }
 
-    campoEmailLogin.style.display = "none";
-    campoSenhaLogin.style.display = "none";
+    if (subtituloFormulario) {
+        subtituloFormulario.textContent = "Informe seus dados para continuar.";
+    }
 
-    btnEntrar.textContent = "Próximo";
-    btnCriarConta.textContent = "Voltar para Login";
+    if (indicadorEtapa) {
+        indicadorEtapa.style.display = "flex";
+    }
+
+    if (areaLembrete) {
+        areaLembrete.style.display = "none";
+    }
+
+    if (campoEmailLogin) {
+        campoEmailLogin.style.display = "none";
+    }
+
+    if (campoSenhaLogin) {
+        campoSenhaLogin.style.display = "none";
+    }
+
+    if (btnEntrar) {
+        btnEntrar.textContent = "Próximo";
+    }
+
+    if (btnCriarConta) {
+        btnCriarConta.textContent = "Voltar para Login";
+    }
 }
 
 function voltarModoLogin() {
@@ -80,26 +124,57 @@ function voltarModoLogin() {
     limparDadosCadastro();
     limparMensagemGeral();
 
-    tituloFormulario.textContent = "Bem-vindo de volta!";
-    subtituloFormulario.textContent = "Acesse sua conta para continuar.";
+    const tituloFormulario = document.getElementById("tituloFormulario");
+    const subtituloFormulario = document.getElementById("subtituloFormulario");
+    const indicadorEtapa = document.getElementById("indicadorEtapa");
+    const areaLembrete = document.getElementById("areaLembrete");
+    const campoEmailLogin = document.getElementById("campoEmailLogin");
+    const campoSenhaLogin = document.getElementById("campoSenhaLogin");
+    const camposCadastro = document.getElementById("camposCadastro");
+    const btnEntrar = document.getElementById("btnEntrar");
+    const btnCriarConta = document.getElementById("btnCriarConta");
 
-    indicadorEtapa.style.display = "none";
-    areaLembrete.style.display = "flex";
+    if (tituloFormulario) {
+        tituloFormulario.textContent = "Bem-vindo de volta!";
+    }
 
-    campoEmailLogin.style.display = "flex";
-    campoSenhaLogin.style.display = "flex";
+    if (subtituloFormulario) {
+        subtituloFormulario.textContent = "Acesse sua conta para continuar.";
+    }
 
-    camposCadastro.innerHTML = "";
+    if (indicadorEtapa) {
+        indicadorEtapa.style.display = "none";
+    }
 
-    btnEntrar.innerHTML = `
-        <img src="../../../assets/icons/login/usuario.png" alt="">
-        Entrar
-    `;
+    if (areaLembrete) {
+        areaLembrete.style.display = "flex";
+    }
 
-    btnCriarConta.innerHTML = `
-        <img src="../../../assets/icons/login/adicionar-usuario.png" alt="">
-        Criar nova conta
-    `;
+    if (campoEmailLogin) {
+        campoEmailLogin.style.display = "flex";
+    }
+
+    if (campoSenhaLogin) {
+        campoSenhaLogin.style.display = "flex";
+    }
+
+    if (camposCadastro) {
+        camposCadastro.innerHTML = "";
+    }
+
+    if (btnEntrar) {
+        btnEntrar.innerHTML = `
+            <img src="../../../assets/icons/login/usuario.png" alt="">
+            Entrar
+        `;
+    }
+
+    if (btnCriarConta) {
+        btnCriarConta.innerHTML = `
+            <img src="../../../assets/icons/login/adicionar-usuario.png" alt="">
+            Criar nova conta
+        `;
+    }
 }
 
 /*========================================================================================================
@@ -109,6 +184,21 @@ BARRA DE PROGRESSO DO CADASTRO
 =========================================================================================================*/
 
 function atualizarProgresso() {
+    const etapa1 = document.getElementById("etapa1");
+    const etapa2 = document.getElementById("etapa2");
+    const etapa3 = document.getElementById("etapa3");
+
+    const textoEtapa1 = document.getElementById("textoEtapa1");
+    const textoEtapa2 = document.getElementById("textoEtapa2");
+    const textoEtapa3 = document.getElementById("textoEtapa3");
+
+    const barra1 = document.getElementById("barra1");
+    const barra2 = document.getElementById("barra2");
+
+    if (!etapa1 || !etapa2 || !etapa3 || !textoEtapa1 || !textoEtapa2 || !textoEtapa3 || !barra1 || !barra2) {
+        return;
+    }
+
     etapa1.classList.remove("ativa");
     etapa2.classList.remove("ativa");
     etapa3.classList.remove("ativa");
@@ -132,9 +222,12 @@ function atualizarProgresso() {
     if (etapaCadastro === 2) {
         etapa1.classList.add("ativa");
         etapa2.classList.add("ativa");
+
         etapa1.innerHTML = "✓";
+
         textoEtapa1.classList.add("ativo");
         textoEtapa2.classList.add("ativo");
+
         barra1.classList.add("ativa");
     }
 
@@ -142,11 +235,14 @@ function atualizarProgresso() {
         etapa1.classList.add("ativa");
         etapa2.classList.add("ativa");
         etapa3.classList.add("ativa");
+
         etapa1.innerHTML = "✓";
         etapa2.innerHTML = "✓";
+
         textoEtapa1.classList.add("ativo");
         textoEtapa2.classList.add("ativo");
         textoEtapa3.classList.add("ativo");
+
         barra1.classList.add("ativa");
         barra2.classList.add("ativa");
     }
@@ -159,6 +255,13 @@ RENDERIZAR CAMPOS DO CADASTRO
 =========================================================================================================*/
 
 function renderizarEtapaCadastro() {
+    const camposCadastro = document.getElementById("camposCadastro");
+
+    if (!camposCadastro) {
+        console.warn("Área de cadastro não encontrada. Verifique se existe id='camposCadastro' no HTML.");
+        return;
+    }
+
     if (etapaCadastro === 1) {
         camposCadastro.innerHTML = `
             <div class="caixa-input">
@@ -318,7 +421,9 @@ async function avancarCadastro() {
         atualizarProgresso();
         renderizarEtapaCadastro();
 
-        if (etapaCadastro === 3) {
+        const btnEntrar = document.getElementById("btnEntrar");
+
+        if (etapaCadastro === 3 && btnEntrar) {
             btnEntrar.textContent = "Finalizar Cadastro";
         }
 
@@ -375,6 +480,12 @@ function salvarDadosDaEtapaAtual() {
 }
 
 function adicionarEventosNosInputsCadastro() {
+    const camposCadastro = document.getElementById("camposCadastro");
+
+    if (!camposCadastro) {
+        return;
+    }
+
     const inputs = camposCadastro.querySelectorAll("input");
 
     inputs.forEach((input) => {
@@ -394,6 +505,7 @@ function adicionarEventosNosInputsCadastro() {
 
         input.addEventListener("keydown", (event) => {
             if (event.key === "Enter") {
+                event.preventDefault();
                 avancarCadastro();
             }
         });
@@ -519,9 +631,15 @@ async function finalizarCadastro() {
         return;
     }
 
+    const btnEntrar = document.getElementById("btnEntrar");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+
     try {
-        btnEntrar.disabled = true;
-        btnEntrar.textContent = "Cadastrando...";
+        if (btnEntrar) {
+            btnEntrar.disabled = true;
+            btnEntrar.textContent = "Cadastrando...";
+        }
 
         const resposta = await fetch(`${API_URL}/cadastrar`, {
             method: "POST",
@@ -551,8 +669,13 @@ async function finalizarCadastro() {
 
         mostrarMensagem("Conta criada com sucesso! Agora você já pode fazer login.", "sucesso");
 
-        emailInput.value = dadosCadastro.email;
-        passwordInput.value = "";
+        if (emailInput) {
+            emailInput.value = dadosCadastro.email;
+        }
+
+        if (passwordInput) {
+            passwordInput.value = "";
+        }
 
         limparDadosCadastro();
 
@@ -562,16 +685,19 @@ async function finalizarCadastro() {
 
     } catch (error) {
         console.error("Erro ao cadastrar usuário:", error);
+
         mostrarMensagem(
             "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.",
             "erro"
         );
 
     } finally {
-        btnEntrar.disabled = false;
+        if (btnEntrar) {
+            btnEntrar.disabled = false;
 
-        if (modoCadastro) {
-            btnEntrar.textContent = "Finalizar Cadastro";
+            if (modoCadastro) {
+                btnEntrar.textContent = "Finalizar Cadastro";
+            }
         }
     }
 }
@@ -597,9 +723,13 @@ ENVIO E CONFIRMAÇÃO DE CÓDIGO DE EMAIL
 =========================================================================================================*/
 
 async function enviarCodigoEmailCadastro() {
+    const btnEntrar = document.getElementById("btnEntrar");
+
     try {
-        btnEntrar.disabled = true;
-        btnEntrar.textContent = "Enviando código...";
+        if (btnEntrar) {
+            btnEntrar.disabled = true;
+            btnEntrar.textContent = "Enviando código...";
+        }
 
         const resposta = await fetch(`${API_URL}/cadastro/email/enviar-codigo`, {
             method: "POST",
@@ -630,29 +760,36 @@ async function enviarCodigoEmailCadastro() {
 
         renderizarEtapaCadastro();
 
-        btnEntrar.textContent = "Verificar Email";
+        if (btnEntrar) {
+            btnEntrar.textContent = "Verificar Email";
+        }
 
         return true;
 
     } catch (error) {
         console.error("Erro ao enviar código de email:", error);
+
         mostrarMensagem(
             "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.",
             "erro"
         );
+
         return false;
 
     } finally {
-        btnEntrar.disabled = false;
+        if (btnEntrar) {
+            btnEntrar.disabled = false;
 
-        if (modoCadastro && etapaCadastro === 2 && dadosCadastro.aguardandoCodigoEmail) {
-            btnEntrar.textContent = "Verificar Email";
+            if (modoCadastro && etapaCadastro === 2 && dadosCadastro.aguardandoCodigoEmail) {
+                btnEntrar.textContent = "Verificar Email";
+            }
         }
     }
 }
 
 async function confirmarCodigoEmailCadastro() {
     const codigoEmailCadastro = document.getElementById("codigoEmailCadastro");
+    const btnEntrar = document.getElementById("btnEntrar");
 
     limparErroCampo(codigoEmailCadastro);
 
@@ -667,8 +804,10 @@ async function confirmarCodigoEmailCadastro() {
     }
 
     try {
-        btnEntrar.disabled = true;
-        btnEntrar.textContent = "Verificando...";
+        if (btnEntrar) {
+            btnEntrar.disabled = true;
+            btnEntrar.textContent = "Verificando...";
+        }
 
         const resposta = await fetch(`${API_URL}/cadastro/email/confirmar-codigo`, {
             method: "POST",
@@ -701,17 +840,21 @@ async function confirmarCodigoEmailCadastro() {
 
     } catch (error) {
         console.error("Erro ao confirmar código de email:", error);
+
         mostrarMensagem(
             "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.",
             "erro"
         );
+
         return false;
 
     } finally {
-        btnEntrar.disabled = false;
+        if (btnEntrar) {
+            btnEntrar.disabled = false;
 
-        if (modoCadastro && etapaCadastro === 2) {
-            btnEntrar.textContent = "Verificar Email";
+            if (modoCadastro && etapaCadastro === 2) {
+                btnEntrar.textContent = "Verificar Email";
+            }
         }
     }
 }
@@ -983,7 +1126,10 @@ function validarCPF(cpf) {
     }
 
     let digito1 = 11 - (soma % 11);
-    if (digito1 >= 10) digito1 = 0;
+
+    if (digito1 >= 10) {
+        digito1 = 0;
+    }
 
     if (digito1 !== Number(cpf[9])) {
         return false;
@@ -996,7 +1142,10 @@ function validarCPF(cpf) {
     }
 
     let digito2 = 11 - (soma % 11);
-    if (digito2 >= 10) digito2 = 0;
+
+    if (digito2 >= 10) {
+        digito2 = 0;
+    }
 
     return digito2 === Number(cpf[10]);
 }
