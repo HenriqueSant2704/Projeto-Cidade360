@@ -329,14 +329,14 @@ body {
     width: 100%;
 }
 
-/* Input com erro */
+
 .caixa-input input.input-erro,
 .input-erro {
     border-color: #ff3b3b !important;
     border-width: 2px !important;
 }
 
-/* Mensagem de erro abaixo do input */
+
 .erro-input {
     display: none;
     width: 100%;
@@ -346,4 +346,150 @@ body {
     margin-top: 3px;
     padding-left: 2px;
     line-height: 1.2;
+}
+
+
+/*========================================================================================================
+
+    Código de segurança
+
+==========================================================================================================*/
+
+
+.codigo-seguranca input {
+    height: 65px;
+    padding: 0;
+    text-align: center;
+
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: 12px;
+
+    border: 2px solid #007BFF;
+    border-radius: 12px;
+
+    color: #7a7a7a;
+    background: white;
+
+    transition: 0.2s;
+}
+
+.codigo-seguranca input:focus {
+    outline: none;
+    border-color: #007BFF;
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.15);
+}
+
+.codigo-seguranca input::placeholder {
+    letter-spacing: 12px;
+    font-size: 24px;
+    font-style: normal;
+    color: #b0b0b0;
+}
+
+.area-botoes {
+    width: 90%;
+    display: flex;
+    gap: 15px;
+}
+
+.area-botoes button {
+    flex: 1;
+}
+
+.btn-voltar {
+    background: white !important;
+    color: #007BFF !important;
+    border: 2px solid #007BFF !important;
+}
+
+.btn-voltar:hover {
+    background: #f2f8ff !important;
+}
+
+.link-reenviar {
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #007BFF;
+    text-decoration: none;
+    align-self: flex-end;
+}
+
+.link-reenviar:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 1.2px;
+    text-underline-offset: 4px;
+}
+
+.seta-btn {
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.seta-voltar {
+    font-size: 15px;
+    font-weight: bold;
+}
+
+
+/*========================================================================================================
+
+    Animações 
+
+==========================================================================================================*/
+
+
+.transicao-saida {
+    opacity: 0;
+    transform: translateY(-15px);
+    transition: all 0.25s ease;
+}
+
+.transicao-entrada {
+    opacity: 0;
+    transform: translateY(15px);
+}
+
+.transicao-entrada.ativa {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.25s ease;
+}
+
+.animacao-saida {
+    opacity: 0;
+    transform: translateX(-30px) scale(0.97);
+    transition:
+        opacity 0.30s ease,
+        transform 0.30s ease;
+}
+
+.animacao-entrada {
+    opacity: 0;
+    transform: translateX(30px) scale(0.97);
+}
+
+.animacao-entrada.ativa {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    transition:
+        opacity 0.30s ease,
+        transform 0.30s ease;
+}
+
+@keyframes aparecer {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.animar {
+    animation: aparecer 0.3s ease;
 }

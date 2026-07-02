@@ -43,13 +43,13 @@
                 <div class="caixa-input" id="campoEmailLogin">
                     <label for="email">Email</label>
                     <img src="../../../assets/icons/login/e-mail.png" alt="">
-                    <input type="email" id="email" placeholder="Digite seu email">
+                    <input type="email" id="email" placeholder="Digite seu email" required>
                 </div>
 
                 <div class="caixa-input" id="campoSenhaLogin">
                     <label for="password">Senha</label>
                     <img src="../../../assets/icons/login/trancar.png" alt="">
-                    <input type="password" id="password" placeholder="Digite sua senha">
+                    <input type="password" id="password" placeholder="Digite sua senha" required>
                     <img src="../../../assets/icons/login/olho.png" alt="" id="mostrarSenha">
                 </div>
 
@@ -66,10 +66,17 @@
                 <p id="mensagemLogin" style="display: none; margin: -10px 0 0 0; font-size: 14px; font-weight: 600;">
                 </p>
 
-                <button type="button" id="btnEntrar">
-                    <img src="../../../assets/icons/login/usuario.png" alt="">
-                    Entrar
-                </button>
+                <div id="areaBotoes" class="area-botoes">
+                    <button type="button" id="btnVoltarEtapa" class="btn-voltar" style="display:none;">
+                        <span class="seta-voltar">⬅</span>
+                        Voltar
+                    </button>
+
+                    <button type="button" id="btnEntrar">
+                        <img src="../../../assets/icons/login/usuario.png" alt="">
+                        Entrar
+                    </button>
+                </div>
             </div>
 
             <p class="caixa-ou" id="textoOu">ou</p>
