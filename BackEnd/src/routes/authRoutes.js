@@ -48,4 +48,9 @@ router.post(
     AuthController.redefinirSenha
 );
 
+router.post(
+    "/recuperar-senha/confirmar-codigo",
+    AuthController.confirmarCodigoRecuperacaoSenha
+);
+
 module.exports = router;

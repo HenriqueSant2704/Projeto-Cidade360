@@ -1,6 +1,11 @@
 /*========================================================================================================
 
-RECUPERAÇÃO DE SENHA
+RECUPERAÇÃO DE SENHA - VERSÃO 1 COM ETAPAS
+
+Etapas:
+1. Email
+2. Código
+3. Nova senha
 
 =========================================================================================================*/
 
@@ -15,12 +20,24 @@ const dadosRecuperacaoSenha = {
     confirmarNovaSenha: ""
 };
 
+/*========================================================================================================
+
+CLIQUE EM ESQUECEU SUA SENHA
+
+=========================================================================================================*/
+
 if (linkEsqueciSenha) {
     linkEsqueciSenha.addEventListener("click", (event) => {
         event.preventDefault();
         entrarModoRecuperarSenha();
     });
 }
+
+/*========================================================================================================
+
+ENTRAR NO MODO RECUPERAÇÃO
+
+=========================================================================================================*/
 
 function entrarModoRecuperarSenha() {
     trocarTela(() => {
@@ -30,13 +47,18 @@ function entrarModoRecuperarSenha() {
 
         limparDadosRecuperacaoSenha();
         limparMensagemGeral();
+
         limparErroCampo(emailInput);
         limparErroCampo(passwordInput);
 
         tituloFormulario.textContent = "Recuperar Senha";
-        subtituloFormulario.textContent = "Informe o email cadastrado para receber um código de recuperação.";
+        subtituloFormulario.textContent = "Informe o email cadastrado para receber um código.";
 
-        indicadorEtapa.style.display = "none";
+        textoEtapa1.textContent = "Email";
+        textoEtapa2.textContent = "Código";
+        textoEtapa3.textContent = "Senha";
+
+        indicadorEtapa.style.display = "flex";
         areaLembrete.style.display = "none";
 
         campoEmailLogin.style.display = "none";
@@ -53,9 +75,62 @@ function entrarModoRecuperarSenha() {
             Voltar para Login
         `;
 
+        atualizarProgressoRecuperacaoSenha();
         renderizarEtapaRecuperacaoSenha();
     });
 }
+
+/*========================================================================================================
+
+BARRA DE PROGRESSO DA RECUPERAÇÃO
+
+=========================================================================================================*/
+
+function atualizarProgressoRecuperacaoSenha() {
+    etapa1.classList.remove("ativa");
+    etapa2.classList.remove("ativa");
+    etapa3.classList.remove("ativa");
+
+    textoEtapa1.classList.remove("ativo");
+    textoEtapa2.classList.remove("ativo");
+    textoEtapa3.classList.remove("ativo");
+
+    barra1.classList.remove("ativa");
+    barra2.classList.remove("ativa");
+
+    etapa1.innerHTML = "";
+    etapa2.innerHTML = "";
+    etapa3.innerHTML = "";
+
+    if (etapaRecuperacaoSenha >= 1) {
+        etapa1.classList.add("ativa");
+        textoEtapa1.classList.add("ativo");
+    }
+
+    if (etapaRecuperacaoSenha >= 2) {
+        etapa1.innerHTML = "✓";
+
+        etapa2.classList.add("ativa");
+        textoEtapa2.classList.add("ativo");
+
+        barra1.classList.add("ativa");
+    }
+
+    if (etapaRecuperacaoSenha >= 3) {
+        etapa2.innerHTML = "✓";
+
+        etapa3.classList.add("ativa");
+        textoEtapa3.classList.add("ativo");
+
+        barra2.classList.add("ativa");
+    }
+}
+
+/*========================================================================================================
+
+RENDERIZAR ETAPAS DA RECUPERAÇÃO
+
+=========================================================================================================*/
 
 function renderizarEtapaRecuperacaoSenha() {
     if (etapaRecuperacaoSenha === 1) {
@@ -76,19 +151,22 @@ function renderizarEtapaRecuperacaoSenha() {
 
     if (etapaRecuperacaoSenha === 2) {
         camposCadastro.innerHTML = `
-            <div class="caixa-input">
-                <label for="codigoRecuperacao">Código recebido</label>
-                <img src="../../../assets/icons/login/confirmar-senha.png" alt="">
+            <div class="caixa-input codigo-seguranca">
+                <label for="codigoRecuperacao">Código de segurança</label>
                 <input
                     type="text"
                     id="codigoRecuperacao"
-                    placeholder="Digite o código de 6 dígitos"
+                    placeholder="000000"
                     maxlength="6"
                     inputmode="numeric"
                     autocomplete="one-time-code"
                     value="${escaparValorInputRecuperacao(dadosRecuperacaoSenha.codigo)}">
             </div>
+        `;
+    }
 
+    if (etapaRecuperacaoSenha === 3) {
+        camposCadastro.innerHTML = `
             <div class="caixa-input">
                 <label for="novaSenhaRecuperacao">Nova senha</label>
                 <img src="../../../assets/icons/login/trancar.png" alt="">
@@ -129,12 +207,24 @@ function renderizarEtapaRecuperacaoSenha() {
     adicionarEventosMostrarSenhaRecuperacao();
 }
 
+/*========================================================================================================
+
+EVENTOS DOS INPUTS DA RECUPERAÇÃO
+
+=========================================================================================================*/
+
 function adicionarEventosRecuperacaoSenha() {
     const inputs = camposCadastro.querySelectorAll("input");
 
     inputs.forEach((input) => {
         input.addEventListener("input", () => {
             salvarDadosRecuperacaoSenha();
+
+            if (input.id === "codigoRecuperacao") {
+                input.value = input.value.replace(/\D/g, "").slice(0, 6);
+                dadosRecuperacaoSenha.codigo = input.value;
+            }
+
             limparErroCampo(input);
             limparMensagemGeral();
         });
@@ -165,6 +255,12 @@ function adicionarEventosMostrarSenhaRecuperacao() {
     });
 }
 
+/*========================================================================================================
+
+SALVAR DADOS DA RECUPERAÇÃO
+
+=========================================================================================================*/
+
 function salvarDadosRecuperacaoSenha() {
     const emailRecuperacao = document.getElementById("emailRecuperacao");
     const codigoRecuperacao = document.getElementById("codigoRecuperacao");
@@ -189,6 +285,12 @@ function salvarDadosRecuperacaoSenha() {
     }
 }
 
+/*========================================================================================================
+
+AVANÇAR RECUPERAÇÃO
+
+=========================================================================================================*/
+
 function avancarRecuperacaoSenha() {
     salvarDadosRecuperacaoSenha();
     limparMensagemGeral();
@@ -199,9 +301,20 @@ function avancarRecuperacaoSenha() {
     }
 
     if (etapaRecuperacaoSenha === 2) {
+        validarCodigoEIrParaSenha();
+        return;
+    }
+
+    if (etapaRecuperacaoSenha === 3) {
         redefinirSenha();
     }
 }
+
+/*========================================================================================================
+
+VOLTAR ETAPA RECUPERAÇÃO
+
+=========================================================================================================*/
 
 function voltarEtapaRecuperacaoSenha() {
     if (etapaRecuperacaoSenha <= 1) {
@@ -209,16 +322,34 @@ function voltarEtapaRecuperacaoSenha() {
     }
 
     trocarTela(() => {
-        etapaRecuperacaoSenha = 1;
-        btnEntrar.innerHTML = 'Enviar código <span class="seta-btn">➔</span>';
+        etapaRecuperacaoSenha--;
+
+        atualizarProgressoRecuperacaoSenha();
+        renderizarEtapaRecuperacaoSenha();
 
         if (btnVoltarEtapa) {
-            btnVoltarEtapa.style.display = "none";
+            btnVoltarEtapa.style.display = etapaRecuperacaoSenha > 1 ? "block" : "none";
         }
 
-        renderizarEtapaRecuperacaoSenha();
+        if (etapaRecuperacaoSenha === 1) {
+            tituloFormulario.textContent = "Recuperar Senha";
+            subtituloFormulario.textContent = "Informe o email cadastrado para receber um código.";
+            btnEntrar.innerHTML = 'Enviar código <span class="seta-btn">➔</span>';
+        }
+
+        if (etapaRecuperacaoSenha === 2) {
+            tituloFormulario.textContent = "Código de Segurança";
+            subtituloFormulario.textContent = "Digite o código enviado para seu email.";
+            btnEntrar.innerHTML = 'Continuar <span class="seta-btn">➔</span>';
+        }
     });
 }
+
+/*========================================================================================================
+
+ENVIAR CÓDIGO PARA EMAIL
+
+=========================================================================================================*/
 
 async function enviarCodigoRecuperacao() {
     const emailRecuperacao = document.getElementById("emailRecuperacao");
@@ -267,15 +398,16 @@ async function enviarCodigoRecuperacao() {
         trocarTela(() => {
             etapaRecuperacaoSenha = 2;
 
-            tituloFormulario.textContent = "Criar nova senha";
-            subtituloFormulario.textContent = "Digite o código recebido e escolha uma nova senha segura.";
+            tituloFormulario.textContent = "Código de Segurança";
+            subtituloFormulario.textContent = "Digite o código enviado para seu email.";
 
-            btnEntrar.innerHTML = 'Redefinir senha <span class="seta-btn">➔</span>';
+            btnEntrar.innerHTML = 'Continuar <span class="seta-btn">➔</span>';
 
             if (btnVoltarEtapa) {
                 btnVoltarEtapa.style.display = "block";
             }
 
+            atualizarProgressoRecuperacaoSenha();
             renderizarEtapaRecuperacaoSenha();
         });
 
@@ -296,24 +428,110 @@ async function enviarCodigoRecuperacao() {
     }
 }
 
-async function redefinirSenha() {
+/*========================================================================================================
+
+VALIDAR CÓDIGO LOCALMENTE E IR PARA SENHA
+
+=========================================================================================================*/
+
+async function validarCodigoEIrParaSenha() {
     const codigoRecuperacao = document.getElementById("codigoRecuperacao");
+
+    limparErroCampo(codigoRecuperacao);
+    limparMensagemGeral();
+
+    salvarDadosRecuperacaoSenha();
+
+    if (!dadosRecuperacaoSenha.codigo) {
+        mostrarErroCampo(codigoRecuperacao, "Digite o código enviado para seu email.");
+        return;
+    }
+
+    if (!/^\d{6}$/.test(dadosRecuperacaoSenha.codigo)) {
+        mostrarErroCampo(codigoRecuperacao, "O código deve conter exatamente 6 números.");
+        return;
+    }
+
+    try {
+        btnEntrar.disabled = true;
+        btnEntrar.textContent = "Verificando...";
+
+        const resposta = await fetch(`${API_URL}/recuperar-senha/confirmar-codigo`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                email: dadosRecuperacaoSenha.email,
+                codigo: dadosRecuperacaoSenha.codigo
+            })
+        });
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok || !dados.sucesso) {
+            mostrarErroCampo(
+                codigoRecuperacao,
+                dados.mensagem || "Código inválido ou expirado."
+            );
+
+            mostrarMensagem(
+                dados.mensagem || "Código inválido ou expirado. Confira e tente novamente.",
+                "erro"
+            );
+
+            return;
+        }
+
+        mostrarMensagem("Código confirmado com sucesso.", "sucesso");
+
+        trocarTela(() => {
+            etapaRecuperacaoSenha = 3;
+
+            tituloFormulario.textContent = "Criar Nova Senha";
+            subtituloFormulario.textContent = "Escolha uma nova senha segura para sua conta.";
+
+            btnEntrar.innerHTML = 'Redefinir senha <span class="seta-btn">➔</span>';
+
+            if (btnVoltarEtapa) {
+                btnVoltarEtapa.style.display = "block";
+            }
+
+            atualizarProgressoRecuperacaoSenha();
+            renderizarEtapaRecuperacaoSenha();
+        });
+
+    } catch (error) {
+        console.error("Erro ao confirmar código:", error);
+
+        mostrarMensagem(
+            "Não foi possível verificar o código. Verifique o servidor e tente novamente.",
+            "erro"
+        );
+
+    } finally {
+        btnEntrar.disabled = false;
+
+        if (modoRecuperarSenha && etapaRecuperacaoSenha === 2) {
+            btnEntrar.innerHTML = 'Continuar <span class="seta-btn">➔</span>';
+        }
+    }
+}
+
+/*========================================================================================================
+
+REDEFINIR SENHA
+
+=========================================================================================================*/
+
+async function redefinirSenha() {
     const novaSenhaRecuperacao = document.getElementById("novaSenhaRecuperacao");
     const confirmarNovaSenhaRecuperacao = document.getElementById("confirmarNovaSenhaRecuperacao");
 
-    limparErroCampo(codigoRecuperacao);
     limparErroCampo(novaSenhaRecuperacao);
     limparErroCampo(confirmarNovaSenhaRecuperacao);
 
     let valido = true;
-
-    if (!dadosRecuperacaoSenha.codigo) {
-        mostrarErroCampo(codigoRecuperacao, "Digite o código enviado para seu email.");
-        valido = false;
-    } else if (!/^\d{6}$/.test(dadosRecuperacaoSenha.codigo)) {
-        mostrarErroCampo(codigoRecuperacao, "O código deve conter exatamente 6 números.");
-        valido = false;
-    }
 
     const validacaoSenha = validarSenhaRecuperacao(dadosRecuperacaoSenha.novaSenha);
 
@@ -391,12 +609,24 @@ async function redefinirSenha() {
     }
 }
 
+/*========================================================================================================
+
+LIMPAR DADOS
+
+=========================================================================================================*/
+
 function limparDadosRecuperacaoSenha() {
     dadosRecuperacaoSenha.email = "";
     dadosRecuperacaoSenha.codigo = "";
     dadosRecuperacaoSenha.novaSenha = "";
     dadosRecuperacaoSenha.confirmarNovaSenha = "";
 }
+
+/*========================================================================================================
+
+VALIDAR SENHA
+
+=========================================================================================================*/
 
 function validarSenhaRecuperacao(senha) {
     if (typeof validarSenhaForte === "function") {
@@ -433,6 +663,12 @@ function validarSenhaRecuperacao(senha) {
 
     return { valido: true };
 }
+
+/*========================================================================================================
+
+ESCAPAR VALORES
+
+=========================================================================================================*/
 
 function escaparValorInputRecuperacao(valor) {
     return String(valor || "")

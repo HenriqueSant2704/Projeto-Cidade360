@@ -70,7 +70,7 @@ function normalizarEmail(email) {
 
 async function buscarUsuarioPorEmail(email) {
     const sql = `
-        SELECT id, nome, email
+        SELECT id, nome, email, senha_hash
         FROM usuarios
         WHERE email = ?
         LIMIT 1
@@ -88,6 +88,18 @@ async function atualizarSenhaUsuario(usuarioId, senhaHash) {
     `;
 
     await db.execute(sql, [senhaHash, usuarioId]);
+}
+
+async function buscarSenhaAtualUsuario(usuarioId) {
+    const sql = `
+        SELECT senha_hash
+        FROM usuarios
+        WHERE id = ?
+        LIMIT 1
+    `;
+
+    const [resultado] = await db.execute(sql, [usuarioId]);
+    return resultado[0]?.senha_hash || null;
 }
 
 /*========================================================================================================
@@ -654,6 +666,21 @@ const AuthController = {
                 });
             }
 
+            const senhaAtualHash = await buscarSenhaAtualUsuario(usuario.id);
+
+            console.log("Senha atual encontrada?", Boolean(senhaAtualHash));
+
+            if (senhaAtualHash) {
+                const senhaEhIgualAnterior = await bcrypt.compare(novaSenha, senhaAtualHash);
+
+                if (senhaEhIgualAnterior) {
+                    return res.status(400).json({
+                        sucesso: false,
+                        mensagem: "A nova senha não pode ser igual à senha anterior."
+                    });
+                }
+            }
+
             const senhaHash = await bcrypt.hash(novaSenha, 12);
 
             await atualizarSenhaUsuario(usuario.id, senhaHash);
@@ -673,7 +700,75 @@ const AuthController = {
                 erro: error.message
             });
         }
+    },
+
+    
+
+    async confirmarCodigoRecuperacaoSenha(req, res) {
+        try {
+            const email = normalizarEmail(req.body.email);
+            const codigo = String(req.body.codigo || "").trim();
+
+            if (!validarEmail(email)) {
+                return res.status(400).json({
+                    sucesso: false,
+                    mensagem: "Digite um email válido para continuar."
+                });
+            }
+
+            if (!/^\d{6}$/.test(codigo)) {
+                return res.status(400).json({
+                    sucesso: false,
+                    mensagem: "O código deve conter exatamente 6 números."
+                });
+            }
+
+            const usuario = await buscarUsuarioPorEmail(email);
+
+            if (!usuario) {
+                return res.status(400).json({
+                    sucesso: false,
+                    mensagem: "Código inválido ou expirado. Solicite um novo código, se necessário."
+                });
+            }
+
+            const registroCodigo = await buscarCodigoValido(usuario.id);
+
+            if (!registroCodigo) {
+                return res.status(400).json({
+                    sucesso: false,
+                    mensagem: "Código inválido ou expirado. Solicite um novo código, se necessário."
+                });
+            }
+
+            const codigoCorreto = await bcrypt.compare(
+                codigo,
+                registroCodigo.codigo_hash
+            );
+
+            if (!codigoCorreto) {
+                return res.status(400).json({
+                    sucesso: false,
+                    mensagem: "Código inválido ou expirado. Solicite um novo código, se necessário."
+                });
+            }
+
+            return res.status(200).json({
+                sucesso: true,
+                mensagem: "Código confirmado com sucesso."
+            });
+
+        } catch (error) {
+            console.error("Erro ao confirmar código de recuperação:", error);
+
+            return res.status(500).json({
+                sucesso: false,
+                mensagem: "Erro interno ao confirmar código de recuperação.",
+                erro: error.message
+            });
+        }
     }
 };
+
 
 module.exports = AuthController;
