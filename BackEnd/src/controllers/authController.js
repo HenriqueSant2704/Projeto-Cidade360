@@ -668,8 +668,6 @@ const AuthController = {
 
             const senhaAtualHash = await buscarSenhaAtualUsuario(usuario.id);
 
-            console.log("Senha atual encontrada?", Boolean(senhaAtualHash));
-
             if (senhaAtualHash) {
                 const senhaEhIgualAnterior = await bcrypt.compare(novaSenha, senhaAtualHash);
 
