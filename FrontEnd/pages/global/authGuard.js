@@ -8,7 +8,7 @@ Se não tiver token ou se o token for inválido, manda para login.
 =========================================================================================================*/
 
 const API_URL_AUTH = "http://localhost:3000/api";
-const LOGIN_PAGE = "/pages/login/login.html";
+const LOGIN_PAGE = "../../../FrontEnd/pages/login/login.html";
 
 // Esconde a página enquanto verifica o login
 document.documentElement.style.visibility = "hidden";

@@ -27,7 +27,7 @@ function sairDoSistema() {
         Usa replace para trocar a página atual pelo login.
         Assim, se o usuário tentar voltar, o authGuard verifica de novo.
     */
-    window.location.replace("/pages/login/login.html");
+    window.location.replace("pages/login/login.html");
 }
 
 function limparDadosLogin() {

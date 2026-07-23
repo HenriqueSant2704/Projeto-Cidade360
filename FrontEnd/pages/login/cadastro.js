@@ -80,7 +80,7 @@ function entrarModoCadastro() {
         btnEntrar.innerHTML = 'Próximo <span class="seta-btn">➔</span>';
 
         btnCriarConta.innerHTML = `
-            <img src="../../../assets/icons/login/adicionar-usuario.png" alt="">
+            <img src="../../../assets/icons/login/saida.png" alt="">
             Voltar para Login
         `;
     });

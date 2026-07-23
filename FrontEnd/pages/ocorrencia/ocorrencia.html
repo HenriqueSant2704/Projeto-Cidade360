@@ -54,7 +54,7 @@
                             <img src="../../../assets/icons/global/agenda.png">
                             <span>Eventos</span>
                         </a>
-                    </li>   
+                    </li>
                 </ul>
             </div>
         </div>
@@ -93,10 +93,215 @@
                 </div>
             </div>
 
-        </div>
+            <div id="tela-ocorrencias">
+                <div class="container-nova-ocorrencia">
+                    <div class="caixa-nova-ocorrencia">
+                        <div class="caixa-titulo">
+                            <div class="titulo">
+                                <img src="../../../assets/icons/painel/atividade.png" alt="">
+                                <h2>Minhas Ocorrencias</h2>
+                            </div>
 
-        <script src="../pages/global/authGuard.js"></script>
-        <script src="../pages/global/logout.js"></script>
+                            <p>
+                                Acompanhe o andamento dos seus chamados, filtre por status e ajude a
+                                manter nossa cidade melhor.
+                            </p>
+                        </div>
+
+                        <button class="btn-nova-ocorrencia" id="btn-nova-ocorrencia">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"="none"
+                                stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 5v14"></path>
+                                <path d="M5 12h14"></path>
+                            </svg>
+                            <span>Nova Ocorrência</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="caixa-qtn-ocorrencias">
+
+                    <div class="card-qtn-ocorrencias">
+                        <div class="numero total">3</div>
+
+                        <div class="texto-card">
+                            <span>TOTAL</span>
+                        </div>
+                    </div>
+
+                    <div class="card-qtn-ocorrencias">
+                        <div class="numero pendente">1</div>
+
+                        <div class="texto-card">
+                            <span>EM ANÁLISE</span>
+                        </div>
+                    </div>
+
+                    <div class="card-qtn-ocorrencias">
+                        <div class="numero andamento">1</div>
+
+                        <div class="texto-card">
+                            <span>EM ANDAMENTO</span>
+                        </div>
+                    </div>
+
+                    <div class="card-qtn-ocorrencias">
+                        <div class="numero resolvido">1</div>
+
+                        <div class="texto-card">
+                            <span>RESOLVIDOS</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="container-filtro-ocorrencias">
+                    <div class="filtro-ocorrencia">
+                        <button class="ativo">Todos</button>
+                        <button>Pendentes</button>
+                        <button>Em Andamento</button>
+                        <button>Resolvidos</button>
+                    </div>
+
+                    <div class="campo-pesquisa">
+                        <img src="../../../assets/icons/painel/ocorrencia/lupa.png" alt="">
+                        <input type="text" placeholder="Buscar por título ou local...">
+                    </div>
+                </div>
+            </div>
+
+            <div id="tela-formulario" class="oculto">
+                <div class="container-nova-ocorrencias">
+
+                    <div class="cabecalho-formulario">
+                        <button class="btn-voltar" id="btn-voltar">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="#5b6780ee" stroke-width="2.5" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M19 12H5"></path>
+                                <path d="M12 19l-7-7 7-7"></path>
+                            </svg>
+                            Voltar
+                        </button>
+                    </div>
+
+                    <div class="card-formulario">
+
+                        <div class="titulo-card">
+
+                            <div class="numero-etapa">
+                                <span>1</span>
+                            </div>
+
+                            <div>
+                                <h2>Detalhes do Problema</h2>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="grupo-input">
+                            <label>O que aconteceu? (Título)</label>
+                            <input type="text" placeholder="Ex: Buraco profundo na faixa da direita">
+                        </div>
+
+                        <div class="grupo-input">
+
+                            <label>Categoria da Ocorrência</label>
+
+                            <div class="campo-select">
+
+                                <img src="../../../assets/icons/painel/nova-ocorrencias/selecionar-tudo.png" alt="">
+
+                                <select>
+                                    <option>Iluminação Pública</option>
+                                    <option>Buraco na Via</option>
+                                    <option>Lixo</option>
+                                    <option>Esgoto</option>
+                                    <option>Árvore Caída</option>
+                                    <option>Semáforo</option>
+                                </select>
+
+                            </div>
+
+                        </div>
+
+                        <div class="grupo-input">
+                            <label>Descrição Completa</label>
+                            <textarea
+                                placeholder="Forneça mais detalhes sobre o tamanho do problema, há quanto tempo está assim, etc."></textarea>
+                        </div>
+                    </div>
+
+
+                    <div class="card-formulario">
+                        <div class="titulo-card">
+                            <div class="numero-etapa">
+                                <span>2</span>
+                            </div>
+
+                            <div>
+                                <h2>Localização</h2>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="linha-endereco">
+                            <div class="input-endereco">
+                                <img src="../../../assets/icons/painel/nova-ocorrencias/pin-de-localizacao.png" alt="">
+                                <input type="text" placeholder="Digite o endereço completo">
+                            </div>
+
+                            <button class="btn-gps">
+                                <img src="../../../assets/icons/painel/nova-ocorrencias/clicker-do-mouse.png" alt="">
+                                Usar GPS
+                            </button>
+                        </div>
+
+                        <div class="mapa-preview">
+                            <img src="../../../assets/icons/painel/nova-ocorrencias/mapa.png" alt="">
+                            <p>O mapa aparecerá após informar o endereço.</p>
+                        </div>
+                    </div>
+
+
+                    <div class="card-formulario">
+
+                        <div class="titulo-card">
+                            <div class="numero-etapa">
+                                <span>3</span>
+                            </div>
+                            <h2>Evidência Visual</h2>
+                        </div>
+                        <hr>
+                        <p class="texto-upload">Anexar uma foto ajuda a prefeitura a identificar e resolver o problema
+                            mais rápido.</p>
+
+                        <label class="area-upload">
+                            <input type="file" id="foto" accept="image/*" hidden>
+                            <div class="circulo-upload">
+                                <img src="../../../assets/icons/painel/nova-ocorrencias/envio.png" alt="">
+                            </div>
+                            <h3>Toque para tirar foto</h3>
+                            <span>ou selecione da galeria</span>
+                        </label>
+
+                        <hr class="linha-final">
+
+                        <button class="btn-enviar-ocorrencia">
+                            <img src="../../../assets/icons/painel/nova-ocorrencias/corrigir.png" alt="">
+                            Registrar Ocorrência
+                        </button>
+
+                        <button class="btn-cancelar" id="btn-cancelar" type="button">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="../../../FrontEnd/pages/global/authGuard.js"></script> 
+    <script src="../../../FrontEnd/pages/global/logout.js"></script> 
+    <script src="../../../FrontEnd/pages/ocorrencia/ocorrencia.js"></script>
 
 </body>
 

@@ -71,7 +71,7 @@ function entrarModoRecuperarSenha() {
         btnEntrar.innerHTML = 'Enviar código <span class="seta-btn">➔</span>';
 
         btnCriarConta.innerHTML = `
-            <img src="../../../assets/icons/login/adicionar-usuario.png" alt="">
+            <img src="../../../assets/icons/login/saida.png" alt="">
             Voltar para Login
         `;
 
