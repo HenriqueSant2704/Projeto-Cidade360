@@ -1,0 +1,718 @@
+/*===================================================================
+
+ Estrutura Original do Painel
+ 
+ ===================================================================*/
+
+
+.container-analises {
+    min-height: 440px;
+    height: auto; 
+    align-items: stretch;
+}
+
+.card-analises {
+    min-height: 440px;
+    height: auto; 
+  
+}
+
+.container-lista-ocorrencias {
+    flex: 1;
+    min-height: 200px; 
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.container-lista-avisos {
+    flex: 1;
+    min-height: 200px; 
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+
+/*===================================================================
+
+ Mapa
+ 
+ ===================================================================*/
+
+.mapa-ocorrencias {
+    width: 100%;
+    flex: 1;
+    min-height: 250px;
+    display: block;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #e5e7eb;
+}
+
+#mapaPainel {
+    width: 100%;
+    height: 100%;
+    min-height: 250px;
+    border-radius: 8px;
+    
+}
+
+#mapaPainel:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    min-height: 100vh;
+    border-radius: 0;
+}
+
+.leaflet-control-layers {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
+    font-family: 'Inter', sans-serif;
+}
+
+.leaflet-control-layers-expanded {
+    padding: 10px 12px;
+}
+
+
+/*===================================================================
+
+ Status
+ 
+ ===================================================================*/
+
+.status-recebido {
+    background-color: #eff6ff;
+    color: #2563eb;
+}
+
+.status-cancelado {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
+
+
+/*===================================================================
+
+ Estado Vazio
+ 
+ ===================================================================*/
+
+.painel-vazio {
+    width: 100%;
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 30px 20px;
+    text-align: center;
+    background-color: #f9fafb;
+    border: 1px dashed #d1d5db;
+    border-radius: 12px;
+}
+
+.painel-vazio strong {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.painel-vazio span {
+    max-width: 380px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.painel-vazio-categorias {
+    min-height: 112px;
+}
+
+.item-ocorrencia-painel {
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.item-ocorrencia-painel:hover {
+    background-color: #f8fafc;
+    transform: translateX(2px);
+}
+
+
+/*===================================================================
+
+ Modal de Consulta do Mapa
+ 
+ ===================================================================*/
+
+.modal-consulta-mapa-painel {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.fundo-modal-consulta-painel {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(2px);
+}
+
+.conteudo-modal-consulta-painel {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 470px;
+    padding: 26px;
+    border-radius: 16px;
+    background-color: #ffffff;
+    box-shadow: 0 22px 70px rgba(15, 23, 42, 0.25);
+}
+
+.fechar-modal-consulta-painel {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    background-color: #f1f5f9;
+    color: #475569;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.tipo-ocorrencia-mapa-painel {
+    display: inline-flex;
+    margin-bottom: 10px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background-color: #eff6ff;
+    color: #2563eb;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.conteudo-modal-consulta-painel h2 {
+    margin: 0 45px 20px 0;
+    color: #111827;
+    font-size: 20px;
+}
+
+.dados-consulta-mapa-painel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.dados-consulta-mapa-painel div {
+    padding: 12px;
+    border-radius: 10px;
+    background-color: #f8fafc;
+}
+
+.dados-consulta-mapa-painel strong,
+.dados-consulta-mapa-painel span {
+    display: block;
+}
+
+.dados-consulta-mapa-painel strong {
+    margin-bottom: 4px;
+    color: #64748b;
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.dados-consulta-mapa-painel span {
+    color: #1e293b;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.btn-consultar-ocorrencia-painel {
+    width: 100%;
+    margin-top: 20px;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 9px;
+    background-color: #2563eb;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-consultar-ocorrencia-painel:hover {
+    background-color: #1d4ed8;
+}
+
+.privacidade-consulta-painel {
+    margin: 18px 0 0 0;
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+
+/*===================================================================
+
+ Mensagens
+ 
+ ===================================================================*/
+
+.toast-painel {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 999999;
+    max-width: 420px;
+    padding: 14px 18px;
+    border-radius: 10px;
+    background-color: #1f2937;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+    pointer-events: none;
+}
+
+.toast-painel.ativo {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.toast-painel.sucesso {
+    background-color: #166534;
+}
+
+.toast-painel.erro {
+    background-color: #b91c1c;
+}
+
+.toast-painel.info {
+    background-color: #1e40af;
+}
+
+
+/*===================================================================
+
+ Responsividade
+ 
+ ===================================================================*/
+
+@media (max-width: 1180px) {
+
+    .container-resumo {
+        flex-wrap: wrap;
+    }
+
+    .card-resumo {
+        width: calc(50% - 10px);
+    }
+
+    .container-analises {
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .card-analises {
+        width: 100%;
+        height: auto;
+        min-height: 420px;
+    }
+
+}
+
+
+@media (max-width: 820px) {
+
+    .perfil-usuario .usuario {
+        display: none;
+    }
+
+    .card-resumo {
+        width: 100%;
+    }
+
+    .dados-consulta-mapa-painel {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+@media (max-width: 560px) {
+
+    
+    .card-analises {
+        min-height: 390px;
+        padding: 18px;
+    }
+
+    .titulo-analises {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .titulo-analises button {
+        width: 100%;
+    }
+
+    .toast-painel {
+        left: 14px;
+        right: 14px;
+        bottom: 14px;
+        max-width: none;
+    }
+
+}
+
+
+/*===================================================================
+
+ Card com Todas as Categorias
+ 
+ ===================================================================*/
+
+.modal-aberto-painel {
+    overflow: hidden;
+}
+
+.modal-categorias-painel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 30px;
+    box-sizing: border-box;
+}
+
+.fundo-modal-categorias-painel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(3px);
+}
+
+.card-todas-categorias-painel {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 760px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+    overflow: hidden;
+}
+
+.cabecalho-todas-categorias-painel {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 26px 28px 22px 28px;
+    border-bottom: 1px solid #edf0f5;
+    box-sizing: border-box;
+}
+
+.cabecalho-todas-categorias-painel h2 {
+    margin: 0;
+    color: #111827;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.cabecalho-todas-categorias-painel p {
+    margin: 7px 0 0 0;
+    color: #718096;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.btn-fechar-categorias-painel {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #e5eaf2;
+    border-radius: 10px;
+    background-color: #ffffff;
+    color: #64748b;
+    font-size: 25px;
+    font-weight: 300;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-fechar-categorias-painel:hover {
+    background-color: #f3f6fb;
+    color: #111827;
+}
+
+
+/*===================================================================
+
+ Resumo das Categorias
+ 
+ ===================================================================*/
+
+.resumo-categorias-painel {
+    width: 100%;
+    display: flex;
+    gap: 12px;
+    padding: 18px 28px;
+    box-sizing: border-box;
+    background-color: #f8faff;
+    border-bottom: 1px solid #edf0f5;
+}
+
+.resumo-categorias-painel span {
+    padding: 7px 11px;
+    border-radius: 8px;
+    background-color: #ffffff;
+    border: 1px solid #e7edf7;
+    color: #566987;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+/*===================================================================
+
+ Lista Completa das Categorias
+ 
+ ===================================================================*/
+
+.lista-todas-categorias-painel {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 20px 28px 28px 28px;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+.item-ranking-categoria-painel {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 15px;
+    border: 1px solid #e8edf5;
+    border-radius: 12px;
+    background-color: #ffffff;
+    box-sizing: border-box;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.item-ranking-categoria-painel:hover {
+    background-color: #f8faff;
+    border-color: #d8e3f4;
+}
+
+
+/*===================================================================
+
+ Posição do Ranking
+ 
+ ===================================================================*/
+
+.posicao-ranking-categoria-painel {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 9px;
+    background-color: #edf4ff;
+    color: #2563eb;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+
+/*===================================================================
+
+ Ícone da Categoria
+ 
+ ===================================================================*/
+
+.icone-ranking-categoria-painel {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+    background-color: #f2f7ff;
+}
+
+.icone-ranking-categoria-painel img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+}
+
+
+/*===================================================================
+
+ Dados da Categoria
+ 
+ ===================================================================*/
+
+.dados-ranking-categoria-painel {
+    width: 100%;
+    min-width: 0;
+}
+
+.linha-ranking-categoria-painel {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.linha-ranking-categoria-painel strong {
+    color: #172033;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.linha-ranking-categoria-painel span {
+    flex-shrink: 0;
+    color: #566987;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+/*===================================================================
+
+ Barra da Categoria
+ 
+ ===================================================================*/
+
+.barra-ranking-categoria-painel {
+    width: 100%;
+    height: 6px;
+    margin-top: 9px;
+    overflow: hidden;
+    border-radius: 20px;
+    background-color: #edf1f7;
+}
+
+.preenchimento-ranking-categoria-painel {
+    height: 100%;
+    min-width: 3px;
+    border-radius: 20px;
+    background-color: #2563eb;
+}
+
+.percentual-ranking-categoria-painel {
+    margin-top: 6px;
+    color: #94a0b5;
+    font-size: 10px;
+}
+
+
+/*===================================================================
+
+ Responsividade do Card
+ 
+ ===================================================================*/
+
+@media (max-width: 650px) {
+
+    .modal-categorias-painel {
+        padding: 14px;
+    }
+
+    .card-todas-categorias-painel {
+        max-height: 90vh;
+        border-radius: 14px;
+    }
+
+    .cabecalho-todas-categorias-painel {
+        padding: 20px;
+    }
+
+    .cabecalho-todas-categorias-painel h2 {
+        font-size: 17px;
+    }
+
+    .resumo-categorias-painel {
+        flex-direction: column;
+        padding: 14px 20px;
+    }
+
+    .lista-todas-categorias-painel {
+        padding: 16px 20px 20px 20px;
+    }
+
+    .item-ranking-categoria-painel {
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .linha-ranking-categoria-painel {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+}
+
+
+@media (max-width: 1200px) {
+    .container-analises {
+        display: flex !important;
+        flex-direction: column !important;
+        height: auto !important; 
+        min-height: 100% !important; 
+        gap: 24px !important; 
+        margin-bottom: 24px !important; 
+    }
+
+    .card-analises {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 400px !important; 
+        flex: 0 0 auto !important; 
+        display: flex;
+        flex-direction: column;
+        overflow: visible !important;
+        
+    }
+
+}

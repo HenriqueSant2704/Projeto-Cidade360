@@ -1,0 +1,584 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
+
+* {
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.container-login {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.container-login img {
+    width: 45%;
+    height: 100vh;
+    object-fit: cover;
+    user-select: none;
+}
+
+.area-login {
+    width: 55%;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.caixa-titulo {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.caixa-titulo h1 {
+    color: #333;
+    margin: 8px;
+}
+
+.caixa-titulo span {
+    font-size: 15px;
+    color: #757575;
+    font-weight: 500;
+}
+
+.caixa-login {
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+}
+
+.caixa-input {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    user-select: none;
+    position: relative;
+}
+
+.caixa-input label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #585858;
+}
+
+/* Ícone da esquerda: email, cadeado, nome, CPF etc */
+.caixa-input img:first-of-type {
+    position: absolute;
+    left: 12px;
+    right: auto;
+    top: 38px;
+    bottom: auto;
+    width: 18px;
+    height: 18px;
+    z-index: 2;
+}
+
+/* Ícone da direita: olho da senha */
+/* O :not(:first-of-type) impede que inputs com só 1 ícone joguem ele para a direita */
+.caixa-input img:last-of-type:not(:first-of-type) {
+    position: absolute;
+    right: 12px;
+    left: auto;
+    top: 38px;
+    bottom: auto;
+    width: 18px;
+    height: 18px;
+    z-index: 2;
+    cursor: pointer;
+}
+
+.caixa-input input {
+    width: 100%;
+    padding: 10px 42px 10px 42px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    color: #5a5a5a;
+}
+
+.caixa-input input:focus {
+    border-color: #007BFF;
+    border-width: 2px;  
+    outline: none;
+}
+
+.caixa-input input::placeholder {
+    color: #929292;
+    font-size: 14px;
+    font-style: italic;
+    font-weight: 500;
+}
+
+.caixa-lembrete-esqueci {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: -70px;
+}
+
+.caixa-lembrete {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+}
+
+.caixa-lembrete input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.caixa-lembrete label {
+    font-size: 14px;
+    color: #535353;
+    font-weight: 600;
+}
+
+.caixa-lembrete-esqueci a {
+    font-size: 14px;
+    font-weight: 600;
+    color: #007BFF;
+    text-decoration: none;
+}
+
+.caixa-lembrete-esqueci a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 1.2px;
+    text-underline-offset: 4px;
+}
+
+.caixa-login button {
+    width: 90%;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    user-select: none;
+}
+
+.caixa-login button:hover {
+    background-color: #0056b3;
+}
+
+.caixa-login button img {
+    width: 16px;
+    height: 16px;
+    margin-bottom: 2px;
+}
+
+.caixa-ou {
+    width: 72%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+    font-size: 14px;
+    color: #666;
+    user-select: none;
+}
+
+.caixa-ou::before,
+.caixa-ou::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: #d9d9d9;
+}
+
+.caixa-criar-conta {
+    width: 72%;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    border: solid #007BFF 2px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    background-color: transparent;
+    color: #007BFF;
+    user-select: none;
+}
+
+.caixa-criar-conta:hover {
+    background-color: #f2f8ff;
+    color: #007BFF;
+    border-color: #007BFF;
+}
+
+.caixa-criar-conta img {
+    width: 18px;
+    height: 18px;
+}
+
+
+/*========================================================================================================
+
+    Cadastro de usuario
+
+==========================================================================================================*/
+
+.progresso-cadastro {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.linha-progresso {
+    display: flex;
+    align-items: center;
+    width: 450px;
+}
+
+.etapa {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #dcdcdc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px #dcdcdc;
+    transition: all 0.3s ease;
+}
+
+.nomes-etapas {
+    position: relative;
+    width: 100%;
+    height: 20px;
+    margin-top: 0px;
+}
+
+.nomes-etapas span {
+    position: absolute;
+    transform: translateX(-50%);
+    font-size: 13px;
+    color: #b0b0b0;
+    font-weight: 600;
+}
+
+#textoEtapa1 {
+    left: 3%;
+}
+
+#textoEtapa2 {
+    left: 50%;
+}
+
+#textoEtapa3 {
+    left: 97%;
+}
+
+.nomes-etapas span.ativo {
+    color: #007bff;
+}
+
+.etapa.ativa {
+    background: #007bff;
+    box-shadow: 0 0 0 2px #007bff;
+}
+
+.barra {
+    flex: 1;
+    height: 3px;
+    background: #dcdcdc;
+}
+
+.barra.ativa {
+    background: #007bff;
+}
+
+#camposCadastro {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    margin: 30px 0px 50px 0px;
+}
+
+#camposCadastro .caixa-input {
+    width: 100%;
+}
+
+
+.caixa-input input.input-erro,
+.input-erro {
+    border-color: #ff3b3b !important;
+    border-width: 2px !important;
+}
+
+
+.erro-input {
+    display: none;
+    width: 100%;
+    color: #ff3b3b;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 3px;
+    padding-left: 2px;
+    line-height: 1.2;
+}
+
+
+/*========================================================================================================
+
+    Código de segurança
+
+==========================================================================================================*/
+
+
+.codigo-seguranca input {
+    height: 65px;
+    padding: 0;
+    text-align: center;
+
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: 12px;
+
+    border: 2px solid #007BFF;
+    border-radius: 12px;
+
+    color: #7a7a7a;
+    background: white;
+
+    transition: 0.2s;
+}
+
+.codigo-seguranca input:focus {
+    outline: none;
+    border-color: #007BFF;
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.15);
+}
+
+.codigo-seguranca input::placeholder {
+    letter-spacing: 12px;
+    font-size: 24px;
+    font-style: normal;
+    color: #b0b0b0;
+}
+
+.area-botoes {
+    width: 90%;
+    display: flex;
+    gap: 15px;
+}
+
+.area-botoes button {
+    flex: 1;
+}
+
+.btn-voltar {
+    background: white !important;
+    color: #007BFF !important;
+    border: 2px solid #007BFF !important;
+}
+
+.btn-voltar:hover {
+    background: #f2f8ff !important;
+}
+
+.link-reenviar {
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #007BFF;
+    text-decoration: none;
+    align-self: flex-end;
+}
+
+.link-reenviar:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 1.2px;
+    text-underline-offset: 4px;
+}
+
+.seta-btn {
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.seta-voltar {
+    font-size: 15px;
+    font-weight: bold;
+}
+
+
+/*========================================================================================================
+
+    Animações 
+
+==========================================================================================================*/
+
+
+.transicao-saida {
+    opacity: 0;
+    transform: translateY(-15px);
+    transition: all 0.25s ease;
+}
+
+.transicao-entrada {
+    opacity: 0;
+    transform: translateY(15px);
+}
+
+.transicao-entrada.ativa {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.25s ease;
+}
+
+.animacao-saida {
+    opacity: 0;
+    transform: translateX(-30px) scale(0.97);
+    transition:
+        opacity 0.30s ease,
+        transform 0.30s ease;
+}
+
+.animacao-entrada {
+    opacity: 0;
+    transform: translateX(30px) scale(0.97);
+}
+
+.animacao-entrada.ativa {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    transition:
+        opacity 0.30s ease,
+        transform 0.30s ease;
+}
+
+@keyframes aparecer {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.animar {
+    animation: aparecer 0.3s ease;
+}
+
+/*========================================================================================================
+
+    Responsividade (Media Queries)
+
+==========================================================================================================*/
+
+
+@media (max-width: 992px) {
+    .container-login > img {
+        display: none; 
+    }
+   
+
+
+    .area-login {
+        width: 100%; 
+        padding: 30px;
+    }
+
+    .caixa-login {
+        width: 100%; 
+        max-width: 500px; 
+    }
+
+    .caixa-ou, 
+    .caixa-criar-conta, 
+    .area-botoes {
+        width: 100%;
+        max-width: 500px;
+    }
+
+    .linha-progresso {
+        width: 100%; 
+        max-width: 400px; 
+    }
+}
+
+
+@media (max-width: 576px) {
+    .area-login {
+        padding: 20px 15px;
+    }
+
+    .caixa-titulo h1 {
+        font-size: 24px;
+    }
+
+    .caixa-titulo span {
+        font-size: 14px;
+    }
+
+    .caixa-lembrete-esqueci {
+        flex-direction: column;
+        gap: 15px;
+        margin-bottom: -50px;
+    }
+
+   
+    .area-botoes {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .area-botoes button {
+        width: 100%;
+    }
+
+    .nomes-etapas span {
+        font-size: 11px; 
+    }
+    
+    .codigo-seguranca input {
+        font-size: 20px;
+        letter-spacing: 8px; 
+    }
+
+    .caixa-lembrete-esqueci {
+        flex-direction: row; 
+        justify-content: space-between; 
+        margin-bottom: -30px;
+    }
+
+
+    .caixa-lembrete label, 
+    .caixa-lembrete-esqueci a {
+        font-size: 14px;
+    }
+}

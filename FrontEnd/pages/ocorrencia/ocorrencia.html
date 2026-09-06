@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../../FrontEnd/pages/global/global.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="../../../FrontEnd/pages/ocorrencia/ocorrencia.css">
+    <link rel="stylesheet" href="/FrontEnd/pages/ocorrencia/acompanhamentoOcorrencias.css?v=1">
+    <title>Cidade360-Ocorrências</title>
+</head>
+
+<body>
+    <div class="container-sistema">
+        <div class="menu-lateral">
+            <div class="logo">
+                <img src="../../../assets/img/global/logo/logo-cidade360.png" alt="">
+            </div>
+
+            <div class="menu-corpo">
+                <div class="menu-secao">Principal</div>
+                <ul class="menu-lista">
+                    <li class="menu-item">
+                        <a href="../../../index.html">
+                            <img src="../../../assets/icons/global/painel-de-controle.png ">
+                            <span>Painel</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" id="menu-ativo">
+                        <a href="/FrontEnd/pages/ocorrencia/ocorrencia.html">
+                            <img src="../../../assets/icons/global/aviso-previo.png">
+                            <span>Ocorrencias</span>
+                        </a>
+                    </li>
+                </ul>
+                <div class="menu-secao">Comunicação</div>
+                <ul class="menu-lista">
+
+                    <li class="menu-item">
+                        <a href="../../../Frontend/pages/Clientes/clientes.html">
+                            <img src="../../../assets/icons/global/tag.png">
+                            <span>Campanhas</span>
+                        </a>
+                    </li>
+
+                    <li class="menu-item">
+                        <a href="#">
+                            <img src="../../../assets/icons/global/campanha.png">
+                            <span>Avisos</span>
+                        </a>
+                    </li>
+
+                    <li class="menu-item">
+                        <a href="#">
+                            <img src="../../../assets/icons/global/agenda.png">
+                            <span>Eventos</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="container-conteudo">
+            <div class="menu-topo">
+                <div class="titulo-pagina">
+                    <button class="minimizar-menu" id="btnMinimizarMenuPainel" type="button">
+                        <img src="../../../assets/icons/global/cardapio.png" alt="">
+                    </button>
+            
+                    <h1>Ocorrências</h1>
+                </div>
+
+                <div class="opcoes-menu-topo">
+                    <div class="menu-acoes">
+                        <button>
+                            <img src="../../../assets/icons/global/configuracoes.png" alt="">
+                        </button>
+
+                    </div>
+                    <div class="menu-acoes">
+                        <button>
+                            <img src="../../../assets/icons/global/notificacao.png" alt="">
+                        </button>
+
+                    </div>
+
+                    <div class="perfil-usuario">
+                        <div class="usuario">
+                            <span>Usuário</span>
+                            <p>Cidadão</p>
+                        </div>
+                        <div class="foto-usuario">
+                            <img src="../../../assets/icons/global/do-utilizador.png" alt="">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tela-ocorrencias">
+                <div class="container-nova-ocorrencia">
+                    <div class="caixa-nova-ocorrencia">
+                        <div class="caixa-titulo">
+                            <div class="titulo">
+                                <img src="../../../assets/icons/painel/atividade.png" alt="">
+                                <h2>Minhas Ocorrencias</h2>
+                            </div>
+
+                            <p>
+                                Acompanhe o andamento dos seus chamados, filtre por status e ajude a
+                                manter nossa cidade melhor.
+                            </p>
+                        </div>
+
+                        <button class="btn-nova-ocorrencia" id="btn-nova-ocorrencia">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"="none"
+                                stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 5v14"></path>
+                                <path d="M5 12h14"></path>
+                            </svg>
+                            <span>Nova Ocorrência</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="caixa-qtn-ocorrencias">
+
+                    <div class="card-qtn-ocorrencias">
+                        <div class="numero total">3</div>
+
+                        <div class="texto-card">
+                            <span>TOTAL</span>
+                        </div>
+                    </div>
+
+                    <div class="card-qtn-ocorrencias">
+                        <div class="numero pendente">1</div>
+
+                        <div class="texto-card">
+                            <span>PENDENTES</span>
+                        </div>
+                    </div>
+
+                    <div class="card-qtn-ocorrencias">
+                        <div class="numero andamento">1</div>
+
+                        <div class="texto-card">
+                            <span>EM ANDAMENTO</span>
+                        </div>
+                    </div>
+
+                    <div class="card-qtn-ocorrencias">
+                        <div class="numero resolvido">1</div>
+
+                        <div class="texto-card">
+                            <span>RESOLVIDOS</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="container-filtro-ocorrencias">
+                    <div class="filtro-ocorrencia">
+                        <button class="ativo">Todos</button>
+                        <button>Pendentes</button>
+                        <button>Em Andamento</button>
+                        <button>Resolvidos</button>
+                        <button>Cancelados</button>
+                    </div>
+
+                    <div class="campo-pesquisa">
+                        <img src="../../../assets/icons/painel/ocorrencia/lupa.png" alt="">
+                        <input type="text" placeholder="Buscar por título ou local...">
+                    </div>
+                </div>
+
+                <div class="container-cards-ocorrencia">
+
+                    <!-- Card 1: Pendente -->
+                    <div class="card-ocorrencias">
+                        <div class="topo-card">
+                            <div class="caixa-icone icone-pendente">
+                                <div class="icone-mascara img-icone-grande"
+                                    style="-webkit-mask-image: url('../../../assets/icons/painel/ocorrencia/iluminacao-publica.png'); mask-image: url('../../../assets/icons/painel/ocorrencia/iluminacao-publica.png');">
+                                </div>
+                            </div>
+                            <div class="etiqueta-status status-pendente">
+                                Pendente
+                            </div>
+                        </div>
+
+                        <h3 class="titulo-card">Lâmpada queimada no poste</h3>
+
+                        <div class="lista-infos">
+                            <div class="item-info">
+                                <div class="icone-info">
+                                    <div class="icone-mascara img-icone-pequeno"
+                                        style="-webkit-mask-image: url('../../../assets/icons/global/painel-de-controle.png'); mask-image: url('../../../assets/icons/global/painel-de-controle.png');">
+                                    </div>
+                                </div>
+                                <span>Iluminação Pública</span>
+                            </div>
+                            <div class="item-info">
+                                <div class="icone-info">
+                                    <div class="icone-mascara img-icone-pequeno"
+                                        style="-webkit-mask-image: url('../../../assets/icons/painel/nova-ocorrencias/pin-de-localizacao.png'); mask-image: url('../../../assets/icons/painel/nova-ocorrencias/pin-de-localizacao.png');">
+                                    </div>
+                                </div>
+                                <span>Av. Jaime, 456 - Centro</span>
+                            </div>
+                        </div>
+
+                        <div class="rodape-card">
+                            <div class="dados-registro">
+                                <span class="codigo">OC-2026-001</span>
+                                <span class="data">08/07/2026</span>
+                            </div>
+                            <button class="btn-detalhes">Detalhes</button>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Em Andamento -->
+                    <div class="card-ocorrencias">
+                        <div class="topo-card">
+                            <div class="caixa-icone icone-andamento">
+                                <div class="icone-mascara img-icone-grande"
+                                    style="-webkit-mask-image: url('../../../assets/icons/painel/ocorrencia/estrada.png'); mask-image: url('../../../assets/icons/painel/ocorrencia/estrada.png');">
+                                </div>
+                            </div>
+                            <div class="etiqueta-status status-andamento">
+                                Em Andamento
+                            </div>
+                        </div>
+
+                        <h3 class="titulo-card">Buraco na via principal</h3>
+
+                        <div class="lista-infos">
+                            <div class="item-info">
+                                <div class="icone-info">
+                                    <div class="icone-mascara img-icone-pequeno"
+                                        style="-webkit-mask-image: url('../../../assets/icons/global/painel-de-controle.png'); mask-image: url('../../../assets/icons/global/painel-de-controle.png');">
+                                    </div>
+                                </div>
+                                <span>Infraestrutura</span>
+                            </div>
+                            <div class="item-info">
+                                <div class="icone-info">
+                                    <div class="icone-mascara img-icone-pequeno"
+                                        style="-webkit-mask-image: url('../../../assets/icons/painel/nova-ocorrencias/pin-de-localizacao.png'); mask-image: url('../../../assets/icons/painel/nova-ocorrencias/pin-de-localizacao.png');">
+                                    </div>
+                                </div>
+                                <span>Rua Ausonia, 123 - Centro</span>
+                            </div>
+                        </div>
+
+                        <div class="rodape-card">
+                            <div class="dados-registro">
+                                <span class="codigo">OC-2026-002</span>
+                                <span class="data">05/07/2026</span>
+                            </div>
+                            <button class="btn-detalhes">Detalhes</button>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Resolvido -->
+                    <div class="card-ocorrencias">
+                        <div class="topo-card">
+                            <div class="caixa-icone icone-resolvido">
+                                <div class="icone-mascara img-icone-grande"
+                                    style="-webkit-mask-image: url('../../../assets/icons/painel/ocorrencia/lixeira-de-reciclagem.png'); mask-image: url('../../../assets/icons/painel/ocorrencia/lixeira-de-reciclagem.png');">
+                                </div>
+                            </div>
+                            <div class="etiqueta-status status-resolvido">
+                                Resolvido
+                            </div>
+                        </div>
+
+                        <h3 class="titulo-card">Coleta de lixo atrasada</h3>
+
+                        <div class="lista-infos">
+                            <div class="item-info">
+                                <div class="icone-info">
+                                    <div class="icone-mascara img-icone-pequeno"
+                                        style="-webkit-mask-image: url('../../../assets/icons/global/painel-de-controle.png'); mask-image: url('../../../assets/icons/global/painel-de-controle.png');">
+                                    </div>
+                                </div>
+                                <span>Lixo Urbano</span>
+                            </div>
+                            <div class="item-info">
+                                <div class="icone-info">
+                                    <div class="icone-mascara img-icone-pequeno"
+                                        style="-webkit-mask-image: url('../../../assets/icons/painel/nova-ocorrencias/pin-de-localizacao.png'); mask-image: url('../../../assets/icons/painel/nova-ocorrencias/pin-de-localizacao.png');">
+                                    </div>
+                                </div>
+                                <span>Rua Netuno, 789 - Centro</span>
+                            </div>
+                        </div>
+
+                        <div class="rodape-card">
+                            <div class="dados-registro">
+                                <span class="codigo">OC-2026-003</span>
+                                <span class="data">10/07/2026</span>
+                            </div>
+                            <button class="btn-detalhes">Detalhes</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
+
+            <div id="tela-formulario" class="oculto">
+                <form id="form-ocorrencia" enctype="multipart/form-data">
+                    <div class="container-nova-ocorrencias">
+
+                        <div class="cabecalho-formulario">
+                            <button class="btn-voltar" id="btn-voltar" type="button">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                    fill="none" stroke="#5b6780ee" stroke-width="2.5" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M19 12H5"></path>
+                                    <path d="M12 19l-7-7 7-7"></path>
+                                </svg>
+                                Voltar
+                            </button>
+                        </div>
+
+                        <div class="card-formulario">
+
+                            <div class="titulo-card">
+
+                                <div class="numero-etapa">
+                                    <span>1</span>
+                                </div>
+
+                                <div>
+                                    <h2>Detalhes do Problema</h2>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="grupo-input">
+                                <label for="ocorrencia-titulo">
+                                    O que aconteceu? (Título)
+                                </label>
+
+                                <input type="text" id="ocorrencia-titulo" maxlength="200"
+                                    placeholder="Ex: Buraco profundo na faixa da direita" required>
+                            </div>
+
+                            <div class="grupo-input">
+                                <label for="ocorrencia-categoria">
+                                    Categoria da Ocorrência
+                                </label>
+
+                                <div class="campo-select">
+
+                                    <img src="../../../assets/icons/painel/nova-ocorrencias/selecionar-tudo.png" alt="">
+
+                                    <select id="ocorrencia-categoria" required>
+
+                                        <option value="">
+                                            Carregando categorias...
+                                        </option>
+
+                                    </select>
+
+                                </div>
+                            </div>
+
+                            <div class="grupo-input">
+                                <label for="ocorrencia-descricao">
+                                    Descrição Completa
+                                </label>
+
+                                <textarea id="ocorrencia-descricao" maxlength="5000"
+                                    placeholder="Forneça mais detalhes sobre o problema." required></textarea>
+                            </div>
+                        </div>
+
+
+                        <div class="card-formulario">
+                            <div class="titulo-card">
+                                <div class="numero-etapa">
+                                    <span>2</span>
+                                </div>
+
+                                <div>
+                                    <h2>Localização</h2>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="linha-endereco">
+                                <div class="input-endereco">
+                                    <img src="../../../assets/icons/painel/nova-ocorrencias/pin-de-localizacao.png"
+                                        alt="">
+                                    <input type="text" id="ocorrencia-endereco" maxlength="255"
+                                        placeholder="Referência ou endereço aproximado">
+                                </div>
+                                <button class="btn-gps" id="btn-gps" type="button">
+                                    <img src="../../../assets/icons/painel/nova-ocorrencias/clicker-do-mouse.png"
+                                        alt="">
+                                    Usar GPS
+                                </button>
+                            </div>
+                            <input type="hidden" id="ocorrencia-latitude">
+                            <input type="hidden" id="ocorrencia-longitude">
+                            <input type="hidden" id="ocorrencia-precisao">
+                            <div class="mapa-preview" id="mapa-ocorrencia">
+                                <img src="../../../assets/icons/painel/nova-ocorrencias/mapa.png" alt="">
+                                <p id="texto-localizacao">
+                                    Use o GPS para registrar a localização aproximada.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="card-formulario">
+
+                            <div class="titulo-card">
+                                <div class="numero-etapa">
+                                    <span>3</span>
+                                </div>
+                                <h2>Evidência Visual</h2>
+                            </div>
+                            <hr>
+                            <p class="texto-upload">Anexar uma foto ajuda a prefeitura a identificar e resolver o
+                                problema
+                                mais rápido.</p>
+
+                            <label class="area-upload" id="area-upload" for="fotos">
+                                <input type="file" id="fotos" name="fotos" accept="image/jpeg,image/png,image/webp"
+                                    multiple hidden>
+                                <div class="conteudo-upload" id="conteudo-upload">
+                                    <div class="circulo-upload">
+                                        <img src="../../../assets/icons/painel/nova-ocorrencias/envio.png" alt="">
+                                    </div>
+                                    <h3>Toque para tirar foto</h3>
+                                    <span>ou selecione da galeria</span>
+                                </div>
+                                <div class="lista-fotos" id="lista-fotos"></div>
+                            </label>
+
+                            <hr class="linha-final">
+                            <div id="mensagem-ocorrencia" class="mensagem-ocorrencia" hidden></div>
+                            <button class="btn-enviar-ocorrencia" id="btn-enviar-ocorrencia" type="submit">
+                                <img src="../../../assets/icons/painel/nova-ocorrencias/corrigir.png" alt="">
+                                Registrar Ocorrência
+                            </button>
+
+                            <button class="btn-cancelar" id="btn-cancelar" type="button">
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div id="tela-detalhes" class="oculto">
+
+                <div class="cabecalho-detalhes">
+                    <button class="btn-voltar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="#566987" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 12H5"></path>
+                            <path d="M12 19l-7-7 7-7"></path>
+                        </svg>
+                        Voltar para Lista
+                    </button>
+
+                    <div class="info-topo-detalhes">
+                        <span class="codigo-topo">OC-2026-001</span>
+                        <div class="etiqueta-status status-pendente">
+                            
+                            Pendente
+                        </div>
+                    </div>
+                </div>
+
+                <div class="conteudo-detalhes">
+
+
+                    <div class="coluna-esquerda">
+                        <div class="cartao-detalhe">
+                            <div class="info-principal">
+                                <div class="caixa-icone icone-pendente">
+                                    <div class="icone-mascara img-icone-grande"
+                                        style="-webkit-mask-image: url('../../../assets/icons/painel/ocorrencia/iluminacao-publica.png'); mask-image: url('../../../assets/icons/painel/ocorrencia/iluminacao-publica.png');">
+                                    </div>
+                                </div>
+                                <div class="textos-principal">
+                                    <h2 class="titulo-grande">Lâmpada queimada no poste</h2>
+                                    <div class="categoria-detalhe">
+                                        <div class="icone-mascara img-icone-pequeno"
+                                            style="-webkit-mask-image: url('../../../assets/icons/global/painel-de-controle.png'); mask-image: url('../../../assets/icons/global/painel-de-controle.png');">
+                                        </div>
+                                        Iluminação Pública
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="caixa-descricao">
+                                <h4 class="titulo-sessao-pequeno">
+                                    Descrição do Problema
+                                </h4>
+                                <p class="texto-descricao">
+                                    A lâmpada do poste em frente ao número 123 está queimada há 3 dias, deixando a rua
+                                    muito escura à noite.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="cartao-detalhe">
+                            <h3 class="titulo-sessao">
+                                Histórico da Solicitação
+                            </h3>
+
+                            <div class="linha-tempo">
+                                <div class="traco-vertical"></div>
+
+                                <div class="item-linha-tempo">
+                                    <div class="marcador-bolinha">
+                                        <div class="icone-mascara img-icone-pequeno"
+                                            style="-webkit-mask-image: url('../../../assets/icons/global/documento.png'); mask-image: url('../../../assets/icons/global/documento.png');">
+                                        </div>
+                                    </div>
+                                    <div class="cartao-historico">
+                                        <h4 class="titulo-historico">Ocorrência Registrada</h4>
+                                        <span class="data-historico">
+                                            08/07/2026
+                                        </span>
+                                        <p class="texto-historico">Sua solicitação foi recebida pelo sistema e aguarda
+                                            triagem.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="coluna-direita">
+                        <div class="cartao-detalhe">
+                            <h3 class="titulo-sessao">
+                                <div class="icone-mascara img-icone-pequeno color-azul"
+                                    style="-webkit-mask-image: url('../../../assets/icons/painel/nova-ocorrencias/pin-de-localizacao.png'); mask-image: url('../../../assets/icons/painel/nova-ocorrencias/pin-de-localizacao.png');">
+                                </div>
+                                Localização
+                            </h3>
+
+                            <div class="caixa-endereco">
+                                Rua Ausonia, 123 - Centro
+                            </div>
+
+                            <div class="caixa-mapa">
+                                <div class="ponto-mapa"></div>
+                            </div>
+                        </div>
+
+                        <div class="cartao-detalhe">
+                            <h3 class="titulo-sessao">
+                                Evidência
+                            </h3>
+
+                            <div class="caixa-foto-vazia">
+                                <span class="texto-foto-vazia">Nenhuma foto anexada</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <script src="../../../FrontEnd/pages/global/authGuard.js"></script> 
+    <script src="../../../FrontEnd/pages/global/logout.js"></script> 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="../../../FrontEnd/pages/ocorrencia/ocorrencia.js"></script>
+    <script src="/FrontEnd/pages/ocorrencia/acompanhamentoOcorrencias.js?v=1"></script>
+    <script src="../../../FrontEnd/pages/global/global.js"></script>
+
+
+</body>
+
+</html>

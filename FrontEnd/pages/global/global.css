@@ -1,0 +1,1195 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
+
+/*===================================================================
+  RESET GLOBAL
+===================================================================*/
+
+* {
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+html {
+    width: 100%;
+    min-height: 100%;
+}
+
+body {
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+
+/*===================================================================
+  ESTRUTURA PRINCIPAL
+===================================================================*/
+
+.container-sistema {
+    width: 100%;
+    max-width: 1920px;
+    height: 100vh;
+
+    display: flex;
+
+    overflow: hidden;
+}
+
+
+/*===================================================================
+  MENU LATERAL
+===================================================================*/
+
+.menu-lateral {
+    position: relative;
+
+    width: 260px;
+    min-width: 260px;
+    height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    flex-shrink: 0;
+
+    background-color: #ffffff;
+
+    border-right: 1px solid rgba(30, 41, 59, 0.12);
+
+    overflow: hidden;
+
+    transition:
+        width 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+        min-width 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 0.3s ease;
+
+    will-change: width, min-width;
+}
+
+
+/*===================================================================
+  ITEM ATIVO
+===================================================================*/
+
+#menu-ativo>a,
+a#menu-ativo,
+#menu-ativo>a:hover,
+a#menu-ativo:hover {
+    background-color: #2563EB;
+
+    color: #ffffff;
+
+    box-shadow:
+        0 4px 10px rgba(37, 99, 235, 0.23);
+}
+
+#menu-ativo>a img,
+a#menu-ativo img,
+#menu-ativo>a:hover img,
+a#menu-ativo:hover img {
+    filter: brightness(0) invert(1);
+}
+
+#menu-nao-ativo {
+    background-color: transparent;
+
+    color: rgba(97, 104, 128, 0.91);
+
+    box-shadow: none;
+}
+
+
+/*===================================================================
+  MENU RECOLHIDO — DESKTOP
+===================================================================*/
+
+.menu-lateral.menu-recolhido {
+    width: 86px;
+    min-width: 86px;
+
+    box-shadow:
+        4px 0 18px rgba(15, 23, 42, 0.06);
+}
+
+
+/*===================================================================
+  LOGO
+===================================================================*/
+
+.logo {
+    width: 100%;
+    height: 90px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 0 18px;
+    margin-bottom: 10px;
+
+    overflow: hidden;
+
+    user-select: none;
+
+    transition:
+        padding 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+        height 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+        margin-bottom 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.logo img {
+    width: 190px;
+    max-width: none;
+    height: auto;
+
+    display: block;
+
+    object-fit: contain;
+
+    flex-shrink: 0;
+
+    transition:
+        width 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+        height 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.22s ease;
+}
+
+
+/* Logo quando o menu está recolhido */
+
+.menu-lateral.menu-recolhido .logo {
+    height: 86px;
+
+    padding: 0 6px;
+
+    margin-bottom: 18px;
+}
+
+.menu-lateral.menu-recolhido .logo img {
+    width: 72px;
+    height: auto;
+
+    transform: scale(1.15);
+}
+
+
+/*===================================================================
+  CAIXA DE PESQUISA
+===================================================================*/
+
+.caixa-pesquisa {
+    width: 85%;
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    margin-bottom: 30px;
+    padding: 0 10px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+
+    background-color: #ffffff;
+
+    user-select: none;
+
+    transition:
+        width 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.22s ease,
+        transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+        margin-bottom 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.caixa-pesquisa img {
+    width: 18px;
+    height: 18px;
+
+    flex-shrink: 0;
+}
+
+.caixa-pesquisa input {
+    width: 100%;
+    height: 80%;
+
+    margin-top: 2px;
+
+    border: none;
+    outline: none;
+
+    font-size: 14px;
+}
+
+
+/* Pesquisa recolhida */
+
+.menu-lateral.menu-recolhido .caixa-pesquisa {
+    width: 0;
+    height: 0;
+
+    margin: 0;
+    padding: 0;
+
+    opacity: 0;
+
+    transform: scale(0.8);
+
+    pointer-events: none;
+
+    border: none;
+}
+
+
+/*===================================================================
+  CORPO DO MENU
+===================================================================*/
+
+.menu-corpo {
+    width: 93%;
+
+    flex-grow: 1;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    scrollbar-width: thin;
+}
+
+.menu-lateral.menu-recolhido .menu-corpo {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+
+/*===================================================================
+  SEÇÕES DO MENU
+===================================================================*/
+
+.menu-secao {
+    width: 100%;
+
+    padding: 0.5rem 0.8rem;
+
+    margin-top: 1rem;
+
+    font-size: 0.9rem;
+    font-weight: 600;
+
+    color: rgba(84, 87, 95, 0.63);
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    transition:
+        opacity 0.2s ease,
+        transform 0.3s ease,
+        height 0.32s ease,
+        margin 0.32s ease,
+        padding 0.32s ease;
+}
+
+.menu-secao:first-child {
+    margin-top: 0;
+}
+
+
+/* Seções recolhidas */
+
+.menu-lateral.menu-recolhido .menu-secao {
+    width: 0;
+    height: 0;
+
+    margin-top: 0;
+
+    padding-top: 0;
+    padding-bottom: 0;
+
+    opacity: 0;
+
+    transform: translateX(-12px);
+
+    pointer-events: none;
+}
+
+
+/*===================================================================
+  LISTA DO MENU
+===================================================================*/
+
+.menu-lista {
+    width: 100%;
+
+    list-style: none;
+
+    padding: 0;
+    margin: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 10px;
+
+    transition:
+        gap 0.32s ease;
+}
+
+.menu-lateral.menu-recolhido .menu-lista {
+    width: 100%;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin-bottom: 16px;
+}
+
+
+/*===================================================================
+  ITEM DO MENU
+===================================================================*/
+
+.menu-item {
+    width: 100%;
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+}
+
+.menu-lateral.menu-recolhido .menu-item {
+    width: 100%;
+
+    display: flex;
+
+    justify-content: center;
+}
+
+
+/*===================================================================
+  LINK DO MENU
+===================================================================*/
+
+.menu-item a {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 1rem;
+
+    padding: 13px 1.2rem;
+
+    text-decoration: none;
+
+    font-size: 16px;
+    font-weight: 500;
+
+    color: rgba(97, 104, 128, 0.91);
+
+    border-radius: 13px;
+
+    user-select: none;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    transition:
+        background-color 0.25s ease,
+        color 0.25s ease,
+        gap 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+        padding 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+        width 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+        height 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+
+/* Hover */
+
+.menu-item a:hover {
+    background-color: rgba(30, 41, 59, 0.09);
+
+    color: #1e293b;
+}
+
+
+/*===================================================================
+  ÍCONES DO MENU
+===================================================================*/
+
+.menu-item a img {
+    width: 20px;
+    height: 20px;
+
+    flex-shrink: 0;
+
+    object-fit: contain;
+
+    transition:
+        width 0.32s ease,
+        height 0.32s ease,
+        transform 0.25s ease,
+        filter 0.25s ease;
+}
+
+.menu-item a:hover img {
+    transform: scale(1.08);
+}
+
+.menu-item a:hover img {
+    filter: brightness(0);
+}
+
+
+/*===================================================================
+  TEXTO DO MENU
+===================================================================*/
+
+.menu-item a span {
+    display: block;
+
+    opacity: 1;
+
+    width: auto;
+
+    overflow: hidden;
+
+    white-space: nowrap;
+
+    transition:
+        opacity 0.22s ease,
+        width 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+
+/*===================================================================
+  MENU RECOLHIDO — ITENS
+===================================================================*/
+
+.menu-lateral.menu-recolhido .menu-item a {
+    width: 56px;
+    height: 52px;
+
+    justify-content: center;
+
+    gap: 0;
+
+    padding: 0;
+
+    margin: 0 auto;
+
+    border-radius: 15px;
+
+    font-size: 0;
+}
+
+
+/* Ícones maiores */
+
+.menu-lateral.menu-recolhido .menu-item a img {
+    width: 22px;
+    height: 22px;
+
+    transform: scale(1);
+}
+
+
+/* Esconde o texto */
+
+.menu-lateral.menu-recolhido .menu-item a span {
+    width: 0;
+
+    opacity: 0;
+
+    pointer-events: none;
+}
+
+
+/*===================================================================
+  ITEM ATIVO RECOLHIDO
+===================================================================*/
+
+.menu-lateral.menu-recolhido #menu-ativo>a,
+.menu-lateral.menu-recolhido a#menu-ativo {
+    width: 54px;
+    height: 54px;
+
+    justify-content: center;
+
+    padding: 0;
+
+    background-color: #2563EB;
+
+    color: #ffffff;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 7px 18px rgba(37, 99, 235, 0.25);
+
+    transform: scale(1.02);
+}
+
+.menu-lateral.menu-recolhido #menu-ativo>a img,
+.menu-lateral.menu-recolhido a#menu-ativo img {
+    width: 23px;
+    height: 23px;
+
+    filter: brightness(0) invert(1);
+}
+
+
+/* Hover dos itens recolhidos */
+
+.menu-lateral.menu-recolhido .menu-item a:hover {
+    background-color: rgba(37, 99, 235, 0.08);
+
+    transform: scale(1.04);
+}
+
+.menu-lateral.menu-recolhido .menu-item a:hover img {
+    transform: scale(1.1);
+}
+
+
+/* O ativo continua azul mesmo no hover */
+
+.menu-lateral.menu-recolhido #menu-ativo>a:hover,
+.menu-lateral.menu-recolhido a#menu-ativo:hover {
+    background-color: #2563EB;
+
+    color: #ffffff;
+}
+
+.menu-lateral.menu-recolhido #menu-ativo>a:hover img,
+.menu-lateral.menu-recolhido a#menu-ativo:hover img {
+    filter: brightness(0) invert(1);
+}
+
+
+/*===================================================================
+  CONTEÚDO PRINCIPAL
+===================================================================*/
+
+.container-conteudo {
+    width: 100%;
+    height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 30px;
+
+    background-color: #f6f6f6;
+
+    overflow-y: auto;
+
+    padding-bottom: 50px;
+
+    min-width: 0;
+}
+
+
+/*===================================================================
+  MENU TOPO
+===================================================================*/
+
+.menu-topo {
+    position: sticky;
+
+    top: 0;
+
+    z-index: 10;
+
+    width: 100%;
+    height: 70px;
+
+    display: flex;
+    align-items: center;
+
+    flex-shrink: 0;
+
+    background-color: #ffffff;
+
+    border-bottom: 1px solid rgba(30, 41, 59, 0.06);
+}
+
+
+/*===================================================================
+  TÍTULO DA PÁGINA
+===================================================================*/
+
+.titulo-pagina {
+    width: 50%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 20px;
+
+    padding-left: 30px;
+
+    min-width: 0;
+}
+
+.titulo-pagina h1 {
+    margin: 0;
+
+    font-size: 18px;
+    font-weight: 600;
+
+    color: rgba(97, 104, 128, 0.91);
+
+    white-space: nowrap;
+}
+
+
+/*===================================================================
+  BOTÃO MINIMIZAR MENU
+===================================================================*/
+
+.minimizar-menu {
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    flex-shrink: 0;
+
+    cursor: pointer;
+
+    border: none;
+    border-radius: 50%;
+
+    background-color: #f1f5f9;
+
+    user-select: none;
+
+    transition:
+        background-color 0.25s ease,
+        transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 0.25s ease;
+}
+
+.minimizar-menu img {
+    width: 20px;
+    height: 20px;
+
+    margin-left: 2px;
+
+    transition:
+        transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+        filter 0.2s ease;
+}
+
+.minimizar-menu:hover {
+    background-color: #2563EB;
+
+    box-shadow:
+        0 5px 14px rgba(37, 99, 235, 0.22);
+
+    transform: scale(1.05);
+}
+
+.minimizar-menu:hover img {
+    filter: brightness(0) invert(1);
+}
+
+
+/* Pequeno giro do ícone quando o menu está recolhido */
+
+.menu-lateral.menu-recolhido~.container-conteudo .minimizar-menu img {
+    transform: rotate(180deg);
+}
+
+
+/*===================================================================
+  OPÇÕES DO TOPO
+===================================================================*/
+
+.opcoes-menu-topo {
+    width: 50%;
+    height: 100%;
+
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+
+    gap: 20px;
+
+    padding-right: 30px;
+
+    min-width: 0;
+}
+
+.menu-acoes {
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    cursor: pointer;
+
+    border-radius: 50%;
+
+    user-select: none;
+}
+
+.menu-acoes button {
+    background-color: transparent;
+
+    cursor: pointer;
+
+    border: none;
+
+    padding: 0;
+}
+
+.menu-acoes img {
+    width: 20px;
+    height: 20px;
+
+    transition:
+        filter 0.2s ease,
+        transform 0.2s ease;
+}
+
+.menu-acoes:hover img {
+    filter:
+        brightness(0) saturate(100%) invert(32%) sepia(96%) saturate(4200%) hue-rotate(215deg) brightness(95%) contrast(105%);
+
+    transform: scale(1.06);
+}
+
+.opcoes-menu-topo img {
+    width: 22px;
+    height: 22px;
+
+    cursor: pointer;
+
+    transition:
+        filter 0.2s ease,
+        transform 0.2s ease;
+}
+
+.opcoes-menu-topo img:hover {
+    filter: brightness(0) invert(0.4);
+
+    transform: scale(1.06);
+}
+
+
+/*===================================================================
+  PERFIL DO USUÁRIO
+===================================================================*/
+
+.perfil-usuario {
+    width: 200px;
+    height: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 17px;
+
+    padding: 0 15px;
+
+    background-color: #ffffff;
+
+    border-left: 1px solid rgba(17, 24, 39, 0.13);
+
+    cursor: pointer;
+
+    white-space: nowrap;
+}
+
+.usuario {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+
+    text-align: right;
+}
+
+.usuario span {
+    font-size: 14px;
+    font-weight: 500;
+
+    color: #111827;
+}
+
+.usuario p {
+    margin: 0;
+
+    font-size: 12px;
+
+    color: #6b7280;
+}
+
+.foto-usuario {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: linear-gradient(135deg,
+            #7c3aed,
+            #2563eb);
+}
+
+.foto-usuario img {
+    width: 15px;
+    height: 15px;
+
+    margin-left: 2px;
+
+    user-select: none;
+
+    transition: filter 0.2s ease;
+}
+
+.foto-usuario:hover img {
+    filter: brightness(0) invert(1);
+}
+
+
+/*===================================================================
+  OVERLAY DO MENU MOBILE
+===================================================================*/
+
+.overlay-menu {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 9999;
+
+    background-color: rgba(15, 23, 42, 0.42);
+
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+
+    opacity: 0;
+
+    visibility: hidden;
+
+    pointer-events: none;
+
+    transition:
+        opacity 0.3s ease,
+        visibility 0.3s ease;
+}
+
+.overlay-menu.ativo {
+    opacity: 1;
+
+    visibility: visible;
+
+    pointer-events: auto;
+}
+
+
+/*===================================================================
+  RESPONSIVIDADE — ATÉ 1024PX
+===================================================================*/
+
+@media (max-width: 1024px) {
+
+    .perfil-usuario .usuario {
+        display: none;
+    }
+
+    .perfil-usuario {
+        width: auto;
+
+        padding: 0 15px;
+
+        border-left: none;
+
+        gap: 0;
+    }
+
+}
+
+
+/*===================================================================
+  RESPONSIVIDADE — MOBILE / TABLET
+===================================================================*/
+
+@media (max-width: 768px) {
+
+    .container-sistema {
+        overflow: hidden;
+    }
+
+
+    /*---------------------------------------------------------------
+      MENU LATERAL MOBILE
+    ---------------------------------------------------------------*/
+
+    .menu-lateral {
+        position: fixed;
+
+        top: 0;
+        left: 0;
+
+        width: 280px;
+        min-width: 280px;
+        height: 100vh;
+
+        z-index: 10000;
+
+        background-color: #ffffff;
+
+        box-shadow:
+            8px 0 30px rgba(15, 23, 42, 0.14);
+
+        transform: translateX(-102%);
+
+        transition:
+            transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+            box-shadow 0.3s ease;
+    }
+
+
+    .menu-lateral.menu-recolhido {
+        width: 280px;
+        min-width: 280px;
+
+        transform: translateX(-102%);
+
+        box-shadow: none;
+    }
+
+    .menu-lateral.menu-aberto {
+        transform: translateX(0);
+
+        box-shadow:
+            8px 0 30px rgba(15, 23, 42, 0.14);
+    }
+
+
+    /*---------------------------------------------------------------
+      LOGO MOBILE
+    ---------------------------------------------------------------*/
+
+    .menu-lateral .logo {
+        width: 100%;
+        height: 90px;
+
+        padding: 0 18px;
+
+        margin-bottom: 10px;
+    }
+
+    .menu-lateral .logo img {
+        width: 190px;
+        height: auto;
+
+        transform: none;
+    }
+
+
+    /*---------------------------------------------------------------
+      PESQUISA MOBILE
+    ---------------------------------------------------------------*/
+
+    .menu-lateral .caixa-pesquisa {
+        width: 85%;
+
+        height: 38px;
+
+        opacity: 1;
+
+        transform: none;
+
+        pointer-events: auto;
+
+        margin-bottom: 30px;
+
+        padding: 0 10px;
+
+        border: 1px solid #d1d5db;
+    }
+
+
+    /*---------------------------------------------------------------
+      SEÇÕES MOBILE
+    ---------------------------------------------------------------*/
+
+    .menu-lateral .menu-secao {
+        width: 100%;
+        height: auto;
+
+        margin-top: 1rem;
+
+        padding: 0.5rem 0.8rem;
+
+        opacity: 1;
+
+        transform: none;
+
+        pointer-events: auto;
+
+        overflow: hidden;
+    }
+
+
+    /*---------------------------------------------------------------
+      LINKS MOBILE
+    ---------------------------------------------------------------*/
+
+    .menu-lateral .menu-item a {
+        width: 100%;
+        height: auto;
+
+        justify-content: flex-start;
+
+        gap: 1rem;
+
+        padding: 13px 1.2rem;
+
+        font-size: 16px;
+    }
+
+    .menu-lateral .menu-item a img {
+        width: 20px;
+        height: 20px;
+    }
+
+    .menu-lateral .menu-item a span {
+        width: auto;
+
+        opacity: 1;
+
+        pointer-events: auto;
+    }
+
+
+    /*---------------------------------------------------------------
+      ITEM ATIVO MOBILE
+    ---------------------------------------------------------------*/
+
+    .menu-lateral #menu-ativo>a,
+    .menu-lateral a#menu-ativo {
+        width: 100%;
+        height: auto;
+
+        justify-content: flex-start;
+
+        padding: 13px 1.2rem;
+
+        background-color: #2563EB;
+
+        color: #ffffff;
+    }
+
+    .menu-lateral #menu-ativo>a img,
+    .menu-lateral a#menu-ativo img {
+        width: 20px;
+        height: 20px;
+
+        filter: brightness(0) invert(1);
+    }
+
+
+    /*---------------------------------------------------------------
+      TOPO MOBILE
+    ---------------------------------------------------------------*/
+
+    .titulo-pagina {
+        width: auto;
+
+        flex-grow: 1;
+
+        gap: 12px;
+
+        padding-left: 15px;
+    }
+
+    .opcoes-menu-topo {
+        width: auto;
+
+        gap: 8px;
+
+        padding-right: 15px;
+    }
+
+    .minimizar-menu {
+        width: 38px;
+        height: 38px;
+    }
+
+
+
+}
+
+
+/*===================================================================
+  CELULAR PEQUENO
+===================================================================*/
+
+/*===================================================================
+  CELULAR PEQUENO
+===================================================================*/
+
+@media (max-width: 480px) {
+
+    .titulo-pagina h1 {
+        display: block;
+
+        margin: 0;
+
+        font-size: 16px;
+        font-weight: 600;
+
+        color: rgba(97, 104, 128, 0.91);
+
+        white-space: nowrap;
+    }
+
+    .titulo-pagina {
+        gap: 10px;
+        padding-left: 12px;
+    }
+
+    .opcoes-menu-topo {
+        gap: 5px;
+    }
+
+    .menu-topo {
+        height: 64px;
+    }
+
+    .minimizar-menu {
+        width: 36px;
+        height: 36px;
+    }
+
+}

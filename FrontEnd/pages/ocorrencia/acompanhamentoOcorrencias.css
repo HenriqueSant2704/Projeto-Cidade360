@@ -1,0 +1,707 @@
+/*===================================================================
+
+ Acompanhamento de Ocorrências - Mês 4
+
+ Complementa o ocorrencia.css original sem substituir
+ a identidade visual da página.
+
+ ===================================================================*/
+
+
+/*===================================================================
+
+ Ajustes da Listagem
+
+ ===================================================================*/
+
+.container-cards-ocorrencia {
+    align-items: stretch;
+}
+
+.card-ocorrencia-dinamico {
+    cursor: default;
+}
+
+.status-cancelado-acompanhamento {
+    background-color: #f1f5f9;
+    color: #64748b;
+    border-color: #cbd5e1;
+}
+
+.icone-cancelado-acompanhamento {
+    background-color: #f1f5f9;
+    color: #64748b;
+}
+
+
+/*===================================================================
+
+ Estados da Listagem
+
+ ===================================================================*/
+
+.estado-lista-ocorrencias {
+    width: 100%;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 35px;
+    background-color: #ffffff;
+    border: 1px dashed #dbe3ef;
+    border-radius: 20px;
+    text-align: center;
+    color: #64748b;
+}
+
+.estado-lista-ocorrencias strong {
+    font-size: 17px;
+    color: #1f2937;
+}
+
+.estado-lista-ocorrencias span {
+    max-width: 480px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.estado-erro-ocorrencias {
+    background-color: #fffafa;
+    border-color: #fecaca;
+}
+
+.estado-erro-ocorrencias strong {
+    color: #b91c1c;
+}
+
+.icone-estado-vazio-ocorrencias {
+    width: 58px;
+    height: 58px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 5px;
+    border-radius: 18px;
+    background-color: #eff6ff;
+}
+
+.icone-estado-vazio-ocorrencias img {
+    width: 27px;
+    height: 27px;
+    opacity: .75;
+}
+
+.spinner-ocorrencias {
+    width: 34px;
+    height: 34px;
+    border: 4px solid #e2e8f0;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: girar-spinner-ocorrencias .7s linear infinite;
+}
+
+@keyframes girar-spinner-ocorrencias {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.btn-tentar-novamente-ocorrencias {
+    margin-top: 8px;
+    padding: 11px 20px;
+    border: none;
+    border-radius: 11px;
+    background-color: #2563eb;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.btn-tentar-novamente-ocorrencias:hover {
+    background-color: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+
+/*===================================================================
+
+ Paginação
+
+ ===================================================================*/
+
+.paginacao-ocorrencias {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-top: 4px;
+    padding: 18px 20px;
+    background-color: #ffffff;
+    border: 1px solid #e7edf5;
+    border-radius: 16px;
+}
+
+.paginacao-informacao {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.paginacao-botoes {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-paginacao {
+    width: 38px;
+    height: 38px;
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    background-color: #ffffff;
+    color: #2563eb;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.btn-paginacao:hover:not(:disabled) {
+    border-color: #2563eb;
+    background-color: #eff6ff;
+}
+
+.btn-paginacao:disabled {
+    cursor: not-allowed;
+    opacity: .45;
+}
+
+.pagina-atual-ocorrencias {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+}
+
+
+/*===================================================================
+
+ Tela de Detalhes
+
+ ===================================================================*/
+
+.estado-detalhes-ocorrencia {
+    width: 100%;
+    min-height: 450px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 40px;
+    background-color: #ffffff;
+    border: 1px solid #e7edf5;
+    border-radius: 22px;
+    text-align: center;
+    color: #64748b;
+}
+
+.estado-detalhes-ocorrencia strong {
+    font-size: 18px;
+    color: #1f2937;
+}
+
+.estado-detalhes-ocorrencia span {
+    font-size: 14px;
+}
+
+.metadados-ocorrencia {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 20px;
+}
+
+.metadados-ocorrencia div {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 15px 18px;
+    background-color: #f8fafc;
+    border: 1px solid #e7edf5;
+    border-radius: 14px;
+}
+
+.metadados-ocorrencia span {
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+.metadados-ocorrencia strong {
+    font-size: 13px;
+    color: #334155;
+}
+
+
+/*===================================================================
+
+ Progresso de Status
+
+ ===================================================================*/
+
+.progresso-status-ocorrencia {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 26px 35px;
+    background-color: #ffffff;
+    border: 1px solid #ececec;
+    border-radius: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, .03);
+}
+
+.etapa-status {
+    min-width: 115px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+    text-align: center;
+    color: #94a3b8;
+}
+
+.etapa-status span {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.bolinha-status {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid #cbd5e1;
+    border-radius: 50%;
+    background-color: #ffffff;
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 700;
+    transition: .2s;
+}
+
+.etapa-status.concluida {
+    color: #2563eb;
+}
+
+.etapa-status.concluida .bolinha-status {
+    border-color: #2563eb;
+    background-color: #2563eb;
+    color: #ffffff;
+}
+
+.etapa-status.atual .bolinha-status {
+    box-shadow: 0 0 0 6px rgba(37, 99, 235, .12);
+}
+
+.linha-status {
+    width: min(130px, 10vw);
+    height: 3px;
+    margin-top: 16px;
+    background-color: #e2e8f0;
+    border-radius: 5px;
+}
+
+.linha-status.concluida {
+    background-color: #2563eb;
+}
+
+.status-cancelado-progresso {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 16px 20px;
+    border: 1px solid #fecaca;
+    border-radius: 14px;
+    background-color: #fff7f7;
+    text-align: center;
+}
+
+.status-cancelado-progresso strong {
+    color: #b91c1c;
+    font-size: 15px;
+}
+
+.status-cancelado-progresso span {
+    color: #7f1d1d;
+    font-size: 13px;
+}
+
+
+/*===================================================================
+
+ Histórico
+
+ ===================================================================*/
+
+.linha-tempo-dinamica {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.item-historico-dinamico {
+    position: relative;
+    min-height: 115px;
+}
+
+.item-historico-dinamico:last-child {
+    min-height: 0;
+}
+
+.responsavel-historico {
+    display: block;
+    margin-bottom: 9px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #2563eb;
+}
+
+
+/*===================================================================
+
+ Mapa Real dos Detalhes
+
+ ===================================================================*/
+
+.caixa-mapa-real {
+    height: 240px;
+    display: block;
+    background: #e2e8f0;
+    overflow: hidden;
+}
+
+.caixa-mapa-real .leaflet-container {
+    width: 100%;
+    height: 100%;
+}
+
+.mapa-detalhes-indisponivel {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #64748b;
+    font-size: 13px;
+}
+
+
+/*===================================================================
+
+ Galeria de Evidências
+
+ ===================================================================*/
+
+.galeria-evidencias {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.foto-evidencia {
+    height: 145px;
+    padding: 0;
+    border: none;
+    border-radius: 14px;
+    background-color: #f1f5f9;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.foto-evidencia img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .25s ease;
+}
+
+.foto-evidencia:hover img {
+    transform: scale(1.04);
+}
+
+.visualizador-foto-ocorrencia {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    background-color: rgba(15, 23, 42, .88);
+    backdrop-filter: blur(4px);
+}
+
+.visualizador-foto-ocorrencia > img {
+    max-width: min(1100px, 95vw);
+    max-height: 90vh;
+    border-radius: 15px;
+    object-fit: contain;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .35);
+}
+
+.fechar-visualizador-foto {
+    position: absolute;
+    top: 24px;
+    right: 28px;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, .15);
+    color: #ffffff;
+    font-size: 30px;
+    cursor: pointer;
+}
+
+
+/*===================================================================
+
+ Administração do Status
+
+ ===================================================================*/
+
+.painel-admin-status {
+    border-color: #bfdbfe;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.texto-admin-status {
+    margin-top: -12px;
+    margin-bottom: 20px;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.grupo-admin-status {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.grupo-admin-status label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+}
+
+.grupo-admin-status select,
+.grupo-admin-status textarea {
+    width: 100%;
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+    background-color: #ffffff;
+    color: #334155;
+    font: inherit;
+    outline: none;
+    transition: .2s;
+}
+
+.grupo-admin-status select {
+    height: 46px;
+    padding: 0 14px;
+}
+
+.grupo-admin-status textarea {
+    min-height: 110px;
+    padding: 13px 14px;
+    resize: vertical;
+}
+
+.grupo-admin-status select:focus,
+.grupo-admin-status textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .10);
+}
+
+.btn-atualizar-status {
+    width: 100%;
+    height: 46px;
+    margin-top: 18px;
+    border: none;
+    border-radius: 12px;
+    background-color: #2563eb;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.btn-atualizar-status:hover:not(:disabled) {
+    background-color: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+.btn-atualizar-status:disabled {
+    cursor: wait;
+    opacity: .65;
+}
+
+.mensagem-admin-status {
+    margin-top: 14px;
+    padding: 11px 13px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.mensagem-admin-status.sucesso {
+    background-color: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
+.mensagem-admin-status.erro {
+    background-color: #fff1f2;
+    color: #be123c;
+    border: 1px solid #fecdd3;
+}
+
+.aviso-status-final {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background-color: #f8fafc;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.caixa-dados-cidadao {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 18px;
+    border-radius: 14px;
+    background-color: #f8fafc;
+    border: 1px solid #e7edf5;
+}
+
+.caixa-dados-cidadao strong {
+    color: #1f2937;
+    font-size: 15px;
+}
+
+.caixa-dados-cidadao span {
+    color: #64748b;
+    font-size: 13px;
+}
+
+
+/*===================================================================
+
+ Responsividade
+
+ ===================================================================*/
+
+@media (max-width: 1000px) {
+
+    .conteudo-detalhes {
+        flex-direction: column;
+    }
+
+    .coluna-esquerda,
+    .coluna-direita {
+        width: 100%;
+        flex: none;
+    }
+
+    .progresso-status-ocorrencia {
+        overflow-x: auto;
+        justify-content: flex-start;
+    }
+
+    .etapa-status {
+        min-width: 105px;
+    }
+
+    .linha-status {
+        min-width: 70px;
+    }
+
+}
+
+
+@media (max-width: 700px) {
+
+    .paginacao-ocorrencias {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .paginacao-informacao {
+        text-align: center;
+    }
+
+    .paginacao-botoes {
+        justify-content: center;
+    }
+
+    .cabecalho-detalhes {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .info-topo-detalhes {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .cartao-detalhe {
+        padding: 22px;
+    }
+
+    .titulo-grande {
+        font-size: 22px;
+    }
+
+    .metadados-ocorrencia {
+        grid-template-columns: 1fr;
+    }
+
+    .galeria-evidencias {
+        grid-template-columns: 1fr;
+    }
+
+    .foto-evidencia {
+        height: 210px;
+    }
+
+    .visualizador-foto-ocorrencia {
+        padding: 18px;
+    }
+
+}
+
+
+/*===================================================================
+
+ Controle das Telas
+ 
+ ===================================================================*/
+
+#tela-ocorrencias.oculto,
+#tela-formulario.oculto,
+#tela-detalhes.oculto {
+    display: none;
+}

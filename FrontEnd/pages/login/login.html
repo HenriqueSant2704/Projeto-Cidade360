@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../../FrontEnd/pages/login/login.css">
+    <title>Cidade360-Login</title>
+</head>
+
+<body>
+    <div class="container-login">
+        <img src="../../../assets/img/login/Fundo-cidade360.png" alt="">
+        <div class="area-login">
+
+            <div class="caixa-titulo">
+                <h1 id="tituloFormulario">Bem-vindo de volta!</h1>
+                <span id="subtituloFormulario">Acesse sua conta para continuar.</span>
+
+                <div class="progresso-cadastro" id="indicadorEtapa" style="display:none;">
+                    <div class="linha-progresso">
+
+                        <div class="etapa ativa" id="etapa1"></div>
+                        <div class="barra" id="barra1"></div>
+
+                        <div class="etapa" id="etapa2"></div>
+                        <div class="barra" id="barra2"></div>
+
+                        <div class="etapa" id="etapa3"></div>
+
+                    </div>
+
+                    <div class="nomes-etapas">
+                        <span id="textoEtapa1">Dados</span>
+                        <span id="textoEtapa2">Contato</span>
+                        <span id="textoEtapa3">Segurança</span>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="caixa-login" id="formLogin">
+                <div class="caixa-input" id="campoEmailLogin">
+                    <label for="email">Email</label>
+                    <img src="../../../assets/icons/login/e-mail.png" alt="">
+                    <input type="email" id="email" placeholder="Digite seu email" required>
+                </div>
+
+                <div class="caixa-input" id="campoSenhaLogin">
+                    <label for="password">Senha</label>
+                    <img src="../../../assets/icons/login/trancar.png" alt="">
+                    <input type="password" id="password" placeholder="Digite sua senha" required>
+                    <img src="../../../assets/icons/login/olho.png" alt="" id="mostrarSenha">
+                </div>
+
+                <div class="caixa-lembrete-esqueci" id="areaLembrete">
+                    <div class="caixa-lembrete">
+                        <input type="checkbox" id="remember" name="remember">
+                        <label for="remember">Lembrar-me</label>
+                    </div>
+                    <a href="#" id="linkEsqueciSenha">Esqueceu sua senha?</a>
+                </div>
+
+                <div id="camposCadastro"></div>
+
+                <p id="mensagemLogin" style="display: none; margin: -10px 0 0 0; font-size: 14px; font-weight: 600;">
+                </p>
+
+                <div id="areaBotoes" class="area-botoes">
+                    <button type="button" id="btnVoltarEtapa" class="btn-voltar" style="display:none;">
+                        <span class="seta-voltar">⬅</span>
+                        Voltar
+                    </button>
+
+                    <button type="button" id="btnEntrar">
+                        <img src="../../../assets/icons/login/usuario.png" alt="">
+                        Entrar 
+                    </button>
+                </div>
+            </div>
+
+            <p class="caixa-ou" id="textoOu">ou</p>
+
+            <button class="caixa-criar-conta" type="button" id="btnCriarConta">
+                <img src="../../../assets/icons/login/adicionar-usuario.png" alt="">
+                Criar nova conta
+            </button>
+        </div>
+    </div>
+
+    <script src="../../../FrontEnd/pages/login/login.js"></script>
+    <script src="../../../FrontEnd/pages/login/cadastro.js"></script>
+    <script src="../../../FrontEnd/pages/login/recuperarSenha.js"></script>
+</body>
+
+</html>
