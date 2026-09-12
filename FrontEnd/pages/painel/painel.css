@@ -610,6 +610,7 @@
         flex-wrap: wrap;
     }
 
+
     .card-resumo {
         width: calc(50% - 10px);
     }
@@ -640,6 +641,7 @@
     .titulo-analises button {
         width: 100%;
     }
+
     
     .card-acao-rapida, 
     .card-categoria {

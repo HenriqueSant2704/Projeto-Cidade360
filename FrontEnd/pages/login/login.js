@@ -80,10 +80,26 @@ MOSTRAR / OCULTAR SENHA DO LOGIN
 =========================================================================================================*/
 
 if (mostrarSenha && passwordInput) {
+
     mostrarSenha.addEventListener("click", (event) => {
+
         event.preventDefault();
 
-        passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+        const senhaVisivel = passwordInput.type === "text";
+
+        if (senhaVisivel) {
+
+            passwordInput.type = "password";
+
+            mostrarSenha.src = "../../../assets/icons/login/olho.png";
+
+        } else {
+
+            passwordInput.type = "text";
+
+            mostrarSenha.src = "../../../assets/icons/login/olho-aberto.png";
+
+        }
     });
 }
 

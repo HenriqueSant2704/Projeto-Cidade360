@@ -68,7 +68,21 @@ function entrarModoRecuperarSenha() {
             btnVoltarEtapa.style.display = "none";
         }
 
-        btnEntrar.innerHTML = 'Enviar código <span class="seta-btn">➔</span>';
+        btnEntrar.innerHTML = `Enviar código <svg
+            class="seta-btn"
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+        >
+            <path d="M5 12H19"></path>
+            <path d="M12 6L18 12L12 18"></path>
+        </svg>`;
 
         btnCriarConta.innerHTML = `
             <img src="../../../assets/icons/login/saida.png" alt="">
@@ -334,13 +348,41 @@ function voltarEtapaRecuperacaoSenha() {
         if (etapaRecuperacaoSenha === 1) {
             tituloFormulario.textContent = "Recuperar Senha";
             subtituloFormulario.textContent = "Informe o email cadastrado para receber um código.";
-            btnEntrar.innerHTML = 'Enviar código <span class="seta-btn">➔</span>';
+            btnEntrar.innerHTML = `Enviar código <svg
+                class="seta-btn"
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path d="M5 12H19"></path>
+                <path d="M12 6L18 12L12 18"></path>
+            </svg>`;
         }
 
         if (etapaRecuperacaoSenha === 2) {
             tituloFormulario.textContent = "Código de Segurança";
             subtituloFormulario.textContent = "Digite o código enviado para seu email.";
-            btnEntrar.innerHTML = 'Continuar <span class="seta-btn">➔</span>';
+            btnEntrar.innerHTML = `Continuar <svg
+                class="seta-btn"
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path d="M5 12H19"></path>
+                <path d="M12 6L18 12L12 18"></path>
+            </svg>`;
         }
     });
 }
@@ -401,7 +443,21 @@ async function enviarCodigoRecuperacao() {
             tituloFormulario.textContent = "Código de Segurança";
             subtituloFormulario.textContent = "Digite o código enviado para seu email.";
 
-            btnEntrar.innerHTML = 'Continuar <span class="seta-btn">➔</span>';
+            btnEntrar.innerHTML = `Continuar <svg
+                class="seta-btn"
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path d="M5 12H19"></path>
+                <path d="M12 6L18 12L12 18"></path>
+            </svg>`;
 
             if (btnVoltarEtapa) {
                 btnVoltarEtapa.style.display = "block";
@@ -423,7 +479,21 @@ async function enviarCodigoRecuperacao() {
         btnEntrar.disabled = false;
 
         if (modoRecuperarSenha && etapaRecuperacaoSenha === 1) {
-            btnEntrar.innerHTML = 'Enviar código <span class="seta-btn">➔</span>';
+            btnEntrar.innerHTML = `Enviar código <svg
+                class="seta-btn"
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path d="M5 12H19"></path>
+                <path d="M12 6L18 12L12 18"></path>
+            </svg>`;
         }
     }
 }
@@ -491,7 +561,21 @@ async function validarCodigoEIrParaSenha() {
             tituloFormulario.textContent = "Criar Nova Senha";
             subtituloFormulario.textContent = "Escolha uma nova senha segura para sua conta.";
 
-            btnEntrar.innerHTML = 'Redefinir senha <span class="seta-btn">➔</span>';
+            btnEntrar.innerHTML = `Redefinir senha <svg
+                class="seta-btn"
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path d="M5 12H19"></path>
+                <path d="M12 6L18 12L12 18"></path>
+            </svg>`;
 
             if (btnVoltarEtapa) {
                 btnVoltarEtapa.style.display = "block";
@@ -513,7 +597,21 @@ async function validarCodigoEIrParaSenha() {
         btnEntrar.disabled = false;
 
         if (modoRecuperarSenha && etapaRecuperacaoSenha === 2) {
-            btnEntrar.innerHTML = 'Continuar <span class="seta-btn">➔</span>';
+            btnEntrar.innerHTML = `Continuar <svg
+                class="seta-btn"
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path d="M5 12H19"></path>
+                <path d="M12 6L18 12L12 18"></path>
+            </svg>`;
         }
     }
 }
@@ -604,7 +702,21 @@ async function redefinirSenha() {
         btnEntrar.disabled = false;
 
         if (modoRecuperarSenha) {
-            btnEntrar.innerHTML = 'Redefinir senha <span class="seta-btn">➔</span>';
+            btnEntrar.innerHTML = `Redefinir senha <svg
+                class="seta-btn"
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path d="M5 12H19"></path>
+                <path d="M12 6L18 12L12 18"></path>
+            </svg>`;
         }
     }
 }

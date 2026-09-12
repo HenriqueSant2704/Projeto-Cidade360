@@ -75,43 +75,44 @@ body {
     color: #585858;
 }
 
-/* Ícone da esquerda: email, cadeado, nome, CPF etc */
+
+/* Ícone da esquerda */
 .caixa-input img:first-of-type {
     position: absolute;
     left: 12px;
-    right: auto;
     top: 38px;
-    bottom: auto;
     width: 18px;
     height: 18px;
     z-index: 2;
+    object-fit: contain;
 }
 
-/* Ícone da direita: olho da senha */
-/* O :not(:first-of-type) impede que inputs com só 1 ícone joguem ele para a direita */
+/* Ícone da direita - olho da senha */
 .caixa-input img:last-of-type:not(:first-of-type) {
     position: absolute;
     right: 12px;
-    left: auto;
     top: 38px;
-    bottom: auto;
     width: 18px;
     height: 18px;
     z-index: 2;
     cursor: pointer;
+    object-fit: contain;
 }
 
 .caixa-input input {
     width: 100%;
-    padding: 10px 42px 10px 42px;
+    height: 42px;
+    padding: 10px 42px;
     border: 1px solid #ccc;
     border-radius: 8px;
     color: #5a5a5a;
+    font-size: 16px;
+    box-sizing: border-box;
 }
 
 .caixa-input input:focus {
     border-color: #007BFF;
-    border-width: 2px;  
+    border-width: 2px;
     outline: none;
 }
 
@@ -120,6 +121,12 @@ body {
     font-size: 14px;
     font-style: italic;
     font-weight: 500;
+}
+
+.caixa-input input,
+.caixa-input select,
+.caixa-input textarea {
+    font-size: 16px;
 }
 
 .caixa-lembrete-esqueci {
@@ -168,7 +175,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     background-color: #007BFF;
     color: white;
     border: none;
@@ -329,6 +336,11 @@ body {
     width: 100%;
 }
 
+#camposCadastro input,
+#camposCadastro select,
+#camposCadastro textarea {
+    font-size: 16px;
+}
 
 .caixa-input input.input-erro,
 .input-erro {
@@ -377,7 +389,7 @@ body {
 .codigo-seguranca input:focus {
     outline: none;
     border-color: #007BFF;
-    box-shadow: 0 0 0 3px rgba(0,123,255,0.15);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
 }
 
 .codigo-seguranca input::placeholder {
@@ -398,13 +410,24 @@ body {
 }
 
 .btn-voltar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     background: white !important;
     color: #007BFF !important;
     border: 2px solid #007BFF !important;
 }
 
-.btn-voltar:hover {
-    background: #f2f8ff !important;
+.conteudo-voltar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+
+#btnVoltarEtapa:hover .seta-voltar {
+    transform: translateX(-3px);
 }
 
 .link-reenviar {
@@ -423,13 +446,35 @@ body {
 }
 
 .seta-btn {
+    display: inline-block;
     font-size: 15px;
     font-weight: 500;
+    transition: transform 180ms ease;
+}
+
+#btnEntrar:hover .seta-btn {
+    transform: translateX(3px);
 }
 
 .seta-voltar {
-    font-size: 15px;
-    font-weight: bold;
+    display: block;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin: 0;
+    transition: transform 180ms ease;
+}
+
+#btnVoltarEtapa:hover .seta-voltar {
+    transform: translateX(-3px);
+}
+
+.icone-voltar-login {
+    transition: transform 180ms ease;
+}
+
+.caixa-criar-conta:hover .icone-voltar-login {
+    transform: translateX(-3px);
 }
 
 
@@ -502,32 +547,32 @@ body {
 
 
 @media (max-width: 992px) {
-    .container-login > img {
-        display: none; 
+    .container-login>img {
+        display: none;
     }
-   
+
 
 
     .area-login {
-        width: 100%; 
+        width: 100%;
         padding: 30px;
     }
 
     .caixa-login {
-        width: 100%; 
-        max-width: 500px; 
+        width: 100%;
+        max-width: 500px;
     }
 
-    .caixa-ou, 
-    .caixa-criar-conta, 
+    .caixa-ou,
+    .caixa-criar-conta,
     .area-botoes {
         width: 100%;
         max-width: 500px;
     }
 
     .linha-progresso {
-        width: 100%; 
-        max-width: 400px; 
+        width: 100%;
+        max-width: 400px;
     }
 }
 
@@ -551,33 +596,33 @@ body {
         margin-bottom: -50px;
     }
 
-   
+
     .area-botoes {
         flex-direction: column;
         gap: 10px;
     }
-    
+
     .area-botoes button {
         width: 100%;
     }
 
     .nomes-etapas span {
-        font-size: 11px; 
+        font-size: 11px;
     }
-    
+
     .codigo-seguranca input {
         font-size: 20px;
-        letter-spacing: 8px; 
+        letter-spacing: 8px;
     }
 
     .caixa-lembrete-esqueci {
-        flex-direction: row; 
-        justify-content: space-between; 
+        flex-direction: row;
+        justify-content: space-between;
         margin-bottom: -30px;
     }
 
 
-    .caixa-lembrete label, 
+    .caixa-lembrete label,
     .caixa-lembrete-esqueci a {
         font-size: 14px;
     }

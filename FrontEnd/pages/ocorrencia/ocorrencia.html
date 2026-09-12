@@ -66,7 +66,7 @@
                     <button class="minimizar-menu" id="btnMinimizarMenuPainel" type="button">
                         <img src="../../../assets/icons/global/cardapio.png" alt="">
                     </button>
-            
+
                     <h1>Ocorrências</h1>
                 </div>
 
@@ -101,7 +101,6 @@
                     <div class="caixa-nova-ocorrencia">
                         <div class="caixa-titulo">
                             <div class="titulo">
-                                <img src="../../../assets/icons/painel/atividade.png" alt="">
                                 <h2>Minhas Ocorrencias</h2>
                             </div>
 
@@ -132,10 +131,18 @@
                     </div>
 
                     <div class="card-qtn-ocorrencias">
-                        <div class="numero pendente">1</div>
+                        <div class="numero recebidos">1</div>
 
                         <div class="texto-card">
-                            <span>PENDENTES</span>
+                            <span>RECEBIDOS</span>
+                        </div>
+                    </div>
+
+                    <div class="card-qtn-ocorrencias">
+                        <div class="numero emanalise">1</div>
+
+                        <div class="texto-card">
+                            <span>EM ANÁLISE</span>
                         </div>
                     </div>
 
@@ -160,7 +167,8 @@
                 <div class="container-filtro-ocorrencias">
                     <div class="filtro-ocorrencia">
                         <button class="ativo">Todos</button>
-                        <button>Pendentes</button>
+                        <button>Recebidos</button>
+                        <button>Em Análise</button>
                         <button>Em Andamento</button>
                         <button>Resolvidos</button>
                         <button>Cancelados</button>
@@ -174,16 +182,16 @@
 
                 <div class="container-cards-ocorrencia">
 
-                    <!-- Card 1: Pendente -->
+                    <!-- Card 1: recebidos -->
                     <div class="card-ocorrencias">
                         <div class="topo-card">
-                            <div class="caixa-icone icone-pendente">
+                            <div class="caixa-icone icone-recebidos">
                                 <div class="icone-mascara img-icone-grande"
                                     style="-webkit-mask-image: url('../../../assets/icons/painel/ocorrencia/iluminacao-publica.png'); mask-image: url('../../../assets/icons/painel/ocorrencia/iluminacao-publica.png');">
                                 </div>
                             </div>
-                            <div class="etiqueta-status status-pendente">
-                                Pendente
+                            <div class="etiqueta-status status-recebidos">
+                                Recebido
                             </div>
                         </div>
 
@@ -467,9 +475,9 @@
 
                     <div class="info-topo-detalhes">
                         <span class="codigo-topo">OC-2026-001</span>
-                        <div class="etiqueta-status status-pendente">
-                            
-                            Pendente
+                        <div class="etiqueta-status status-recebidos">
+
+                            Recebido
                         </div>
                     </div>
                 </div>
@@ -480,7 +488,7 @@
                     <div class="coluna-esquerda">
                         <div class="cartao-detalhe">
                             <div class="info-principal">
-                                <div class="caixa-icone icone-pendente">
+                                <div class="caixa-icone icone-recebidos">
                                     <div class="icone-mascara img-icone-grande"
                                         style="-webkit-mask-image: url('../../../assets/icons/painel/ocorrencia/iluminacao-publica.png'); mask-image: url('../../../assets/icons/painel/ocorrencia/iluminacao-publica.png');">
                                     </div>
@@ -570,8 +578,8 @@
     </div>
 
 
-    <script src="../../../FrontEnd/pages/global/authGuard.js"></script> 
-    <script src="../../../FrontEnd/pages/global/logout.js"></script> 
+    <script src="../../../FrontEnd/pages/global/authGuard.js"></script>
+    <script src="../../../FrontEnd/pages/global/logout.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="../../../FrontEnd/pages/ocorrencia/ocorrencia.js"></script>
     <script src="/FrontEnd/pages/ocorrencia/acompanhamentoOcorrencias.js?v=1"></script>

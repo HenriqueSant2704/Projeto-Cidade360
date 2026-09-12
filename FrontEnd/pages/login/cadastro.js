@@ -77,7 +77,21 @@ function entrarModoCadastro() {
             btnVoltarEtapa.style.display = "none";
         }
 
-        btnEntrar.innerHTML = 'Próximo <span class="seta-btn">➔</span>';
+        btnEntrar.innerHTML = `Próximo <svg
+        class="seta-btn"
+        xmlns="http://www.w3.org/2000/svg"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+    >
+        <path d="M5 12H19"></path>
+        <path d="M12 6L18 12L12 18"></path>
+    </svg>`;
 
         btnCriarConta.innerHTML = `
             <img src="../../../assets/icons/login/saida.png" alt="">
@@ -365,9 +379,37 @@ async function avancarCadastro() {
             }
 
             if (etapaCadastro === 3) {
-                btnEntrar.innerHTML = 'Finalizar Cadastro <span class="seta-btn">➔</span>';
+                btnEntrar.innerHTML = `Finalizar Cadastro <svg
+                    class="seta-btn"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path d="M5 12H19"></path>
+                    <path d="M12 6L18 12L12 18"></path>
+                </svg>`;
             } else {
-                btnEntrar.innerHTML = 'Próximo <span class="seta-btn">➔</span>';
+                btnEntrar.innerHTML = `Próximo <svg
+                    class="seta-btn"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path d="M5 12H19"></path>
+                    <path d="M12 6L18 12L12 18"></path>
+                </svg>`;
             }
         });
 
@@ -391,7 +433,21 @@ function voltarEtapaCadastro() {
             btnVoltarEtapa.style.display = etapaCadastro > 1 ? "block" : "none";
         }
 
-        btnEntrar.innerHTML = 'Próximo <span class="seta-btn">➔</span>';
+        btnEntrar.innerHTML = `Próximo <svg
+            class="seta-btn"
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+        >
+            <path d="M5 12H19"></path>
+            <path d="M12 6L18 12L12 18"></path>
+        </svg>`;
     });
 }
 
@@ -658,7 +714,21 @@ async function finalizarCadastro() {
         btnEntrar.disabled = false;
 
         if (modoCadastro) {
-            btnEntrar.innerHTML = 'Finalizar Cadastro <span class="seta-btn">➔</span>';
+            btnEntrar.innerHTML = `Finalizar Cadastro <svg
+                class="seta-btn"
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path d="M5 12H19"></path>
+                <path d="M12 6L18 12L12 18"></path>
+            </svg>`;
         }
     }
 }
@@ -717,7 +787,21 @@ async function enviarCodigoEmailCadastro() {
 
         renderizarEtapaCadastro();
 
-        btnEntrar.innerHTML = 'Verificar Email <span class="seta-btn">➔</span>';
+        btnEntrar.innerHTML = `Verificar Email <svg
+            class="seta-btn"
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+        >
+            <path d="M5 12H19"></path>
+            <path d="M12 6L18 12L12 18"></path>
+        </svg>`;
 
         return true;
 
@@ -735,7 +819,21 @@ async function enviarCodigoEmailCadastro() {
         btnEntrar.disabled = false;
 
         if (modoCadastro && etapaCadastro === 2 && dadosCadastro.aguardandoCodigoEmail) {
-            btnEntrar.innerHTML = 'Verificar Email <span class="seta-btn">➔</span>';
+            btnEntrar.innerHTML = `Verificar Email <svg
+                class="seta-btn"
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path d="M5 12H19"></path>
+                <path d="M12 6L18 12L12 18"></path>
+            </svg>`;
         }
     }
 }
@@ -802,7 +900,21 @@ async function confirmarCodigoEmailCadastro() {
         btnEntrar.disabled = false;
 
         if (modoCadastro && etapaCadastro === 2) {
-            btnEntrar.innerHTML = 'Verificar Email <span class="seta-btn">➔</span>';
+            btnEntrar.innerHTML = `Verificar Email <svg
+                class="seta-btn"
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path d="M5 12H19"></path>
+                <path d="M12 6L18 12L12 18"></path>
+            </svg>`;
         }
     }
 }

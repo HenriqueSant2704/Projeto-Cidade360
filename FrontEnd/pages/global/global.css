@@ -10,14 +10,11 @@
     font-family: 'Poppins', sans-serif;
 }
 
-html {
-    width: 100%;
-    min-height: 100%;
-}
+
 
 body {
     width: 100%;
-    min-height: 100%;
+    min-height: 100vh;
     margin: 0;
     padding: 0;
 }
@@ -31,9 +28,7 @@ body {
     width: 100%;
     max-width: 1920px;
     height: 100vh;
-
     display: flex;
-
     overflow: hidden;
 }
 
@@ -252,12 +247,9 @@ a#menu-ativo:hover img {
 
 .menu-corpo {
     width: 93%;
-
     flex-grow: 1;
-
     overflow-y: auto;
     overflow-x: hidden;
-
     scrollbar-width: thin;
 }
 
@@ -276,20 +268,13 @@ a#menu-ativo:hover img {
 
 .menu-secao {
     width: 100%;
-
     padding: 0.5rem 0.8rem;
-
     margin-top: 1rem;
-
     font-size: 0.9rem;
     font-weight: 600;
-
     color: rgba(84, 87, 95, 0.63);
-
     white-space: nowrap;
-
     overflow: hidden;
-
     transition:
         opacity 0.2s ease,
         transform 0.3s ease,
@@ -308,16 +293,11 @@ a#menu-ativo:hover img {
 .menu-lateral.menu-recolhido .menu-secao {
     width: 0;
     height: 0;
-
     margin-top: 0;
-
     padding-top: 0;
     padding-bottom: 0;
-
     opacity: 0;
-
     transform: translateX(-12px);
-
     pointer-events: none;
 }
 
@@ -328,28 +308,20 @@ a#menu-ativo:hover img {
 
 .menu-lista {
     width: 100%;
-
     list-style: none;
-
     padding: 0;
     margin: 0;
-
     display: flex;
     flex-direction: column;
-
     gap: 10px;
-
     transition:
         gap 0.32s ease;
 }
 
 .menu-lateral.menu-recolhido .menu-lista {
     width: 100%;
-
     align-items: center;
-
     gap: 8px;
-
     margin-bottom: 16px;
 }
 
@@ -360,18 +332,14 @@ a#menu-ativo:hover img {
 
 .menu-item {
     width: 100%;
-
     display: flex;
-
     justify-content: center;
     align-items: center;
 }
 
 .menu-lateral.menu-recolhido .menu-item {
     width: 100%;
-
     display: flex;
-
     justify-content: center;
 }
 
@@ -609,21 +577,14 @@ a#menu-ativo:hover img {
 
 .menu-topo {
     position: sticky;
-
     top: 0;
-
     z-index: 10;
-
     width: 100%;
     height: 70px;
-
     display: flex;
     align-items: center;
-
     flex-shrink: 0;
-
     background-color: #ffffff;
-
     border-bottom: 1px solid rgba(30, 41, 59, 0.06);
 }
 
@@ -634,25 +595,18 @@ a#menu-ativo:hover img {
 
 .titulo-pagina {
     width: 50%;
-
     display: flex;
     align-items: center;
-
     gap: 20px;
-
     padding-left: 30px;
-
     min-width: 0;
 }
 
 .titulo-pagina h1 {
     margin: 0;
-
     font-size: 18px;
     font-weight: 600;
-
     color: rgba(97, 104, 128, 0.91);
-
     white-space: nowrap;
 }
 
@@ -664,22 +618,15 @@ a#menu-ativo:hover img {
 .minimizar-menu {
     width: 38px;
     height: 38px;
-
     display: flex;
     justify-content: center;
     align-items: center;
-
     flex-shrink: 0;
-
     cursor: pointer;
-
     border: none;
     border-radius: 50%;
-
     background-color: #f1f5f9;
-
     user-select: none;
-
     transition:
         background-color 0.25s ease,
         transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
@@ -689,9 +636,7 @@ a#menu-ativo:hover img {
 .minimizar-menu img {
     width: 20px;
     height: 20px;
-
     margin-left: 2px;
-
     transition:
         transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
         filter 0.2s ease;
@@ -699,7 +644,6 @@ a#menu-ativo:hover img {
 
 .minimizar-menu:hover {
     background-color: #2563EB;
-
     box-shadow:
         0 5px 14px rgba(37, 99, 235, 0.22);
 
@@ -754,18 +698,14 @@ a#menu-ativo:hover img {
 
 .menu-acoes button {
     background-color: transparent;
-
     cursor: pointer;
-
     border: none;
-
     padding: 0;
 }
 
 .menu-acoes img {
     width: 20px;
     height: 20px;
-
     transition:
         filter 0.2s ease,
         transform 0.2s ease;
@@ -787,12 +727,6 @@ a#menu-ativo:hover img {
     transition:
         filter 0.2s ease,
         transform 0.2s ease;
-}
-
-.opcoes-menu-topo img:hover {
-    filter: brightness(0) invert(0.4);
-
-    transform: scale(1.06);
 }
 
 
@@ -874,9 +808,6 @@ a#menu-ativo:hover img {
     transition: filter 0.2s ease;
 }
 
-.foto-usuario:hover img {
-    filter: brightness(0) invert(1);
-}
 
 
 /*===================================================================
