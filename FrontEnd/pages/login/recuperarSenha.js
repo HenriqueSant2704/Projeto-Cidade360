@@ -253,10 +253,13 @@ function adicionarEventosRecuperacaoSenha() {
 }
 
 function adicionarEventosMostrarSenhaRecuperacao() {
+
     const botoes = camposCadastro.querySelectorAll(".mostrar-senha-recuperacao");
 
     botoes.forEach((botao) => {
+
         botao.addEventListener("click", (event) => {
+
             event.preventDefault();
 
             const target = botao.getAttribute("data-target");
@@ -267,16 +270,23 @@ function adicionarEventosMostrarSenhaRecuperacao() {
             const senhaVisivel = input.type === "text";
 
             if (senhaVisivel) {
+
                 input.type = "password";
                 botao.src = "../../../assets/icons/login/olho.png";
                 botao.alt = "Mostrar senha";
+
             } else {
+
                 input.type = "text";
                 botao.src = "../../../assets/icons/login/olho-aberto.png";
                 botao.alt = "Ocultar senha";
+
             }
+
         });
+
     });
+
 }
 
 /*========================================================================================================
