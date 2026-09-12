@@ -99,16 +99,19 @@ body {
     object-fit: contain;
 }
 
+
+.mostrar-senha-cadastro,
 .mostrar-senha-recuperacao {
     position: absolute;
     right: 12px;
     top: 38px;
     width: 18px;
     height: 18px;
-    z-index: 10;
+    z-index: 20;
     cursor: pointer;
     object-fit: contain;
     pointer-events: auto;
+    user-select: none;
 }
 
 .caixa-input input {
