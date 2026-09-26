@@ -1,0 +1,961 @@
+/*===================================================================
+
+ Cidade360 - Modo Administrador (Prefeitura)
+ Arquivo: FrontEnd/pages/ocorrencia/adminOcorrencias.css
+
+ Complementa ocorrencia.css e acompanhamentoOcorrencias.css.
+ Reaproveita as classes que já existem (etiqueta-status, cartao-detalhe,
+ progresso-status-ocorrencia, painel-admin-status...) e só adiciona
+ o que é novo: lixeira, modal, diálogo de cancelamento e toast.
+
+ Todas as regras só têm efeito quando o JS de admin cria os elementos,
+ então o cidadão não é afetado.
+
+ ===================================================================*/
+
+
+/*===================================================================
+ Cabeçalho no modo admin
+ ===================================================================*/
+
+.modo-admin #btn-nova-ocorrencia {
+    display: none;
+}
+
+.selo-admin {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: #eef3fb;
+    border: 1px solid #d8e1ef;
+    color: #2563EB;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+
+/*===================================================================
+ Card: lixeira e cidadão
+ ===================================================================*/
+
+.acoes-card-admin {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-lixeira-admin {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 0;
+    border: 1px solid #fde2e2;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #dc2626;
+    cursor: pointer;
+    transition: background-color .2s ease, border-color .2s ease, transform .2s ease;
+}
+
+.btn-lixeira-admin:hover {
+    background: #fef2f2;
+    border-color: #fecaca;
+    transform: translateY(-1px);
+}
+
+.btn-lixeira-admin[hidden] {
+    display: none;
+}
+
+.item-info-cidadao .icone-info svg {
+    width: 15px;
+    height: 15px;
+}
+
+.card-ocorrencias.card-cancelado-admin {
+    background-color: #fcfcfd;
+}
+
+.card-cancelado-admin .titulo-card {
+    color: #64748b;
+    text-decoration: line-through;
+    text-decoration-color: #cbd5e1;
+}
+
+
+/*===================================================================
+ Modal de detalhes
+ ===================================================================*/
+
+body.modal-admin-aberto {
+    overflow: hidden;
+}
+
+.modal-admin-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+    background: rgba(15, 23, 42, .55);
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    transition: opacity .2s ease;
+}
+
+.modal-admin-overlay[hidden] {
+    display: none;
+}
+
+.modal-admin-overlay.visivel {
+    opacity: 1;
+}
+
+.modal-admin {
+    width: min(1080px, 100%);
+    max-height: calc(100vh - 48px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #f6f8fb;
+    border-radius: 28px;
+    box-shadow: 0 30px 80px rgba(15, 23, 42, .25);
+    transform: translateY(16px) scale(.98);
+    transition: transform .28s cubic-bezier(.22, 1, .36, 1);
+}
+
+.modal-admin-overlay.visivel .modal-admin {
+    transform: none;
+}
+
+.modal-admin-conteudo {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Cabeçalho */
+
+.modal-admin-cabecalho {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 22px 28px;
+    background: #ffffff;
+    border-bottom: 1px solid #ececec;
+}
+
+.modal-admin-identidade {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+}
+
+.modal-admin-identidade .caixa-icone {
+    flex-shrink: 0;
+}
+
+.modal-admin-titulos {
+    min-width: 0;
+}
+
+.modal-admin-codigo {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #6b7280;
+    letter-spacing: .5px;
+}
+
+.modal-admin-titulos h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #1f2937;
+}
+
+.modal-admin-cabecalho-acoes {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.modal-admin .etiqueta-status {
+    white-space: nowrap;
+}
+
+.btn-fechar-modal-admin {
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    border: 1px solid #ececec;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #566987;
+    cursor: pointer;
+    transition: background-color .2s ease, color .2s ease;
+}
+
+.btn-fechar-modal-admin:hover {
+    background: #f1f5f9;
+    color: #1f2937;
+}
+
+/* Corpo */
+
+.modal-admin-corpo {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px 28px 28px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.modal-admin-grade {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.modal-admin-coluna {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+}
+
+.modal-admin .cartao-detalhe {
+    padding: 24px;
+    border-radius: 20px;
+}
+
+.modal-admin .titulo-sessao {
+    margin: 0 0 18px;
+    font-size: 16px;
+}
+
+.modal-admin .texto-descricao {
+    margin: 0;
+    white-space: pre-line;
+}
+
+.modal-admin .metadados-ocorrencia {
+    margin-top: 16px;
+}
+
+.modal-admin .progresso-status-ocorrencia {
+    padding: 22px 24px;
+}
+
+.modal-admin .caixa-endereco {
+    margin-bottom: 14px;
+    padding: 14px 18px;
+    font-size: 14px;
+}
+
+.modal-admin .caixa-mapa {
+    height: 200px;
+}
+
+.modal-admin .caixa-mapa-real {
+    height: 220px;
+}
+
+/* O global.css pode limitar o tamanho das imagens e quebrar os tiles do mapa */
+.modal-admin .caixa-mapa-real img {
+    max-width: none !important;
+    max-height: none !important;
+}
+
+.mapa-sem-gps {
+    max-width: 220px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .85);
+    color: #64748b;
+    font-size: 13px;
+    text-align: center;
+}
+
+.modal-admin .caixa-foto-vazia {
+    height: 150px;
+}
+
+.modal-admin .aviso-status-final {
+    margin: 0;
+}
+
+/* Estados: carregando e erro */
+
+.modal-admin-estado {
+    position: relative;
+    min-height: 360px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 48px 28px;
+    background: #ffffff;
+    color: #64748b;
+    font-size: 14px;
+    text-align: center;
+}
+
+.modal-admin-estado h2 {
+    margin: 6px 0 0;
+    font-size: 17px;
+    color: #1f2937;
+}
+
+.modal-admin-fechar-flutuante {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+}
+
+.modal-admin-estado-icone {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 16px;
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.spinner-admin {
+    width: 34px;
+    height: 34px;
+    border: 4px solid #e2e8f0;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: girar-admin .7s linear infinite;
+}
+
+.spinner-botao {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: girar-admin .7s linear infinite;
+}
+
+@keyframes girar-admin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/*===================================================================
+ Histórico (linha do tempo)
+ ===================================================================*/
+
+.historico-admin {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.historico-admin-item {
+    position: relative;
+    padding: 0 0 16px 32px;
+}
+
+.historico-admin-item:last-child {
+    padding-bottom: 0;
+}
+
+.historico-admin-item::before {
+    content: "";
+    position: absolute;
+    top: 20px;
+    bottom: -2px;
+    left: 7px;
+    width: 2px;
+    background: #e2e8f0;
+}
+
+.historico-admin-item:last-child::before {
+    display: none;
+}
+
+.historico-admin-marcador {
+    position: absolute;
+    top: 16px;
+    left: 0;
+    width: 16px;
+    height: 16px;
+    border: 3px solid #cbd5e1;
+    border-radius: 50%;
+    background: #ffffff;
+}
+
+.historico-admin-item[data-status="recebido"] .historico-admin-marcador { border-color: #2563EB; }
+.historico-admin-item[data-status="em_analise"] .historico-admin-marcador { border-color: #d48806; }
+.historico-admin-item[data-status="em_andamento"] .historico-admin-marcador { border-color: #047857; }
+.historico-admin-item[data-status="resolvido"] .historico-admin-marcador { border-color: #9333EA; }
+.historico-admin-item[data-status="cancelado"] .historico-admin-marcador { border-color: #b91c1c; }
+
+.historico-admin-item:first-child .historico-admin-marcador {
+    box-shadow: 0 0 0 5px rgba(37, 99, 235, .10);
+}
+
+.historico-admin-cartao {
+    padding: 14px 16px;
+    border: 1px solid #e7edf5;
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+.historico-admin-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin-bottom: 6px;
+}
+
+.historico-admin-topo strong {
+    font-size: 14px;
+    color: #1f2937;
+}
+
+.historico-admin-topo time {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.historico-admin-cartao p {
+    margin: 0 0 8px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #475569;
+}
+
+.modal-admin .responsavel-historico {
+    margin: 0;
+}
+
+
+/*===================================================================
+ Painel de ação (próximo passo)
+ ===================================================================*/
+
+.painel-admin-cabecalho {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.painel-admin-cabecalho .titulo-sessao {
+    margin: 0;
+}
+
+.transicao-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.seta-transicao {
+    display: inline-flex;
+    color: #94a3b8;
+}
+
+.modal-admin .painel-admin-status .texto-admin-status {
+    margin: 0 0 18px;
+}
+
+.painel-admin-linha {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 270px;
+    gap: 20px;
+    align-items: end;
+}
+
+.painel-admin-linha .grupo-admin-status {
+    margin-top: 0;
+}
+
+.painel-admin-linha textarea {
+    min-height: 104px;
+}
+
+.contador-caracteres {
+    align-self: flex-end;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.painel-admin-botoes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 24px;
+}
+
+.painel-admin-botoes .btn-atualizar-status {
+    height: 50px;
+    margin-top: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+}
+
+.btn-cancelar-ocorrencia-admin {
+    height: 46px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #dc2626;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color .2s ease;
+}
+
+.btn-cancelar-ocorrencia-admin:hover:not(:disabled) {
+    background: #fef2f2;
+}
+
+.btn-cancelar-ocorrencia-admin:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.painel-admin-final {
+    border-color: #ececec;
+    background: #ffffff;
+}
+
+
+/*===================================================================
+ Diálogo de cancelamento
+ ===================================================================*/
+
+.dialogo-admin-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9500;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, .45);
+    opacity: 0;
+    transition: opacity .18s ease;
+}
+
+.dialogo-admin-overlay[hidden] {
+    display: none;
+}
+
+.dialogo-admin-overlay.visivel {
+    opacity: 1;
+}
+
+.dialogo-admin {
+    width: min(500px, 100%);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    padding: 28px;
+    border-radius: 24px;
+    background: #ffffff;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, .25);
+    transform: scale(.96);
+    transition: transform .2s ease;
+}
+
+.dialogo-admin-overlay.visivel .dialogo-admin {
+    transform: none;
+}
+
+.dialogo-admin-icone {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 16px;
+    border: 1px solid #fecaca;
+    border-radius: 16px;
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.dialogo-admin h3 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    line-height: 1.35;
+    color: #1f2937;
+}
+
+.dialogo-admin > p {
+    margin: 0 0 22px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: #64748b;
+}
+
+.motivos-cancelamento {
+    margin: 0 0 18px;
+    padding: 0;
+    border: none;
+}
+
+.motivos-cancelamento legend {
+    margin-bottom: 10px;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+}
+
+.lista-motivos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.opcao-motivo {
+    position: relative;
+}
+
+.opcao-motivo input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.opcao-motivo span {
+    display: inline-flex;
+    padding: 9px 14px;
+    border: 1px solid #dbe3ef;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.opcao-motivo span:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+}
+
+.opcao-motivo input:checked + span {
+    border-color: #dc2626;
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.opcao-motivo input:focus-visible + span {
+    outline: 3px solid rgba(37, 99, 235, .45);
+    outline-offset: 2px;
+}
+
+.dialogo-admin .grupo-admin-status {
+    margin-top: 0;
+}
+
+.dialogo-admin .grupo-admin-status textarea {
+    min-height: 90px;
+}
+
+.dialogo-admin-erro {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid #fecdd3;
+    border-radius: 10px;
+    background: #fff1f2;
+    color: #be123c;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.dialogo-admin-botoes {
+    display: flex;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.dialogo-admin-botoes button {
+    flex: 1;
+    height: 48px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    border-radius: 12px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color .2s ease;
+}
+
+.btn-dialogo-voltar {
+    border: 1px solid #dbe3ef;
+    background: #ffffff;
+    color: #475569;
+}
+
+.btn-dialogo-voltar:hover:not(:disabled) {
+    background: #f8fafc;
+}
+
+.btn-dialogo-confirmar {
+    border: none;
+    background: #dc2626;
+    color: #ffffff;
+}
+
+.btn-dialogo-confirmar:hover:not(:disabled) {
+    background: #b91c1c;
+}
+
+.dialogo-admin-botoes button:disabled {
+    opacity: .7;
+    cursor: wait;
+}
+
+
+/*===================================================================
+ Toast
+ ===================================================================*/
+
+.toast-admin-area {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 9800;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.toast-admin {
+    min-width: 280px;
+    max-width: 380px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: #1f2937;
+    color: #ffffff;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, .28);
+    pointer-events: auto;
+    animation: toast-admin-entrar .25s ease both;
+}
+
+.toast-admin.saindo {
+    animation: toast-admin-sair .2s ease both;
+}
+
+.toast-admin-icone {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #047857;
+    color: #ffffff;
+}
+
+.toast-admin-textos strong {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 14px;
+}
+
+.toast-admin-textos span {
+    font-size: 13px;
+    line-height: 1.45;
+    color: #cbd5e1;
+}
+
+@keyframes toast-admin-entrar {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: none; }
+}
+
+@keyframes toast-admin-sair {
+    to { opacity: 0; transform: translateY(8px); }
+}
+
+
+/*===================================================================
+ Foco visível (teclado)
+ ===================================================================*/
+
+.btn-lixeira-admin:focus-visible,
+.btn-fechar-modal-admin:focus-visible,
+.btn-cancelar-ocorrencia-admin:focus-visible,
+.dialogo-admin-botoes button:focus-visible,
+.modal-admin .btn-atualizar-status:focus-visible,
+.modal-admin .foto-evidencia:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, .45);
+    outline-offset: 2px;
+}
+
+
+/*===================================================================
+ Responsividade
+ ===================================================================*/
+
+@media (max-width: 900px) {
+
+    .modal-admin-grade,
+    .painel-admin-linha {
+        grid-template-columns: 1fr;
+    }
+
+    .painel-admin-botoes {
+        padding-bottom: 0;
+    }
+}
+
+@media (max-width: 700px) {
+
+    /* No celular o modal vira uma "gaveta" que sobe de baixo */
+    .modal-admin-overlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .modal-admin {
+        max-height: 94vh;
+        border-radius: 24px 24px 0 0;
+        transform: translateY(40px);
+    }
+
+    .modal-admin-cabecalho {
+        flex-wrap: wrap;
+        align-items: flex-start;
+        padding: 18px;
+        gap: 12px;
+    }
+
+    .modal-admin-identidade {
+        flex: 1 1 100%;
+        padding-right: 50px;
+    }
+
+    .modal-admin-titulos h2 {
+        font-size: 18px;
+    }
+
+    .modal-admin-cabecalho-acoes {
+        width: 100%;
+    }
+
+    .modal-admin-cabecalho .btn-fechar-modal-admin {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+    }
+
+    .modal-admin-conteudo {
+        position: relative;
+    }
+
+    .modal-admin-corpo {
+        padding: 16px;
+        gap: 16px;
+    }
+
+    .modal-admin-coluna {
+        gap: 16px;
+    }
+
+    .modal-admin .cartao-detalhe {
+        padding: 18px;
+    }
+
+    .transicao-status .etiqueta-status {
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+
+    .dialogo-admin {
+        padding: 22px;
+    }
+
+    .dialogo-admin-botoes {
+        flex-direction: column-reverse;
+    }
+
+    .toast-admin-area {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+    }
+
+    .toast-admin {
+        min-width: 0;
+        max-width: none;
+    }
+}
+
+@media (max-width: 430px) {
+
+    .acoes-card-admin .btn-detalhes {
+        padding: 10px 14px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .modal-admin-overlay,
+    .modal-admin,
+    .dialogo-admin-overlay,
+    .dialogo-admin,
+    .toast-admin,
+    .toast-admin.saindo {
+        transition: none;
+        animation: none;
+    }
+}
