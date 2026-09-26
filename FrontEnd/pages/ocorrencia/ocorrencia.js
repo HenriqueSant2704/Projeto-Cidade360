@@ -73,8 +73,11 @@ const listaFotosOcorrencia = document.getElementById("lista-fotos");
 const btnEnviarOcorrencia = document.getElementById("btn-enviar-ocorrencia");
 const mensagemOcorrencia = document.getElementById("mensagem-ocorrencia");
 
+// ALTERADO: o status "pendente" não existe mais.
+// Os contadores agora são "recebidos" e "em análise" (classes que já existem no HTML).
 const numeroTotalOcorrencias = document.querySelector(".numero.total");
-const numeroPendentesOcorrencias = document.querySelector(".numero.pendente");
+const numeroRecebidosOcorrencias = document.querySelector(".numero.recebidos");
+const numeroEmAnaliseOcorrencias = document.querySelector(".numero.emanalise");
 const numeroAndamentoOcorrencias = document.querySelector(".numero.andamento");
 const numeroResolvidasOcorrencias = document.querySelector(".numero.resolvido");
 
@@ -753,8 +756,14 @@ RESUMO
 
 =========================================================================================================*/
 
+// ALTERADO: se o backend não mandar o campo, mostra "-" em vez de um número inventado.
 function definirNumeroOcorrencias(elemento, valor) {
     if (!elemento) {
+        return;
+    }
+
+    if (valor === undefined || valor === null) {
+        elemento.textContent = "-";
         return;
     }
 
@@ -787,9 +796,16 @@ async function carregarResumoOcorrencias() {
             dados.resumo.total
         );
 
+        // ALTERADO: "pendentes" foi substituído por "recebidos" e "em_analise".
         definirNumeroOcorrencias(
-            numeroPendentesOcorrencias,
-            dados.resumo.pendentes
+            numeroRecebidosOcorrencias,
+            dados.resumo.recebidos
+        );
+
+        // Enquanto o backend ainda devolver "pendentes", ele é usado como "em análise".
+        definirNumeroOcorrencias(
+            numeroEmAnaliseOcorrencias,
+            dados.resumo.em_analise ?? dados.resumo.pendentes
         );
 
         definirNumeroOcorrencias(

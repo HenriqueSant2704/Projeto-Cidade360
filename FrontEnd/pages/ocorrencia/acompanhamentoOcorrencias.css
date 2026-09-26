@@ -22,15 +22,16 @@
     cursor: default;
 }
 
+/* ALTERADO: cancelado agora é vermelho (antes era cinza) */
 .status-cancelado-acompanhamento {
-    background-color: #f1f5f9;
-    color: #64748b;
-    border-color: #cbd5e1;
+    background-color: #fef2f2;
+    color: #b91c1c;
+    border-color: #fecaca;
 }
 
 .icone-cancelado-acompanhamento {
-    background-color: #f1f5f9;
-    color: #64748b;
+    background-color: #fef2f2;
+    color: #dc2626;
 }
 
 

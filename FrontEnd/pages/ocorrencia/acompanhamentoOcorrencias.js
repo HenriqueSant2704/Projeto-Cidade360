@@ -16,6 +16,10 @@ Implementa o entregável do Mês 4:
 - Atualização de status para administrador
 - Atualização automática da listagem após novo registro
 
+Status do sistema (o status "pendente" NÃO existe mais):
+Recebido > Em análise > Em atendimento > Resolvido
+Cancelado (pode acontecer antes de resolver)
+
 =========================================================================================================*/
 
 (() => {
@@ -77,9 +81,16 @@ Implementa o entregável do Mês 4:
             ".numero.total"
         );
 
-    const numeroPendentes =
+    // ALTERADO: ".numero.pendente" não existe no HTML.
+    // Agora usamos os contadores "recebidos" e "em análise".
+    const numeroRecebidos =
         document.querySelector(
-            ".numero.pendente"
+            ".numero.recebidos"
+        );
+
+    const numeroEmAnalise =
+        document.querySelector(
+            ".numero.emanalise"
         );
 
     const numeroAndamento =
@@ -322,6 +333,26 @@ Implementa o entregável do Mês 4:
     }
 
 
+    // NOVO: deixa o texto em minúsculas e sem acento.
+    // Assim "Em Análise", "em análise" e "em analise" são tratados igual.
+    function normalizarTexto(
+        valor
+    ) {
+        return String(
+            valor || ""
+        )
+            .normalize(
+                "NFD"
+            )
+            .replace(
+                /[\u0300-\u036f]/g,
+                ""
+            )
+            .trim()
+            .toLowerCase();
+    }
+
+
     function formatarData(
         valor,
         incluirHora = false
@@ -448,25 +479,74 @@ Implementa o entregável do Mês 4:
 
     ====================================================================================================*/
 
-    function obterConfigStatus(
+    // NOVO: transforma o nome que vem do banco em uma chave fixa.
+    // Toda a tela usa essa chave, então um acento ou uma letra maiúscula
+    // diferente no banco não quebra mais a cor nem a barra de progresso.
+    function obterChaveStatus(
         status
     ) {
         const valor =
-            String(
-                status || ""
-            )
-                .trim()
-                .toLowerCase();
+            normalizarTexto(
+                status
+            );
 
         if (
             valor === "recebido"
         ) {
+            return "recebido";
+        }
+
+        // "pendente" foi descartado. Se algum registro antigo ainda
+        // estiver com esse nome, ele é exibido como "Em análise".
+        if (
+            valor === "em analise" ||
+            valor === "pendente"
+        ) {
+            return "em_analise";
+        }
+
+        if (
+            valor === "em atendimento" ||
+            valor === "em andamento"
+        ) {
+            return "em_atendimento";
+        }
+
+        if (
+            valor === "resolvido"
+        ) {
+            return "resolvido";
+        }
+
+        if (
+            valor === "cancelado"
+        ) {
+            return "cancelado";
+        }
+
+        return null;
+    }
+
+
+    // ALTERADO: "status-pendente" e "icone-pendente" não existiam no CSS.
+    // Recebido usa as classes "recebidos" (azul) e Em análise usa "emanalise" (amarelo).
+    function obterConfigStatus(
+        status
+    ) {
+        const chave =
+            obterChaveStatus(
+                status
+            );
+
+        if (
+            chave === "recebido"
+        ) {
             return {
                 classe:
-                    "status-pendente",
+                    "status-recebidos",
 
                 classeIcone:
-                    "icone-pendente",
+                    "icone-recebidos",
 
                 nome:
                     "Recebido",
@@ -477,14 +557,14 @@ Implementa o entregável do Mês 4:
         }
 
         if (
-            valor === "em análise"
+            chave === "em_analise"
         ) {
             return {
                 classe:
-                    "status-pendente",
+                    "status-emanalise",
 
                 classeIcone:
-                    "icone-pendente",
+                    "icone-emanalise",
 
                 nome:
                     "Em análise",
@@ -495,8 +575,7 @@ Implementa o entregável do Mês 4:
         }
 
         if (
-            valor === "em atendimento" ||
-            valor === "em andamento"
+            chave === "em_atendimento"
         ) {
             return {
                 classe:
@@ -514,7 +593,7 @@ Implementa o entregável do Mês 4:
         }
 
         if (
-            valor === "resolvido"
+            chave === "resolvido"
         ) {
             return {
                 classe:
@@ -532,7 +611,7 @@ Implementa o entregável do Mês 4:
         }
 
         if (
-            valor === "cancelado"
+            chave === "cancelado"
         ) {
             return {
                 classe:
@@ -545,16 +624,16 @@ Implementa o entregável do Mês 4:
                     "Cancelado",
 
                 cor:
-                    "#64748B"
+                    "#B91C1C"
             };
         }
 
         return {
             classe:
-                "status-pendente",
+                "status-recebidos",
 
             classeIcone:
-                "icone-pendente",
+                "icone-recebidos",
 
             nome:
                 status || "Recebido",
@@ -639,20 +718,26 @@ Implementa o entregável do Mês 4:
     }
 
 
+    // ALTERADO: o botão "Pendentes" não existe no HTML.
+    // Agora "Recebidos" e "Em Análise" enviam o filtro correto.
     function obterFiltroBotao(
         botao
     ) {
         const texto =
-            String(
-                botao?.textContent || ""
-            )
-                .trim()
-                .toLowerCase();
+            normalizarTexto(
+                botao?.textContent
+            );
 
         if (
-            texto === "pendentes"
+            texto === "recebidos"
         ) {
-            return "pendentes";
+            return "recebidos";
+        }
+
+        if (
+            texto === "em analise"
+        ) {
+            return "em_analise";
         }
 
         if (
@@ -836,6 +921,36 @@ Implementa o entregável do Mês 4:
 
     ====================================================================================================*/
 
+    // NOVO: se o backend não mandar o campo, mostra "-" em vez de um número inventado.
+    function definirNumeroResumo(
+        elemento,
+        valor
+    ) {
+        if (
+            !elemento
+        ) {
+            return;
+        }
+
+        if (
+            valor === undefined ||
+            valor === null
+        ) {
+            elemento.textContent =
+                "-";
+
+            return;
+        }
+
+        elemento.textContent =
+            String(
+                Number(
+                    valor
+                ) || 0
+            );
+    }
+
+
     async function carregarResumo() {
         const url =
             ehAdministrador()
@@ -867,49 +982,33 @@ Implementa o entregável do Mês 4:
             );
         }
 
-        if (
-            numeroTotal
-        ) {
-            numeroTotal.textContent =
-                String(
-                    Number(
-                        dados.resumo.total
-                    ) || 0
-                );
-        }
+        definirNumeroResumo(
+            numeroTotal,
+            dados.resumo.total
+        );
 
-        if (
-            numeroPendentes
-        ) {
-            numeroPendentes.textContent =
-                String(
-                    Number(
-                        dados.resumo.pendentes
-                    ) || 0
-                );
-        }
+        // ALTERADO: "pendentes" foi substituído por "recebidos" e "em_analise".
+        definirNumeroResumo(
+            numeroRecebidos,
+            dados.resumo.recebidos
+        );
 
-        if (
-            numeroAndamento
-        ) {
-            numeroAndamento.textContent =
-                String(
-                    Number(
-                        dados.resumo.em_andamento
-                    ) || 0
-                );
-        }
+        // Enquanto o backend ainda devolver "pendentes", ele é usado como "em análise".
+        definirNumeroResumo(
+            numeroEmAnalise,
+            dados.resumo.em_analise ??
+            dados.resumo.pendentes
+        );
 
-        if (
-            numeroResolvidas
-        ) {
-            numeroResolvidas.textContent =
-                String(
-                    Number(
-                        dados.resumo.resolvidas
-                    ) || 0
-                );
-        }
+        definirNumeroResumo(
+            numeroAndamento,
+            dados.resumo.em_andamento
+        );
+
+        definirNumeroResumo(
+            numeroResolvidas,
+            dados.resumo.resolvidas
+        );
     }
 
 
@@ -1930,15 +2029,15 @@ Implementa o entregável do Mês 4:
 
     ====================================================================================================*/
 
+    // ALTERADO: agora compara pela chave do status (obterChaveStatus),
+    // então "Em Análise", "em análise" ou "Em andamento" funcionam do mesmo jeito.
     function montarProgressoStatus(
         statusAtual
     ) {
         const atual =
-            String(
-                statusAtual || ""
-            )
-                .trim()
-                .toLowerCase();
+            obterChaveStatus(
+                statusAtual
+            );
 
         if (
             atual === "cancelado"
@@ -1964,14 +2063,14 @@ Implementa o entregável do Mês 4:
                     "Em análise",
 
                 chave:
-                    "em análise"
+                    "em_analise"
             },
             {
                 nome:
                     "Em atendimento",
 
                 chave:
-                    "em atendimento"
+                    "em_atendimento"
             },
             {
                 nome:
