@@ -2,42 +2,137 @@
 
 ACOMPANHAMENTO DE OCORRÊNCIAS
 
-Implementa o entregável do Mês 4:
-
-- Listagem real das ocorrências registradas
-- Filtros por status
-- Busca por título, categoria ou localização
-- Paginação
-- Tela de detalhes
-- Status atual
-- Linha do tempo com histórico
-- Fotos da ocorrência
-- Localização no mapa
-- Atualização de status para administrador
+- Listagem real das ocorrências (cidadão vê as dele, admin vê todas)
+- Filtros por status, busca e paginação
+- Detalhes em um MODAL (mesmo visual para cidadão e admin)
+- Admin: lixeira no card, "Próximo passo" no modal e cancelamento com motivo
 - Atualização automática da listagem após novo registro
 
-Status do sistema (o status "pendente" NÃO existe mais):
-Recebido > Em análise > Em atendimento > Resolvido
+Fluxo de status (o status "pendente" NÃO existe mais):
+Recebido > Em análise > Em andamento > Resolvido
 Cancelado (pode acontecer antes de resolver)
+
+Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
 
 =========================================================================================================*/
 
 (() => {
+    "use strict";
 
-    const API_OCORRENCIAS_ACOMPANHAMENTO =
-        "/api/ocorrencias";
 
-    const API_USUARIO_ACOMPANHAMENTO =
-        "/api/me";
+    /*====================================================================================================
 
-    const LOGIN_PAGE_ACOMPANHAMENTO =
-        "/FrontEnd/pages/login/login.html";
+    CONFIGURAÇÃO
 
-    const LIMITE_POR_PAGINA =
-        6;
+    ====================================================================================================*/
 
-    const TEMPO_BUSCA =
-        350;
+    const API_OCORRENCIAS_ACOMPANHAMENTO = "/api/ocorrencias";
+    const API_USUARIO_ACOMPANHAMENTO = "/api/me";
+    const LOGIN_PAGE_ACOMPANHAMENTO = "/FrontEnd/pages/login/login.html";
+
+    const LIMITE_POR_PAGINA = 6;
+    const TEMPO_BUSCA = 350;
+
+    // Tudo que muda por status fica aqui, em um lugar só.
+    const STATUS = {
+        recebido: {
+            nome: "Recebido",
+            classe: "status-recebidos",
+            classeIcone: "icone-recebidos"
+        },
+        em_analise: {
+            nome: "Em análise",
+            classe: "status-emanalise",
+            classeIcone: "icone-emanalise"
+        },
+        em_andamento: {
+            nome: "Em andamento",
+            classe: "status-andamento",
+            classeIcone: "icone-andamento"
+        },
+        resolvido: {
+            nome: "Resolvido",
+            classe: "status-resolvido",
+            classeIcone: "icone-resolvido"
+        },
+        cancelado: {
+            nome: "Cancelado",
+            classe: "status-cancelado-acompanhamento",
+            classeIcone: "icone-cancelado-acompanhamento"
+        }
+    };
+
+    const FLUXO = [
+        "recebido",
+        "em_analise",
+        "em_andamento",
+        "resolvido"
+    ];
+
+    // Para cada status, qual é o próximo passo que o admin pode dar.
+    const PROXIMA_ETAPA = {
+        recebido: {
+            status: "em_analise",
+            botao: "Aceitar ocorrência",
+            sucesso: "Ocorrência aceita",
+            mensagemPadrao: "A prefeitura aceitou sua ocorrência e está analisando o problema.",
+            ajuda: "Revise as informações acima. Ao aceitar, o cidadão é avisado de que a prefeitura está analisando o problema."
+        },
+        em_analise: {
+            status: "em_andamento",
+            botao: "Iniciar atendimento",
+            sucesso: "Atendimento iniciado",
+            mensagemPadrao: "Uma equipe foi designada e o atendimento já está em andamento.",
+            ajuda: "Use quando uma equipe for designada para resolver o problema no local."
+        },
+        em_andamento: {
+            status: "resolvido",
+            botao: "Marcar como resolvida",
+            sucesso: "Ocorrência resolvida",
+            mensagemPadrao: "O problema foi resolvido pela prefeitura. Obrigado por ajudar a cuidar da cidade!",
+            ajuda: "Use quando o serviço for concluído. Depois disso o status não pode mais ser alterado."
+        }
+    };
+
+    // Títulos e textos usados no histórico quando o banco não manda observação.
+    const HISTORICO_PADRAO = {
+        recebido: {
+            titulo: "Ocorrência registrada",
+            descricao: "Sua solicitação foi recebida pelo sistema e aguarda triagem."
+        },
+        em_analise: {
+            titulo: "Ocorrência aceita pela prefeitura",
+            descricao: PROXIMA_ETAPA.recebido.mensagemPadrao
+        },
+        em_andamento: {
+            titulo: "Atendimento iniciado",
+            descricao: PROXIMA_ETAPA.em_analise.mensagemPadrao
+        },
+        resolvido: {
+            titulo: "Ocorrência resolvida",
+            descricao: PROXIMA_ETAPA.em_andamento.mensagemPadrao
+        },
+        cancelado: {
+            titulo: "Ocorrência cancelada",
+            descricao: "A ocorrência foi cancelada pela prefeitura."
+        }
+    };
+
+    const MOTIVOS_CANCELAMENTO = {
+        trote: "Trote ou sem fundamento",
+        duplicada: "Ocorrência duplicada",
+        fora_competencia: "Fora da competência da prefeitura",
+        outro: "Outro motivo"
+    };
+
+    // Valor enviado no ?status= da listagem -> status que deve voltar
+    const FILTRO_PARA_STATUS = {
+        recebidos: "recebido",
+        em_analise: "em_analise",
+        em_andamento: "em_andamento",
+        resolvidos: "resolvido",
+        cancelados: "cancelado"
+    };
 
 
     /*====================================================================================================
@@ -46,77 +141,29 @@ Cancelado (pode acontecer antes de resolver)
 
     ====================================================================================================*/
 
-    const telaOcorrencias =
-        document.getElementById(
-            "tela-ocorrencias"
-        );
+    const telaOcorrencias = document.getElementById("tela-ocorrencias");
+    const telaFormulario = document.getElementById("tela-formulario");
+    const containerCards = document.querySelector(".container-cards-ocorrencia");
+    const botoesFiltro = document.querySelectorAll(".filtro-ocorrencia button");
+    const campoPesquisa = document.querySelector(".campo-pesquisa input");
 
-    const telaFormulario =
-        document.getElementById(
-            "tela-formulario"
-        );
+    const numeroTotal = document.querySelector(".numero.total");
+    const numeroRecebidos = document.querySelector(".numero.recebidos");
+    const numeroEmAnalise = document.querySelector(".numero.emanalise");
+    const numeroAndamento = document.querySelector(".numero.andamento");
+    const numeroResolvidas = document.querySelector(".numero.resolvido");
 
-    const telaDetalhes =
-        document.getElementById(
-            "tela-detalhes"
-        );
+    const caixaTituloPagina = document.querySelector(".caixa-titulo .titulo");
+    const tituloPaginaOcorrencias = document.querySelector(".caixa-titulo .titulo h2");
+    const descricaoPaginaOcorrencias = document.querySelector(".caixa-titulo > p");
+    const btnNovaOcorrencia = document.getElementById("btn-nova-ocorrencia");
+    const textoPerfilUsuario = document.querySelector(".perfil-usuario .usuario p");
 
-    const containerCards =
-        document.querySelector(
-            ".container-cards-ocorrencia"
-        );
-
-    const botoesFiltro =
-        document.querySelectorAll(
-            ".filtro-ocorrencia button"
-        );
-
-    const campoPesquisa =
-        document.querySelector(
-            ".campo-pesquisa input"
-        );
-
-    const numeroTotal =
-        document.querySelector(
-            ".numero.total"
-        );
-
-    // ALTERADO: ".numero.pendente" não existe no HTML.
-    // Agora usamos os contadores "recebidos" e "em análise".
-    const numeroRecebidos =
-        document.querySelector(
-            ".numero.recebidos"
-        );
-
-    const numeroEmAnalise =
-        document.querySelector(
-            ".numero.emanalise"
-        );
-
-    const numeroAndamento =
-        document.querySelector(
-            ".numero.andamento"
-        );
-
-    const numeroResolvidas =
-        document.querySelector(
-            ".numero.resolvido"
-        );
-
-    const tituloPaginaOcorrencias =
-        document.querySelector(
-            ".caixa-titulo .titulo h2"
-        );
-
-    const descricaoPaginaOcorrencias =
-        document.querySelector(
-            ".caixa-titulo > p"
-        );
-
-    const btnNovaOcorrencia =
-        document.getElementById(
-            "btn-nova-ocorrencia"
-        );
+    // Criados pelo próprio JS
+    let modalEl = null;
+    let conteudoModal = null;
+    let dialogoEl = null;
+    let areaToast = null;
 
 
     /*====================================================================================================
@@ -126,47 +173,58 @@ Cancelado (pode acontecer antes de resolver)
     ====================================================================================================*/
 
     const estado = {
-        usuario:
-            null,
+        usuario: null,
+        statusDisponiveis: [],
 
-        statusDisponiveis:
-            [],
+        ocorrencias: [],
+        pagina: 1,
+        totalPaginas: 1,
+        total: 0,
+        filtroStatus: "",
+        busca: "",
+        requisicaoLista: 0,
+        debounceBusca: null,
 
-        ocorrencias:
-            [],
+        atualizandoStatus: false,
 
-        pagina:
-            1,
+        modal: {
+            id: null,
+            ocorrencia: null,
+            requisicao: 0,
+            focoAnterior: null,
+            mapa: null
+        },
 
-        totalPaginas:
-            1,
+        dialogo: {
+            aberto: false,
+            ocupado: false,
+            aoConfirmar: null,
+            focoAnterior: null
+        }
+    };
 
-        total:
-            0,
 
-        filtroStatus:
-            "",
+    /*====================================================================================================
 
-        busca:
-            "",
+    ÍCONES (SVG)
 
-        carregandoLista:
-            false,
+    ====================================================================================================*/
 
-        carregandoDetalhes:
-            false,
+    function svg(caminhos, tamanho = 18, espessura = 2) {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${tamanho}" height="${tamanho}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${espessura}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${caminhos}</svg>`;
+    }
 
-        atualizandoStatus:
-            false,
+    const CAMINHO_LIXEIRA = '<path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>';
 
-        mapaDetalhes:
-            null,
-
-        marcadorDetalhes:
-            null,
-
-        debounceBusca:
-            null
+    const ICONES = {
+        lixeira: svg(CAMINHO_LIXEIRA),
+        lixeiraGrande: svg(CAMINHO_LIXEIRA, 24),
+        fechar: svg('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>', 20),
+        check: svg('<path d="M20 6 9 17l-5-5"/>', 18, 2.6),
+        checkPequeno: svg('<path d="M20 6 9 17l-5-5"/>', 15, 3),
+        seta: svg('<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>', 16),
+        escudo: svg('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>', 14, 2.2),
+        alerta: svg('<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>', 22)
     };
 
 
@@ -178,117 +236,57 @@ Cancelado (pode acontecer antes de resolver)
 
     function obterToken() {
         return (
-            localStorage.getItem(
-                "cidade360_token"
-            ) ||
-            sessionStorage.getItem(
-                "cidade360_token"
-            )
+            localStorage.getItem("cidade360_token") ||
+            sessionStorage.getItem("cidade360_token")
         );
     }
-
 
     function limparSessao() {
-        localStorage.removeItem(
-            "cidade360_token"
-        );
-
-        localStorage.removeItem(
-            "cidade360_usuario"
-        );
-
-        localStorage.removeItem(
-            "cidade360_id"
-        );
-
-        sessionStorage.removeItem(
-            "cidade360_token"
-        );
-
-        sessionStorage.removeItem(
-            "cidade360_usuario"
-        );
-
-        sessionStorage.removeItem(
-            "cidade360_id"
-        );
+        ["cidade360_token", "cidade360_usuario", "cidade360_id"].forEach((chave) => {
+            localStorage.removeItem(chave);
+            sessionStorage.removeItem(chave);
+        });
     }
-
 
     function redirecionarParaLogin() {
         limparSessao();
-
-        window.location.replace(
-            LOGIN_PAGE_ACOMPANHAMENTO
-        );
+        window.location.replace(LOGIN_PAGE_ACOMPANHAMENTO);
     }
 
-
-    async function fetchAutenticado(
-        url,
-        opcoes = {}
-    ) {
-        const token =
-            obterToken();
+    async function fetchAutenticado(url, opcoes = {}) {
+        const token = obterToken();
 
         if (!token) {
             redirecionarParaLogin();
-
-            throw new Error(
-                "Sessão não encontrada."
-            );
+            throw new Error("Sessão não encontrada.");
         }
 
-        const headers =
-            new Headers(
-                opcoes.headers || {}
-            );
+        const headers = new Headers(opcoes.headers || {});
+        headers.set("Authorization", `Bearer ${token}`);
 
-        headers.set(
-            "Authorization",
-            `Bearer ${token}`
-        );
+        const resposta = await fetch(url, {
+            ...opcoes,
+            headers,
+            cache: "no-store"
+        });
 
-        const resposta =
-            await fetch(
-                url,
-                {
-                    ...opcoes,
-                    headers,
-                    cache:
-                        "no-store"
-                }
-            );
-
-        if (
-            resposta.status === 401
-        ) {
+        if (resposta.status === 401) {
             redirecionarParaLogin();
-
-            throw new Error(
-                "Sua sessão expirou."
-            );
+            throw new Error("Sua sessão expirou.");
         }
 
         return resposta;
     }
 
-
-    async function lerResposta(
-        resposta
-    ) {
-        const corpo =
-            await resposta.text();
+    async function lerResposta(resposta) {
+        const corpo = await resposta.text();
 
         if (!corpo) {
             return null;
         }
 
         try {
-            return JSON.parse(
-                corpo
-            );
-
+            return JSON.parse(corpo);
         } catch (error) {
             return {
                 sucesso: false,
@@ -304,172 +302,97 @@ Cancelado (pode acontecer antes de resolver)
 
     ====================================================================================================*/
 
-    function escaparHtml(
-        valor
-    ) {
-        return String(
-            valor ?? ""
-        )
-            .replace(
-                /&/g,
-                "&amp;"
-            )
-            .replace(
-                /</g,
-                "&lt;"
-            )
-            .replace(
-                />/g,
-                "&gt;"
-            )
-            .replace(
-                /"/g,
-                "&quot;"
-            )
-            .replace(
-                /'/g,
-                "&#039;"
-            );
+    // Evita que um texto digitado pelo cidadão vire HTML na tela.
+    function escaparHtml(valor) {
+        return String(valor ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
-
-    // NOVO: deixa o texto em minúsculas e sem acento.
-    // Assim "Em Análise", "em análise" e "em analise" são tratados igual.
-    function normalizarTexto(
-        valor
-    ) {
-        return String(
-            valor || ""
-        )
-            .normalize(
-                "NFD"
-            )
-            .replace(
-                /[\u0300-\u036f]/g,
-                ""
-            )
+    // Minúsculas e sem acento: "Em Análise" e "em analise" viram a mesma coisa.
+    function normalizarTexto(valor) {
+        return String(valor || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
             .trim()
             .toLowerCase();
     }
 
-
-    function formatarData(
-        valor,
-        incluirHora = false
-    ) {
+    function formatarData(valor, incluirHora = false) {
         if (!valor) {
             return "--/--/----";
         }
 
-        const data =
-            new Date(
-                valor
-            );
+        const data = new Date(valor);
 
-        if (
-            Number.isNaN(
-                data.getTime()
-            )
-        ) {
+        if (Number.isNaN(data.getTime())) {
             return "--/--/----";
         }
 
         if (incluirHora) {
-            return data.toLocaleString(
-                "pt-BR",
-                {
-                    dateStyle:
-                        "short",
-
-                    timeStyle:
-                        "short"
-                }
-            );
+            return data.toLocaleString("pt-BR", {
+                dateStyle: "short",
+                timeStyle: "short"
+            });
         }
 
-        return data.toLocaleDateString(
-            "pt-BR"
-        );
+        return data.toLocaleDateString("pt-BR");
     }
 
+    function formatarCodigo(ocorrencia) {
+        const id = Number(ocorrencia?.id) || 0;
 
-    function formatarCodigo(
-        ocorrencia
-    ) {
-        const id =
-            Number(
-                ocorrencia?.id
-            ) || 0;
+        const data = new Date(
+            ocorrencia?.data_criacao ||
+            ocorrencia?.data_ocorrencia ||
+            Date.now()
+        );
 
-        const data =
-            new Date(
-                ocorrencia?.data_criacao ||
-                ocorrencia?.data_ocorrencia ||
-                Date.now()
-            );
-
-        const ano =
-            Number.isNaN(
-                data.getTime()
-            )
-                ? new Date().getFullYear()
-                : data.getFullYear();
+        const ano = Number.isNaN(data.getTime())
+            ? new Date().getFullYear()
+            : data.getFullYear();
 
         return `OC-${ano}-${String(id).padStart(4, "0")}`;
     }
 
+    function temCoordenadas(ocorrencia) {
+        return (
+            ocorrencia?.latitude !== null &&
+            ocorrencia?.latitude !== undefined &&
+            ocorrencia?.longitude !== null &&
+            ocorrencia?.longitude !== undefined &&
+            Number.isFinite(Number(ocorrencia.latitude)) &&
+            Number.isFinite(Number(ocorrencia.longitude))
+        );
+    }
 
-    function obterEndereco(
-        ocorrencia
-    ) {
+    function obterEndereco(ocorrencia) {
         const partes = [
             ocorrencia?.endereco,
             ocorrencia?.bairro,
             ocorrencia?.cidade
         ]
-            .map((item) =>
-                String(
-                    item || ""
-                ).trim()
-            )
+            .map((item) => String(item || "").trim())
             .filter(Boolean);
 
-        if (
-            partes.length > 0
-        ) {
-            return partes.join(
-                " - "
-            );
+        if (partes.length > 0) {
+            return partes.join(" - ");
         }
 
-        if (
-            Number.isFinite(
-                Number(
-                    ocorrencia?.latitude
-                )
-            ) &&
-            Number.isFinite(
-                Number(
-                    ocorrencia?.longitude
-                )
-            )
-        ) {
+        if (temCoordenadas(ocorrencia)) {
             return `Localização: ${Number(ocorrencia.latitude).toFixed(5)}, ${Number(ocorrencia.longitude).toFixed(5)}`;
         }
 
         return "Localização não informada";
     }
 
-
     function ehAdministrador() {
-        return (
-            String(
-                estado.usuario?.tipo_usuario || ""
-            )
-                .trim()
-                .toUpperCase() ===
-            "ADMIN"
-        );
+        return String(estado.usuario?.tipo_usuario || "")
+            .trim()
+            .toUpperCase() === "ADMIN";
     }
 
 
@@ -479,284 +402,103 @@ Cancelado (pode acontecer antes de resolver)
 
     ====================================================================================================*/
 
-    // NOVO: transforma o nome que vem do banco em uma chave fixa.
-    // Toda a tela usa essa chave, então um acento ou uma letra maiúscula
-    // diferente no banco não quebra mais a cor nem a barra de progresso.
-    function obterChaveStatus(
-        status
-    ) {
-        const valor =
-            normalizarTexto(
-                status
-            );
+    // Transforma o nome que vem do banco em uma chave fixa.
+    // "Em atendimento" (nome antigo) e "Em andamento" viram a mesma chave.
+    function obterChaveStatus(status) {
+        const valor = normalizarTexto(status);
 
-        if (
-            valor === "recebido"
-        ) {
+        if (valor === "recebido") {
             return "recebido";
         }
 
-        // "pendente" foi descartado. Se algum registro antigo ainda
-        // estiver com esse nome, ele é exibido como "Em análise".
-        if (
-            valor === "em analise" ||
-            valor === "pendente"
-        ) {
+        // "pendente" foi descartado. Registros antigos aparecem como "Em análise".
+        if (valor === "em analise" || valor === "pendente") {
             return "em_analise";
         }
 
-        if (
-            valor === "em atendimento" ||
-            valor === "em andamento"
-        ) {
-            return "em_atendimento";
+        if (valor === "em andamento" || valor === "em atendimento") {
+            return "em_andamento";
         }
 
-        if (
-            valor === "resolvido"
-        ) {
+        if (valor === "resolvido") {
             return "resolvido";
         }
 
-        if (
-            valor === "cancelado"
-        ) {
+        if (valor === "cancelado") {
             return "cancelado";
         }
 
         return null;
     }
 
+    function obterConfigStatus(status) {
+        const chave = obterChaveStatus(status);
 
-    // ALTERADO: "status-pendente" e "icone-pendente" não existiam no CSS.
-    // Recebido usa as classes "recebidos" (azul) e Em análise usa "emanalise" (amarelo).
-    function obterConfigStatus(
-        status
-    ) {
-        const chave =
-            obterChaveStatus(
-                status
-            );
-
-        if (
-            chave === "recebido"
-        ) {
+        if (chave) {
             return {
-                classe:
-                    "status-recebidos",
-
-                classeIcone:
-                    "icone-recebidos",
-
-                nome:
-                    "Recebido",
-
-                cor:
-                    "#2563EB"
-            };
-        }
-
-        if (
-            chave === "em_analise"
-        ) {
-            return {
-                classe:
-                    "status-emanalise",
-
-                classeIcone:
-                    "icone-emanalise",
-
-                nome:
-                    "Em análise",
-
-                cor:
-                    "#d48806"
-            };
-        }
-
-        if (
-            chave === "em_atendimento"
-        ) {
-            return {
-                classe:
-                    "status-andamento",
-
-                classeIcone:
-                    "icone-andamento",
-
-                nome:
-                    "Em atendimento",
-
-                cor:
-                    "#047857"
-            };
-        }
-
-        if (
-            chave === "resolvido"
-        ) {
-            return {
-                classe:
-                    "status-resolvido",
-
-                classeIcone:
-                    "icone-resolvido",
-
-                nome:
-                    "Resolvido",
-
-                cor:
-                    "#9333EA"
-            };
-        }
-
-        if (
-            chave === "cancelado"
-        ) {
-            return {
-                classe:
-                    "status-cancelado-acompanhamento",
-
-                classeIcone:
-                    "icone-cancelado-acompanhamento",
-
-                nome:
-                    "Cancelado",
-
-                cor:
-                    "#B91C1C"
+                chave,
+                ...STATUS[chave]
             };
         }
 
         return {
-            classe:
-                "status-recebidos",
-
-            classeIcone:
-                "icone-recebidos",
-
-            nome:
-                status || "Recebido",
-
-            cor:
-                "#2563EB"
+            chave: null,
+            ...STATUS.recebido,
+            nome: status || STATUS.recebido.nome
         };
     }
 
+    function podeCancelar(chave) {
+        return chave === "recebido" || chave === "em_analise" || chave === "em_andamento";
+    }
 
-    function obterIconeCategoria(
-        categoria
-    ) {
-        const valor =
-            String(
-                categoria || ""
-            )
-                .trim()
-                .toLowerCase();
+    // Procura o id do status na lista que veio de /api/ocorrencias/status.
+    function obterIdStatus(chave) {
+        const encontrado = estado.statusDisponiveis.find(
+            (status) => obterChaveStatus(status.nome) === chave
+        );
 
-        if (
-            valor.includes(
-                "buraco"
-            ) ||
-            valor.includes(
-                "via"
-            )
-        ) {
+        return encontrado ? Number(encontrado.id) || null : null;
+    }
+
+    function obterIconeCategoria(categoria) {
+        const valor = normalizarTexto(categoria);
+
+        if (valor.includes("buraco") || valor.includes("via")) {
             return "/assets/icons/painel/ocorrencia/estrada.png";
         }
 
-        if (
-            valor.includes(
-                "iluminação"
-            ) ||
-            valor.includes(
-                "iluminacao"
-            ) ||
-            valor.includes(
-                "poste"
-            )
-        ) {
+        if (valor.includes("iluminacao") || valor.includes("poste")) {
             return "/assets/icons/painel/ocorrencia/iluminacao-publica.png";
         }
 
-        if (
-            valor.includes(
-                "lixo"
-            ) ||
-            valor.includes(
-                "coleta"
-            )
-        ) {
+        if (valor.includes("lixo") || valor.includes("coleta")) {
             return "/assets/icons/painel/ocorrencia/lixeira-de-reciclagem.png";
         }
 
-        if (
-            valor.includes(
-                "praga"
-            )
-        ) {
+        if (valor.includes("praga")) {
             return "/assets/icons/painel/ocorrencia/controle-de-pragas.png";
         }
 
-        if (
-            valor.includes(
-                "manutenção"
-            ) ||
-            valor.includes(
-                "manutencao"
-            )
-        ) {
+        if (valor.includes("manutencao")) {
             return "/assets/icons/painel/ocorrencia/manutencao.png";
         }
 
-        if (valor.includes("Árvore Caída") ||
-        valor.includes("caída")){
-        return "/assets/icons/painel/ocorrencia/arvore-caida.png";
+        if (valor.includes("arvore") || valor.includes("caida")) {
+            return "/assets/icons/painel/ocorrencia/arvore-caida.png";
         }
 
         return "/assets/icons/painel/ocorrencia/3-pontos.png";
     }
 
+    function obterFiltroBotao(botao) {
+        const texto = normalizarTexto(botao?.textContent);
 
-    // ALTERADO: o botão "Pendentes" não existe no HTML.
-    // Agora "Recebidos" e "Em Análise" enviam o filtro correto.
-    function obterFiltroBotao(
-        botao
-    ) {
-        const texto =
-            normalizarTexto(
-                botao?.textContent
-            );
-
-        if (
-            texto === "recebidos"
-        ) {
-            return "recebidos";
-        }
-
-        if (
-            texto === "em analise"
-        ) {
-            return "em_analise";
-        }
-
-        if (
-            texto === "em andamento"
-        ) {
-            return "em_andamento";
-        }
-
-        if (
-            texto === "resolvidos"
-        ) {
-            return "resolvidos";
-        }
-
-        if (
-            texto === "cancelados"
-        ) {
-            return "cancelados";
-        }
+        if (texto === "recebidos") return "recebidos";
+        if (texto === "em analise") return "em_analise";
+        if (texto === "em andamento") return "em_andamento";
+        if (texto === "resolvidos") return "resolvidos";
+        if (texto === "cancelados") return "cancelados";
 
         return "";
     }
@@ -770,387 +512,253 @@ Cancelado (pode acontecer antes de resolver)
 
     function obterUsuarioArmazenado() {
         const valor =
-            localStorage.getItem(
-                "cidade360_usuario"
-            ) ||
-            sessionStorage.getItem(
-                "cidade360_usuario"
-            );
+            localStorage.getItem("cidade360_usuario") ||
+            sessionStorage.getItem("cidade360_usuario");
 
         if (!valor) {
             return null;
         }
 
         try {
-            return JSON.parse(
-                valor
-            );
-
+            return JSON.parse(valor);
         } catch (error) {
             return null;
         }
     }
 
-
     async function carregarUsuario() {
-        const usuarioArmazenado =
-            obterUsuarioArmazenado();
+        const usuarioArmazenado = obterUsuarioArmazenado();
 
-        if (
-            usuarioArmazenado?.tipo_usuario
-        ) {
-            estado.usuario =
-                usuarioArmazenado;
-
+        if (usuarioArmazenado?.tipo_usuario) {
+            estado.usuario = usuarioArmazenado;
             configurarInterfacePorPerfil();
-
             return;
         }
 
-        const resposta =
-            await fetchAutenticado(
-                API_USUARIO_ACOMPANHAMENTO,
-                {
-                    method:
-                        "GET"
-                }
-            );
+        const resposta = await fetchAutenticado(API_USUARIO_ACOMPANHAMENTO, {
+            method: "GET"
+        });
 
-        const dados =
-            await lerResposta(
-                resposta
-            );
+        const dados = await lerResposta(resposta);
 
-        if (
-            !resposta.ok ||
-            !dados?.sucesso ||
-            !dados?.usuario
-        ) {
+        if (!resposta.ok || !dados?.sucesso || !dados?.usuario) {
             throw new Error(
                 dados?.mensagem ||
                 "Não foi possível identificar o usuário."
             );
         }
 
-        estado.usuario =
-            dados.usuario;
-
+        estado.usuario = dados.usuario;
         configurarInterfacePorPerfil();
     }
 
-
     function configurarInterfacePorPerfil() {
-        if (
-            !ehAdministrador()
-        ) {
+        if (!ehAdministrador()) {
             return;
         }
 
-        if (
-            tituloPaginaOcorrencias
-        ) {
-            tituloPaginaOcorrencias.textContent =
-                "Gestão de Ocorrências";
+        document.body.classList.add("modo-admin");
+
+        if (tituloPaginaOcorrencias) {
+            tituloPaginaOcorrencias.textContent = "Todas as Ocorrências";
         }
 
-        if (
-            descricaoPaginaOcorrencias
-        ) {
+        if (caixaTituloPagina && !caixaTituloPagina.querySelector(".selo-admin")) {
+            caixaTituloPagina.insertAdjacentHTML(
+                "beforeend",
+                `<span class="selo-admin">${ICONES.escudo}Prefeitura</span>`
+            );
+        }
+
+        if (descricaoPaginaOcorrencias) {
             descricaoPaginaOcorrencias.textContent =
-                "Visualize as solicitações dos cidadãos, acompanhe o histórico e atualize o andamento de cada atendimento.";
+                "Analise as ocorrências registradas pelos cidadãos, aceite as válidas e acompanhe cada uma até a resolução.";
         }
 
-        if (
-            btnNovaOcorrencia
-        ) {
-            btnNovaOcorrencia.hidden =
-                true;
+        if (btnNovaOcorrencia) {
+            btnNovaOcorrencia.hidden = true;
         }
 
-        if (
-            campoPesquisa
-        ) {
-            campoPesquisa.placeholder =
-                "Buscar por título, local, cidadão ou categoria...";
+        if (campoPesquisa) {
+            campoPesquisa.placeholder = "Buscar por título, local, cidadão ou categoria...";
+        }
+
+        if (textoPerfilUsuario) {
+            textoPerfilUsuario.textContent = "Administrador";
         }
     }
 
 
     /*====================================================================================================
 
-    STATUS DISPONÍVEIS
+    STATUS DISPONÍVEIS (id de cada status no banco)
 
     ====================================================================================================*/
 
     async function carregarStatusDisponiveis() {
-        const resposta =
-            await fetchAutenticado(
-                `${API_OCORRENCIAS_ACOMPANHAMENTO}/status`,
-                {
-                    method:
-                        "GET"
-                }
-            );
+        const resposta = await fetchAutenticado(
+            `${API_OCORRENCIAS_ACOMPANHAMENTO}/status`,
+            { method: "GET" }
+        );
 
-        const dados =
-            await lerResposta(
-                resposta
-            );
+        const dados = await lerResposta(resposta);
 
-        if (
-            !resposta.ok ||
-            !dados?.sucesso ||
-            !Array.isArray(
-                dados.status
-            )
-        ) {
+        if (!resposta.ok || !dados?.sucesso || !Array.isArray(dados.status)) {
             throw new Error(
                 dados?.mensagem ||
                 "Não foi possível carregar os status."
             );
         }
 
-        estado.statusDisponiveis =
-            dados.status;
+        estado.statusDisponiveis = dados.status;
     }
 
 
     /*====================================================================================================
 
-    RESUMO
+    RESUMO (contadores do topo)
 
     ====================================================================================================*/
 
-    // NOVO: se o backend não mandar o campo, mostra "-" em vez de um número inventado.
-    function definirNumeroResumo(
-        elemento,
-        valor
-    ) {
-        if (
-            !elemento
-        ) {
+    // Se o backend não mandar o campo, mostra "-" em vez de um número inventado.
+    function definirNumeroResumo(elemento, valor) {
+        if (!elemento) {
             return;
         }
 
-        if (
-            valor === undefined ||
-            valor === null
-        ) {
-            elemento.textContent =
-                "-";
-
+        if (valor === undefined || valor === null) {
+            elemento.textContent = "-";
             return;
         }
 
-        elemento.textContent =
-            String(
-                Number(
-                    valor
-                ) || 0
-            );
+        elemento.textContent = String(Number(valor) || 0);
     }
 
-
     async function carregarResumo() {
-        const url =
-            ehAdministrador()
-                ? `${API_OCORRENCIAS_ACOMPANHAMENTO}/admin/resumo`
-                : `${API_OCORRENCIAS_ACOMPANHAMENTO}/resumo`;
+        const url = ehAdministrador()
+            ? `${API_OCORRENCIAS_ACOMPANHAMENTO}/admin/resumo`
+            : `${API_OCORRENCIAS_ACOMPANHAMENTO}/resumo`;
 
-        const resposta =
-            await fetchAutenticado(
-                url,
-                {
-                    method:
-                        "GET"
-                }
-            );
+        const resposta = await fetchAutenticado(url, { method: "GET" });
+        const dados = await lerResposta(resposta);
 
-        const dados =
-            await lerResposta(
-                resposta
-            );
-
-        if (
-            !resposta.ok ||
-            !dados?.sucesso ||
-            !dados?.resumo
-        ) {
+        if (!resposta.ok || !dados?.sucesso || !dados?.resumo) {
             throw new Error(
                 dados?.mensagem ||
                 "Não foi possível carregar o resumo."
             );
         }
 
-        definirNumeroResumo(
-            numeroTotal,
-            dados.resumo.total
-        );
-
-        // ALTERADO: "pendentes" foi substituído por "recebidos" e "em_analise".
-        definirNumeroResumo(
-            numeroRecebidos,
-            dados.resumo.recebidos
-        );
+        definirNumeroResumo(numeroTotal, dados.resumo.total);
+        definirNumeroResumo(numeroRecebidos, dados.resumo.recebidos);
 
         // Enquanto o backend ainda devolver "pendentes", ele é usado como "em análise".
-        definirNumeroResumo(
-            numeroEmAnalise,
-            dados.resumo.em_analise ??
-            dados.resumo.pendentes
-        );
+        definirNumeroResumo(numeroEmAnalise, dados.resumo.em_analise ?? dados.resumo.pendentes);
 
-        definirNumeroResumo(
-            numeroAndamento,
-            dados.resumo.em_andamento
-        );
-
-        definirNumeroResumo(
-            numeroResolvidas,
-            dados.resumo.resolvidas
-        );
+        definirNumeroResumo(numeroAndamento, dados.resumo.em_andamento);
+        definirNumeroResumo(numeroResolvidas, dados.resumo.resolvidas);
     }
 
 
     /*====================================================================================================
 
-    CARREGAMENTO DA LISTA
+    LISTAGEM
 
     ====================================================================================================*/
 
     function construirUrlListagem() {
-        const base =
-            ehAdministrador()
-                ? `${API_OCORRENCIAS_ACOMPANHAMENTO}/admin`
-                : API_OCORRENCIAS_ACOMPANHAMENTO;
+        const base = ehAdministrador()
+            ? `${API_OCORRENCIAS_ACOMPANHAMENTO}/admin`
+            : API_OCORRENCIAS_ACOMPANHAMENTO;
 
-        const parametros =
-            new URLSearchParams();
+        const parametros = new URLSearchParams();
 
-        parametros.set(
-            "pagina",
-            String(
-                estado.pagina
-            )
-        );
+        parametros.set("pagina", String(estado.pagina));
+        parametros.set("limite", String(LIMITE_POR_PAGINA));
 
-        parametros.set(
-            "limite",
-            String(
-                LIMITE_POR_PAGINA
-            )
-        );
-
-        if (
-            estado.filtroStatus
-        ) {
-            parametros.set(
-                "status",
-                estado.filtroStatus
-            );
+        if (estado.filtroStatus) {
+            parametros.set("status", estado.filtroStatus);
         }
 
-        if (
-            estado.busca
-        ) {
-            parametros.set(
-                "busca",
-                estado.busca
-            );
+        if (estado.busca) {
+            parametros.set("busca", estado.busca);
         }
 
         return `${base}?${parametros.toString()}`;
     }
 
-
+    // ALTERADO: antes, se a lista estava carregando, um clique no filtro era ignorado
+    // (o botão ficava ativo, mas a lista não mudava). Agora toda chamada é feita e
+    // só a resposta mais recente é desenhada.
     async function carregarLista() {
-        if (
-            estado.carregandoLista
-        ) {
-            return;
-        }
-
-        estado.carregandoLista =
-            true;
+        const requisicao = ++estado.requisicaoLista;
 
         renderizarCarregando();
 
         try {
-            const resposta =
-                await fetchAutenticado(
-                    construirUrlListagem(),
-                    {
-                        method:
-                            "GET"
-                    }
-                );
+            const resposta = await fetchAutenticado(construirUrlListagem(), {
+                method: "GET"
+            });
 
-            const dados =
-                await lerResposta(
-                    resposta
-                );
+            const dados = await lerResposta(resposta);
 
-            if (
-                !resposta.ok ||
-                !dados?.sucesso ||
-                !Array.isArray(
-                    dados.ocorrencias
-                )
-            ) {
+            if (requisicao !== estado.requisicaoLista) {
+                return;
+            }
+
+            if (!resposta.ok || !dados?.sucesso || !Array.isArray(dados.ocorrencias)) {
                 throw new Error(
                     dados?.mensagem ||
                     "Não foi possível carregar as ocorrências."
                 );
             }
 
-            estado.ocorrencias =
-                dados.ocorrencias;
+            estado.ocorrencias = dados.ocorrencias;
+            estado.pagina = Number(dados.paginacao?.pagina) || 1;
+            estado.totalPaginas = Number(dados.paginacao?.total_paginas) || 1;
+            estado.total = Number(dados.paginacao?.total) || 0;
 
-            estado.pagina =
-                Number(
-                    dados.paginacao?.pagina
-                ) || 1;
-
-            estado.totalPaginas =
-                Number(
-                    dados.paginacao?.total_paginas
-                ) || 1;
-
-            estado.total =
-                Number(
-                    dados.paginacao?.total
-                ) || 0;
-
+            avisarSeFiltroFoiIgnorado();
             renderizarLista();
 
         } catch (error) {
-            console.error(
-                "Erro ao carregar ocorrências:",
-                error
-            );
+            if (requisicao !== estado.requisicaoLista) {
+                return;
+            }
+
+            console.error("Erro ao carregar ocorrências:", error);
 
             renderizarErroLista(
                 error.message ||
                 "Não foi possível carregar as ocorrências."
             );
-
-        } finally {
-            estado.carregandoLista =
-                false;
         }
     }
 
+    // Ajuda a achar problema no backend: se pedimos "recebidos" e voltou
+    // ocorrência com outro status, o filtro não foi aplicado lá.
+    function avisarSeFiltroFoiIgnorado() {
+        const esperado = FILTRO_PARA_STATUS[estado.filtroStatus];
 
-    /*====================================================================================================
+        if (!esperado) {
+            return;
+        }
 
-    ESTADO DE CARREGAMENTO
+        const fora = estado.ocorrencias.filter(
+            (ocorrencia) => obterChaveStatus(ocorrencia.status) !== esperado
+        );
 
-    ====================================================================================================*/
+        if (fora.length > 0) {
+            console.warn(
+                `[Cidade360] O backend não aplicou o filtro "status=${estado.filtroStatus}". ` +
+                `Vieram ${fora.length} ocorrência(s) com outro status. ` +
+                "Verifique se a rota de listagem aceita esse valor."
+            );
+        }
+    }
 
     function renderizarCarregando() {
-        if (
-            !containerCards
-        ) {
+        if (!containerCards) {
             return;
         }
 
@@ -1158,24 +766,13 @@ Cancelado (pode acontecer antes de resolver)
             <div class="estado-lista-ocorrencias">
                 <div class="spinner-ocorrencias"></div>
                 <strong>Carregando ocorrências...</strong>
-                <span>Buscando suas solicitações atualizadas.</span>
+                <span>Buscando as solicitações atualizadas.</span>
             </div>
         `;
     }
 
-
-    /*====================================================================================================
-
-    ESTADO DE ERRO
-
-    ====================================================================================================*/
-
-    function renderizarErroLista(
-        mensagem
-    ) {
-        if (
-            !containerCards
-        ) {
+    function renderizarErroLista(mensagem) {
+        if (!containerCards) {
             return;
         }
 
@@ -1183,149 +780,96 @@ Cancelado (pode acontecer antes de resolver)
             <div class="estado-lista-ocorrencias estado-erro-ocorrencias">
                 <strong>Não foi possível carregar as ocorrências.</strong>
                 <span>${escaparHtml(mensagem)}</span>
-                <button class="btn-tentar-novamente-ocorrencias" id="btn-tentar-lista-ocorrencias" type="button">
+                <button class="btn-tentar-novamente-ocorrencias" data-acao-lista="tentar-novamente" type="button">
                     Tentar novamente
                 </button>
             </div>
         `;
-
-        document
-            .getElementById(
-                "btn-tentar-lista-ocorrencias"
-            )
-            ?.addEventListener(
-                "click",
-                carregarLista
-            );
     }
 
-
-    /*====================================================================================================
-
-    LISTA VAZIA
-
-    ====================================================================================================*/
-
     function renderizarListaVazia() {
-        if (
-            !containerCards
-        ) {
+        if (!containerCards) {
             return;
         }
 
-        const existeFiltro =
-            Boolean(
-                estado.filtroStatus ||
-                estado.busca
-            );
+        const existeFiltro = Boolean(estado.filtroStatus || estado.busca);
+
+        const titulo = existeFiltro
+            ? "Nenhuma ocorrência encontrada."
+            : ehAdministrador()
+                ? "Nenhuma ocorrência registrada ainda."
+                : "Você ainda não possui ocorrências registradas.";
+
+        const texto = existeFiltro
+            ? "Altere os filtros ou a busca para visualizar outros resultados."
+            : ehAdministrador()
+                ? "Quando um cidadão registrar uma ocorrência, ela aparece aqui."
+                : "Registre uma nova ocorrência para acompanhar o atendimento por aqui.";
+
+        const botao = !existeFiltro && !ehAdministrador()
+            ? `
+                <button class="btn-tentar-novamente-ocorrencias" data-acao-lista="primeira-ocorrencia" type="button">
+                    Registrar nova ocorrência
+                </button>
+            `
+            : "";
 
         containerCards.innerHTML = `
             <div class="estado-lista-ocorrencias">
                 <div class="icone-estado-vazio-ocorrencias">
                     <img src="/assets/icons/global/aviso-previo.png" alt="">
                 </div>
-
-                <strong>
-                    ${existeFiltro
-                        ? "Nenhuma ocorrência encontrada."
-                        : "Você ainda não possui ocorrências registradas."}
-                </strong>
-
-                <span>
-                    ${existeFiltro
-                        ? "Altere os filtros ou a busca para visualizar outros resultados."
-                        : "Registre uma nova ocorrência para acompanhar o atendimento por aqui."}
-                </span>
-
-                ${!existeFiltro && !ehAdministrador()
-                    ? `
-                        <button class="btn-tentar-novamente-ocorrencias" id="btn-primeira-ocorrencia" type="button">
-                            Registrar nova ocorrência
-                        </button>
-                    `
-                    : ""}
+                <strong>${titulo}</strong>
+                <span>${texto}</span>
+                ${botao}
             </div>
         `;
-
-        document
-            .getElementById(
-                "btn-primeira-ocorrencia"
-            )
-            ?.addEventListener(
-                "click",
-                () => {
-                    btnNovaOcorrencia
-                        ?.click();
-                }
-            );
     }
 
+    function montarCard(ocorrencia) {
+        const id = Number(ocorrencia.id) || 0;
+        const config = obterConfigStatus(ocorrencia.status);
+        const icone = obterIconeCategoria(ocorrencia.categoria);
+        const codigo = formatarCodigo(ocorrencia);
+        const data = formatarData(ocorrencia.data_criacao || ocorrencia.data_ocorrencia);
+        const endereco = obterEndereco(ocorrencia);
+        const admin = ehAdministrador();
 
-    /*====================================================================================================
-
-    CARD
-
-    ====================================================================================================*/
-
-    function montarCard(
-        ocorrencia
-    ) {
-        const configStatus =
-            obterConfigStatus(
-                ocorrencia.status
-            );
-
-        const icone =
-            obterIconeCategoria(
-                ocorrencia.categoria
-            );
-
-        const codigo =
-            formatarCodigo(
-                ocorrencia
-            );
-
-        const data =
-            formatarData(
-                ocorrencia.data_criacao ||
-                ocorrencia.data_ocorrencia
-            );
-
-        const endereco =
-            obterEndereco(
-                ocorrencia
-            );
-
-        const usuarioAdmin =
-            ehAdministrador() &&
-            ocorrencia.usuario_nome
-                ? `
-                    <div class="item-info">
-                        <div class="icone-info">
-                            <div class="icone-mascara img-icone-pequeno"
-                                style="-webkit-mask-image: url('/assets/icons/global/do-utilizador.png'); mask-image: url('/assets/icons/global/do-utilizador.png');">
-                            </div>
+        const cidadao = admin && ocorrencia.usuario_nome
+            ? `
+                <div class="item-info">
+                    <div class="icone-info">
+                        <div class="icone-mascara img-icone-pequeno"
+                            style="-webkit-mask-image: url('/assets/icons/global/do-utilizador.png'); mask-image: url('/assets/icons/global/do-utilizador.png');">
                         </div>
-                        <span>${escaparHtml(ocorrencia.usuario_nome)}</span>
                     </div>
-                `
-                : "";
+                    <span>${escaparHtml(ocorrencia.usuario_nome)}</span>
+                </div>
+            `
+            : "";
+
+        const lixeira = admin && podeCancelar(config.chave)
+            ? `
+                <button class="btn-lixeira-card" type="button" data-cancelar-id="${id}"
+                    title="Cancelar ocorrência" aria-label="Cancelar ocorrência ${codigo}">
+                    ${ICONES.lixeira}
+                </button>
+            `
+            : "";
 
         return `
-            <div class="card-ocorrencias card-ocorrencia-dinamico" data-id="${Number(ocorrencia.id) || 0}">
+            <div class="card-ocorrencias card-ocorrencia-dinamico ${config.chave === "cancelado" ? "card-cancelado" : ""}" data-id="${id}">
 
                 <div class="topo-card">
-
-                    <div class="caixa-icone ${configStatus.classeIcone}">
+                    <div class="caixa-icone ${config.classeIcone}">
                         <div class="icone-mascara img-icone-grande"
                             style="-webkit-mask-image: url('${icone}'); mask-image: url('${icone}');">
                         </div>
                     </div>
 
-                    <div class="etiqueta-status ${configStatus.classe}">
-                        ${escaparHtml(configStatus.nome)}
+                    <div class="etiqueta-status ${config.classe}">
+                        ${escaparHtml(config.nome)}
                     </div>
-
                 </div>
 
                 <h3 class="titulo-card">
@@ -1333,14 +877,12 @@ Cancelado (pode acontecer antes de resolver)
                 </h3>
 
                 <div class="lista-infos">
-
                     <div class="item-info">
                         <div class="icone-info">
                             <div class="icone-mascara img-icone-pequeno"
                                 style="-webkit-mask-image: url('/assets/icons/global/painel-de-controle.png'); mask-image: url('/assets/icons/global/painel-de-controle.png');">
                             </div>
                         </div>
-
                         <span>${escaparHtml(ocorrencia.categoria || "Sem categoria")}</span>
                     </div>
 
@@ -1350,108 +892,54 @@ Cancelado (pode acontecer antes de resolver)
                                 style="-webkit-mask-image: url('/assets/icons/painel/nova-ocorrencias/pin-de-localizacao.png'); mask-image: url('/assets/icons/painel/nova-ocorrencias/pin-de-localizacao.png');">
                             </div>
                         </div>
-
                         <span>${escaparHtml(endereco)}</span>
                     </div>
 
-                    ${usuarioAdmin}
-
+                    ${cidadao}
                 </div>
 
                 <div class="rodape-card">
-
                     <div class="dados-registro">
                         <span class="codigo">${codigo}</span>
                         <span class="data">${data}</span>
                     </div>
 
-                    <button class="btn-detalhes" type="button" data-detalhes-id="${Number(ocorrencia.id) || 0}">
-                        Detalhes
-                    </button>
-
+                    <div class="acoes-card">
+                        ${lixeira}
+                        <button class="btn-detalhes" type="button" data-detalhes-id="${id}">
+                            Detalhes
+                        </button>
+                    </div>
                 </div>
 
             </div>
         `;
     }
 
-
-    /*====================================================================================================
-
-    RENDERIZA LISTA
-
-    ====================================================================================================*/
-
     function renderizarLista() {
-        if (
-            !containerCards
-        ) {
+        if (!containerCards) {
             return;
         }
 
-        if (
-            estado.ocorrencias.length === 0
-        ) {
+        if (estado.ocorrencias.length === 0) {
             renderizarListaVazia();
-
             return;
         }
 
         containerCards.innerHTML =
-            estado.ocorrencias
-                .map(
-                    montarCard
-                )
-                .join("");
-
-        const paginacao =
-            document.createElement(
-                "div"
-            );
-
-        paginacao.className =
-            "paginacao-ocorrencias";
-
-        paginacao.innerHTML =
-            montarPaginacao();
-
-        containerCards.appendChild(
-            paginacao
-        );
-
-        registrarEventosCards();
-
-        registrarEventosPaginacao();
+            estado.ocorrencias.map(montarCard).join("") +
+            `<div class="paginacao-ocorrencias">${montarPaginacao()}</div>`;
     }
 
-
-    /*====================================================================================================
-
-    PAGINAÇÃO
-
-    ====================================================================================================*/
-
     function montarPaginacao() {
-        const pagina =
-            estado.pagina;
+        const pagina = estado.pagina;
+        const totalPaginas = estado.totalPaginas;
 
-        const totalPaginas =
-            estado.totalPaginas;
+        const inicio = estado.total === 0
+            ? 0
+            : ((pagina - 1) * LIMITE_POR_PAGINA) + 1;
 
-        const inicio =
-            estado.total === 0
-                ? 0
-                : (
-                    (pagina - 1) *
-                    LIMITE_POR_PAGINA
-                ) + 1;
-
-        const fim =
-            Math.min(
-                pagina *
-                LIMITE_POR_PAGINA,
-                estado.total
-            );
+        const fim = Math.min(pagina * LIMITE_POR_PAGINA, estado.total);
 
         return `
             <div class="paginacao-informacao">
@@ -1459,13 +947,8 @@ Cancelado (pode acontecer antes de resolver)
             </div>
 
             <div class="paginacao-botoes">
-
-                <button
-                    class="btn-paginacao"
-                    id="btn-pagina-anterior"
-                    type="button"
-                    ${pagina <= 1 ? "disabled" : ""}
-                >
+                <button class="btn-paginacao" data-acao-lista="pagina-anterior" type="button"
+                    aria-label="Página anterior" ${pagina <= 1 ? "disabled" : ""}>
                     &larr;
                 </button>
 
@@ -1473,1385 +956,1127 @@ Cancelado (pode acontecer antes de resolver)
                     Página ${pagina} de ${totalPaginas}
                 </span>
 
-                <button
-                    class="btn-paginacao"
-                    id="btn-proxima-pagina"
-                    type="button"
-                    ${pagina >= totalPaginas ? "disabled" : ""}
-                >
+                <button class="btn-paginacao" data-acao-lista="proxima-pagina" type="button"
+                    aria-label="Próxima página" ${pagina >= totalPaginas ? "disabled" : ""}>
                     &rarr;
                 </button>
-
             </div>
         `;
     }
 
-
-    function registrarEventosPaginacao() {
-        document
-            .getElementById(
-                "btn-pagina-anterior"
-            )
-            ?.addEventListener(
-                "click",
-                () => {
-                    if (
-                        estado.pagina <= 1
-                    ) {
-                        return;
-                    }
-
-                    estado.pagina--;
-
-                    carregarLista();
-
-                    rolarParaLista();
-                }
-            );
-
-        document
-            .getElementById(
-                "btn-proxima-pagina"
-            )
-            ?.addEventListener(
-                "click",
-                () => {
-                    if (
-                        estado.pagina >=
-                        estado.totalPaginas
-                    ) {
-                        return;
-                    }
-
-                    estado.pagina++;
-
-                    carregarLista();
-
-                    rolarParaLista();
-                }
-            );
-    }
-
-
     function rolarParaLista() {
         document
-            .querySelector(
-                ".container-filtro-ocorrencias"
-            )
-            ?.scrollIntoView({
-                behavior:
-                    "smooth",
+            .querySelector(".container-filtro-ocorrencias")
+            ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
 
-                block:
-                    "start"
-            });
+    // Um único listener para toda a lista (cards, lixeira, paginação e botões de estado).
+    function registrarEventosLista() {
+        if (!containerCards) {
+            return;
+        }
+
+        containerCards.addEventListener("click", (event) => {
+            const lixeira = event.target.closest("[data-cancelar-id]");
+
+            if (lixeira) {
+                event.stopPropagation();
+                iniciarCancelamento(Number(lixeira.dataset.cancelarId));
+                return;
+            }
+
+            const detalhes = event.target.closest("[data-detalhes-id]");
+
+            if (detalhes) {
+                event.stopPropagation();
+                abrirModal(Number(detalhes.dataset.detalhesId));
+                return;
+            }
+
+            const acao = event.target.closest("[data-acao-lista]")?.dataset.acaoLista;
+
+            if (acao === "tentar-novamente") {
+                carregarLista();
+            }
+
+            if (acao === "primeira-ocorrencia") {
+                btnNovaOcorrencia?.click();
+            }
+
+            if (acao === "pagina-anterior" && estado.pagina > 1) {
+                estado.pagina--;
+                carregarLista();
+                rolarParaLista();
+            }
+
+            if (acao === "proxima-pagina" && estado.pagina < estado.totalPaginas) {
+                estado.pagina++;
+                carregarLista();
+                rolarParaLista();
+            }
+        });
+
+        containerCards.addEventListener("dblclick", (event) => {
+            const card = event.target.closest(".card-ocorrencia-dinamico");
+
+            if (card && !event.target.closest("button")) {
+                abrirModal(Number(card.dataset.id));
+            }
+        });
     }
 
 
     /*====================================================================================================
 
-    EVENTOS DOS CARDS
-
-    ====================================================================================================*/
-
-    function registrarEventosCards() {
-        document
-            .querySelectorAll(
-                "[data-detalhes-id]"
-            )
-            .forEach((botao) => {
-                botao.addEventListener(
-                    "click",
-                    (event) => {
-                        event.stopPropagation();
-
-                        abrirDetalhes(
-                            Number(
-                                botao.dataset.detalhesId
-                            )
-                        );
-                    }
-                );
-            });
-
-        document
-            .querySelectorAll(
-                ".card-ocorrencia-dinamico"
-            )
-            .forEach((card) => {
-                card.addEventListener(
-                    "dblclick",
-                    () => {
-                        abrirDetalhes(
-                            Number(
-                                card.dataset.id
-                            )
-                        );
-                    }
-                );
-            });
-    }
-
-
-    /*====================================================================================================
-
-    FILTROS
+    FILTROS E BUSCA
 
     ====================================================================================================*/
 
     function registrarFiltros() {
-        botoesFiltro
-            .forEach((botao) => {
-                botao.addEventListener(
-                    "click",
-                    () => {
-                        botoesFiltro
-                            .forEach((item) => {
-                                item.classList.remove(
-                                    "ativo"
-                                );
-                            });
+        botoesFiltro.forEach((botao) => {
+            botao.addEventListener("click", () => {
+                botoesFiltro.forEach((item) => item.classList.remove("ativo"));
+                botao.classList.add("ativo");
 
-                        botao.classList.add(
-                            "ativo"
-                        );
+                estado.filtroStatus = obterFiltroBotao(botao);
+                estado.pagina = 1;
 
-                        estado.filtroStatus =
-                            obterFiltroBotao(
-                                botao
-                            );
-
-                        estado.pagina =
-                            1;
-
-                        carregarLista();
-                    }
-                );
+                carregarLista();
             });
+        });
 
-        campoPesquisa
-            ?.addEventListener(
-                "input",
-                () => {
-                    if (
-                        estado.debounceBusca
-                    ) {
-                        clearTimeout(
-                            estado.debounceBusca
-                        );
-                    }
+        campoPesquisa?.addEventListener("input", () => {
+            clearTimeout(estado.debounceBusca);
 
-                    estado.debounceBusca =
-                        setTimeout(
-                            () => {
-                                estado.busca =
-                                    String(
-                                        campoPesquisa.value || ""
-                                    )
-                                        .trim()
-                                        .slice(
-                                            0,
-                                            100
-                                        );
-
-                                estado.pagina =
-                                    1;
-
-                                carregarLista();
-
-                            },
-                            TEMPO_BUSCA
-                        );
-                }
-            );
+            estado.debounceBusca = setTimeout(() => {
+                estado.busca = String(campoPesquisa.value || "").trim().slice(0, 100);
+                estado.pagina = 1;
+                carregarLista();
+            }, TEMPO_BUSCA);
+        });
     }
 
 
     /*====================================================================================================
 
-    DETALHES
+    OVERLAYS (abrir e fechar com animação)
 
     ====================================================================================================*/
 
-    async function abrirDetalhes(
-        id
-    ) {
-        if (
-            !Number.isInteger(id) ||
-            id <= 0 ||
-            estado.carregandoDetalhes
-        ) {
-            return;
-        }
+    function mostrarOverlay(elemento) {
+        clearTimeout(elemento._timerFechar);
+        elemento.hidden = false;
 
-        estado.carregandoDetalhes =
-            true;
+        requestAnimationFrame(() => {
+            elemento.classList.add("visivel");
+        });
+    }
 
-        mostrarTelaDetalhesCarregando();
+    function esconderOverlay(elemento) {
+        elemento.classList.remove("visivel");
 
-        try {
-            const resposta =
-                await fetchAutenticado(
-                    `${API_OCORRENCIAS_ACOMPANHAMENTO}/${id}`,
-                    {
-                        method:
-                            "GET"
-                    }
-                );
+        elemento._timerFechar = setTimeout(() => {
+            elemento.hidden = true;
+        }, 220);
+    }
 
-            const dados =
-                await lerResposta(
-                    resposta
-                );
+    function atualizarTravaDeRolagem() {
+        const algumAberto = estado.modal.id !== null || estado.dialogo.aberto;
+        document.body.classList.toggle("modal-ocorrencia-aberto", algumAberto);
+    }
 
-            if (
-                !resposta.ok ||
-                !dados?.sucesso ||
-                !dados?.ocorrencia
-            ) {
-                throw new Error(
-                    dados?.mensagem ||
-                    "Não foi possível carregar os detalhes."
-                );
+
+    /*====================================================================================================
+
+    MODAL DE DETALHES
+
+    ====================================================================================================*/
+
+    function criarModal() {
+        modalEl = document.createElement("div");
+        modalEl.className = "modal-ocorrencia-overlay";
+        modalEl.hidden = true;
+        modalEl.innerHTML = `
+            <div class="modal-ocorrencia" role="dialog" aria-modal="true" aria-labelledby="modal-ocorrencia-titulo">
+                <div class="modal-ocorrencia-conteudo"></div>
+            </div>
+        `;
+
+        document.body.appendChild(modalEl);
+        conteudoModal = modalEl.querySelector(".modal-ocorrencia-conteudo");
+
+        modalEl.addEventListener("click", (event) => {
+            // Clique fora fecha, a não ser que o admin tenha digitado uma mensagem.
+            if (event.target === modalEl) {
+                const mensagem = conteudoModal.querySelector("#admin-mensagem");
+
+                if (!mensagem || !mensagem.value.trim()) {
+                    fecharModal();
+                }
+
+                return;
             }
 
-            renderizarDetalhes(
-                dados.ocorrencia
-            );
+            const alvo = event.target.closest("[data-acao]");
 
-        } catch (error) {
-            console.error(
-                "Erro ao abrir detalhes:",
-                error
-            );
+            if (!alvo) {
+                return;
+            }
 
-            renderizarErroDetalhes(
-                error.message ||
+            switch (alvo.dataset.acao) {
+                case "fechar":
+                    fecharModal();
+                    break;
+                case "avancar":
+                    avancarStatus(alvo);
+                    break;
+                case "cancelar":
+                    iniciarCancelamento(estado.modal.id);
+                    break;
+                case "ver-foto":
+                    abrirFoto(alvo.dataset.src);
+                    break;
+                case "tentar-novamente":
+                    abrirModal(estado.modal.id);
+                    break;
+            }
+        });
+
+        modalEl.addEventListener("input", (event) => {
+            if (event.target.id === "admin-mensagem") {
+                const contador = conteudoModal.querySelector('[data-contador="admin-mensagem"]');
+
+                if (contador) {
+                    contador.textContent = `${event.target.value.length}/1000`;
+                }
+            }
+        });
+    }
+
+    async function buscarOcorrencia(id) {
+        const resposta = await fetchAutenticado(
+            `${API_OCORRENCIAS_ACOMPANHAMENTO}/${id}`,
+            { method: "GET" }
+        );
+
+        const dados = await lerResposta(resposta);
+
+        if (!resposta.ok || !dados?.sucesso || !dados?.ocorrencia) {
+            throw new Error(
+                dados?.mensagem ||
                 "Não foi possível carregar os detalhes."
             );
-
-        } finally {
-            estado.carregandoDetalhes =
-                false;
-        }
-    }
-
-
-    function mostrarTelaDetalhesCarregando() {
-        destruirMapaDetalhes();
-
-        telaOcorrencias
-            ?.classList.add(
-                "oculto"
-            );
-
-        telaFormulario
-            ?.classList.add(
-                "oculto"
-            );
-
-        telaDetalhes
-            ?.classList.remove(
-                "oculto"
-            );
-
-        if (
-            telaDetalhes
-        ) {
-            telaDetalhes.innerHTML = `
-                <div class="estado-detalhes-ocorrencia">
-                    <div class="spinner-ocorrencias"></div>
-                    <strong>Carregando detalhes...</strong>
-                    <span>Buscando o histórico atualizado da solicitação.</span>
-                </div>
-            `;
         }
 
-        window.scrollTo({
-            top:
-                0,
-
-            behavior:
-                "smooth"
-        });
+        return dados.ocorrencia;
     }
 
-
-    function renderizarErroDetalhes(
-        mensagem
-    ) {
-        if (
-            !telaDetalhes
-        ) {
+    async function abrirModal(id) {
+        if (!Number.isInteger(id) || id <= 0) {
             return;
         }
 
-        telaDetalhes.innerHTML = `
-            <div class="estado-detalhes-ocorrencia estado-erro-ocorrencias">
-
-                <strong>Não foi possível abrir a ocorrência.</strong>
-
-                <span>${escaparHtml(mensagem)}</span>
-
-                <button class="btn-tentar-novamente-ocorrencias" id="btn-voltar-erro-detalhes" type="button">
-                    Voltar para lista
-                </button>
-
-            </div>
-        `;
-
-        document
-            .getElementById(
-                "btn-voltar-erro-detalhes"
-            )
-            ?.addEventListener(
-                "click",
-                voltarParaLista
-            );
-    }
-
-
-    function renderizarDetalhes(
-        ocorrencia
-    ) {
-        if (
-            !telaDetalhes
-        ) {
-            return;
+        if (estado.modal.id === null) {
+            estado.modal.focoAnterior = document.activeElement;
         }
 
-        destruirMapaDetalhes();
+        const requisicao = ++estado.modal.requisicao;
 
-        const configStatus =
-            obterConfigStatus(
-                ocorrencia.status
-            );
+        estado.modal.id = id;
+        estado.modal.ocorrencia = null;
 
-        const icone =
-            obterIconeCategoria(
-                ocorrencia.categoria
-            );
+        destruirMapa();
+        atualizarTravaDeRolagem();
 
-        const codigo =
-            formatarCodigo(
-                ocorrencia
-            );
-
-        const endereco =
-            obterEndereco(
-                ocorrencia
-            );
-
-        const historico =
-            montarHistorico(
-                ocorrencia
-            );
-
-        const progresso =
-            montarProgressoStatus(
-                ocorrencia.status
-            );
-
-        const fotos =
-            montarFotos(
-                ocorrencia.imagens
-            );
-
-        const blocoAdmin =
-            ehAdministrador()
-                ? montarBlocoAdministrador(
-                    ocorrencia
-                )
-                : "";
-
-        const blocoCidadao =
-            ehAdministrador() &&
-            ocorrencia.usuario_nome
-                ? `
-                    <div class="cartao-detalhe">
-                        <h3 class="titulo-sessao">Cidadão solicitante</h3>
-
-                        <div class="caixa-dados-cidadao">
-                            <strong>${escaparHtml(ocorrencia.usuario_nome)}</strong>
-                            <span>${escaparHtml(ocorrencia.usuario_email || "")}</span>
-                        </div>
-                    </div>
-                `
-                : "";
-
-        telaDetalhes.innerHTML = `
-            <div class="cabecalho-detalhes">
-
-                <button class="btn-voltar" id="btn-voltar-lista-detalhes" type="button">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                        fill="none" stroke="#566987" stroke-width="2.5" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path d="M19 12H5"></path>
-                        <path d="M12 19l-7-7 7-7"></path>
-                    </svg>
-
-                    Voltar para Lista
-                </button>
-
-                <div class="info-topo-detalhes">
-                    <span class="codigo-topo">${codigo}</span>
-
-                    <div class="etiqueta-status ${configStatus.classe}">
-                        ${escaparHtml(configStatus.nome)}
-                    </div>
-                </div>
-
-            </div>
-
-
-            <div class="progresso-status-ocorrencia">
-                ${progresso}
-            </div>
-
-
-            <div class="conteudo-detalhes">
-
-                <div class="coluna-esquerda">
-
-                    <div class="cartao-detalhe">
-
-                        <div class="info-principal">
-
-                            <div class="caixa-icone ${configStatus.classeIcone}">
-                                <div class="icone-mascara img-icone-grande"
-                                    style="-webkit-mask-image: url('${icone}'); mask-image: url('${icone}');">
-                                </div>
-                            </div>
-
-                            <div class="textos-principal">
-                                <h2 class="titulo-grande">${escaparHtml(ocorrencia.titulo || "Ocorrência")}</h2>
-
-                                <div class="categoria-detalhe">
-                                    <div class="icone-mascara img-icone-pequeno"
-                                        style="-webkit-mask-image: url('/assets/icons/global/painel-de-controle.png'); mask-image: url('/assets/icons/global/painel-de-controle.png');">
-                                    </div>
-
-                                    ${escaparHtml(ocorrencia.categoria || "Sem categoria")}
-                                </div>
-                            </div>
-
-                        </div>
-
-                        <div class="caixa-descricao">
-                            <h4 class="titulo-sessao-pequeno">Descrição do Problema</h4>
-                            <p class="texto-descricao">${escaparHtml(ocorrencia.descricao || "Sem descrição.")}</p>
-                        </div>
-
-                        <div class="metadados-ocorrencia">
-                            <div>
-                                <span>Registrada em</span>
-                                <strong>${formatarData(ocorrencia.data_criacao || ocorrencia.data_ocorrencia, true)}</strong>
-                            </div>
-
-                            <div>
-                                <span>Última atualização</span>
-                                <strong>${formatarData(ocorrencia.data_atualizacao || ocorrencia.data_criacao || ocorrencia.data_ocorrencia, true)}</strong>
-                            </div>
-                        </div>
-
-                    </div>
-
-
-                    <div class="cartao-detalhe">
-
-                        <h3 class="titulo-sessao">
-                            Histórico da Solicitação
-                        </h3>
-
-                        <div class="linha-tempo linha-tempo-dinamica">
-                            <div class="traco-vertical"></div>
-                            ${historico}
-                        </div>
-
-                    </div>
-
-                    ${blocoAdmin}
-
-                </div>
-
-
-                <div class="coluna-direita">
-
-                    ${blocoCidadao}
-
-                    <div class="cartao-detalhe">
-
-                        <h3 class="titulo-sessao">
-                            <div class="icone-mascara img-icone-pequeno color-azul"
-                                style="-webkit-mask-image: url('/assets/icons/painel/nova-ocorrencias/pin-de-localizacao.png'); mask-image: url('/assets/icons/painel/nova-ocorrencias/pin-de-localizacao.png');">
-                            </div>
-
-                            Localização
-                        </h3>
-
-                        <div class="caixa-endereco">
-                            ${escaparHtml(endereco)}
-                        </div>
-
-                        <div class="caixa-mapa caixa-mapa-real" id="mapa-detalhes-ocorrencia"></div>
-
-                    </div>
-
-
-                    <div class="cartao-detalhe">
-
-                        <h3 class="titulo-sessao">
-                            Evidências
-                        </h3>
-
-                        ${fotos}
-
-                    </div>
-
-                </div>
-
-            </div>
-        `;
-
-        registrarEventosDetalhes(
-            ocorrencia
-        );
-
-        inicializarMapaDetalhes(
-            ocorrencia
-        );
-    }
-
-
-    /*====================================================================================================
-
-    PROGRESSO DO STATUS
-
-    ====================================================================================================*/
-
-    // ALTERADO: agora compara pela chave do status (obterChaveStatus),
-    // então "Em Análise", "em análise" ou "Em andamento" funcionam do mesmo jeito.
-    function montarProgressoStatus(
-        statusAtual
-    ) {
-        const atual =
-            obterChaveStatus(
-                statusAtual
-            );
-
-        if (
-            atual === "cancelado"
-        ) {
-            return `
-                <div class="status-cancelado-progresso">
-                    <strong>Solicitação cancelada</strong>
-                    <span>Consulte o histórico abaixo para verificar o motivo e as atualizações registradas.</span>
-                </div>
-            `;
-        }
-
-        const etapas = [
-            {
-                nome:
-                    "Recebido",
-
-                chave:
-                    "recebido"
-            },
-            {
-                nome:
-                    "Em análise",
-
-                chave:
-                    "em_analise"
-            },
-            {
-                nome:
-                    "Em atendimento",
-
-                chave:
-                    "em_atendimento"
-            },
-            {
-                nome:
-                    "Resolvido",
-
-                chave:
-                    "resolvido"
-            }
-        ];
-
-        const indiceAtual =
-            etapas.findIndex(
-                (etapa) =>
-                    etapa.chave ===
-                    atual
-            );
-
-        return etapas
-            .map(
-                (etapa, indice) => {
-                    const concluida =
-                        indice <=
-                        indiceAtual;
-
-                    const atualEtapa =
-                        indice ===
-                        indiceAtual;
-
-                    return `
-                        <div class="etapa-status ${concluida ? "concluida" : ""} ${atualEtapa ? "atual" : ""}">
-
-                            <div class="bolinha-status">
-                                ${concluida ? "✓" : indice + 1}
-                            </div>
-
-                            <span>${etapa.nome}</span>
-
-                        </div>
-
-                        ${indice < etapas.length - 1
-                            ? `<div class="linha-status ${indice < indiceAtual ? "concluida" : ""}"></div>`
-                            : ""}
-                    `;
-                }
-            )
-            .join("");
-    }
-
-
-    /*====================================================================================================
-
-    HISTÓRICO
-
-    ====================================================================================================*/
-
-    function montarHistorico(
-        ocorrencia
-    ) {
-        const historico =
-            Array.isArray(
-                ocorrencia.historico
-            )
-                ? ocorrencia.historico
-                : [];
-
-        if (
-            historico.length === 0
-        ) {
-            return `
-                <div class="item-linha-tempo">
-                    <div class="marcador-bolinha">
-                        <div class="icone-mascara img-icone-pequeno"
-                            style="-webkit-mask-image: url('/assets/icons/global/documento.png'); mask-image: url('/assets/icons/global/documento.png');">
-                        </div>
-                    </div>
-
-                    <div class="cartao-historico">
-                        <h4 class="titulo-historico">Ocorrência registrada</h4>
-                        <span class="data-historico">${formatarData(ocorrencia.data_criacao || ocorrencia.data_ocorrencia, true)}</span>
-                        <p class="texto-historico">Sua solicitação está registrada no sistema.</p>
-                    </div>
-                </div>
-            `;
-        }
-
-        return historico
-            .map(
-                (item, indice) => {
-                    const primeiro =
-                        indice === 0;
-
-                    const titulo =
-                        primeiro &&
-                        !item.status_anterior
-                            ? "Ocorrência registrada"
-                            : `Status alterado para ${item.status_novo}`;
-
-                    const responsavel =
-                        item.usuario_responsavel_nome
-                            ? `<span class="responsavel-historico">Atualizado por ${escaparHtml(item.usuario_responsavel_nome)}</span>`
-                            : "";
-
-                    return `
-                        <div class="item-linha-tempo item-historico-dinamico">
-
-                            <div class="marcador-bolinha">
-                                <div class="icone-mascara img-icone-pequeno"
-                                    style="-webkit-mask-image: url('/assets/icons/global/documento.png'); mask-image: url('/assets/icons/global/documento.png');">
-                                </div>
-                            </div>
-
-                            <div class="cartao-historico">
-
-                                <h4 class="titulo-historico">
-                                    ${escaparHtml(titulo)}
-                                </h4>
-
-                                <span class="data-historico">
-                                    ${formatarData(item.data_alteracao, true)}
-                                </span>
-
-                                ${responsavel}
-
-                                <p class="texto-historico">
-                                    ${escaparHtml(
-                                        item.observacao ||
-                                        `A solicitação avançou para o status ${item.status_novo}.`
-                                    )}
-                                </p>
-
-                            </div>
-
-                        </div>
-                    `;
-                }
-            )
-            .join("");
-    }
-
-
-    /*====================================================================================================
-
-    FOTOS
-
-    ====================================================================================================*/
-
-    function montarFotos(
-        imagens
-    ) {
-        const fotos =
-            Array.isArray(
-                imagens
-            )
-                ? imagens.filter(
-                    (imagem) =>
-                        Boolean(
-                            imagem?.url
-                        )
-                )
-                : [];
-
-        if (
-            fotos.length === 0
-        ) {
-            return `
-                <div class="caixa-foto-vazia">
-                    <span class="texto-foto-vazia">Nenhuma foto disponível</span>
-                </div>
-            `;
-        }
-
-        return `
-            <div class="galeria-evidencias">
-                ${fotos
-                    .map(
-                        (foto, indice) => `
-                            <button
-                                class="foto-evidencia"
-                                type="button"
-                                data-foto-url="${escaparHtml(foto.url)}"
-                                aria-label="Abrir foto ${indice + 1}"
-                            >
-                                <img
-                                    src="${escaparHtml(foto.url)}"
-                                    alt="Foto da ocorrência ${indice + 1}"
-                                    loading="lazy"
-                                >
-                            </button>
-                        `
-                    )
-                    .join("")}
-            </div>
-        `;
-    }
-
-
-    /*====================================================================================================
-
-    ADMINISTRADOR
-
-    ====================================================================================================*/
-
-    const TRANSICOES_PERMITIDAS = {
-        "Recebido": [
-            "Em análise",
-            "Cancelado"
-        ],
-
-        "Em análise": [
-            "Em atendimento",
-            "Cancelado"
-        ],
-
-        "Em atendimento": [
-            "Em análise",
-            "Resolvido",
-            "Cancelado"
-        ],
-
-        "Resolvido": [
-            "Em atendimento"
-        ],
-
-        "Cancelado": [
-            "Recebido"
-        ]
-    };
-
-
-    function montarBlocoAdministrador(
-        ocorrencia
-    ) {
-        const permitidos =
-            TRANSICOES_PERMITIDAS[
-                ocorrencia.status
-            ] || [];
-
-        const opcoes =
-            estado.statusDisponiveis
-                .filter(
-                    (status) =>
-                        permitidos.includes(
-                            status.nome
-                        )
-                )
-                .map(
-                    (status) => `
-                        <option value="${Number(status.id) || 0}">
-                            ${escaparHtml(status.nome)}
-                        </option>
-                    `
-                )
-                .join("");
-
-        if (
-            !opcoes
-        ) {
-            return `
-                <div class="cartao-detalhe painel-admin-status">
-                    <h3 class="titulo-sessao">Atualização de Status</h3>
-
-                    <div class="aviso-status-final">
-                        Não há uma transição disponível para este status.
-                    </div>
-                </div>
-            `;
-        }
-
-        return `
-            <div class="cartao-detalhe painel-admin-status">
-
-                <h3 class="titulo-sessao">
-                    Atualização de Status
-                </h3>
-
-                <p class="texto-admin-status">
-                    Toda alteração fica registrada no histórico e será exibida ao cidadão.
-                </p>
-
-                <div class="grupo-admin-status">
-
-                    <label for="novo-status-ocorrencia">
-                        Novo status
-                    </label>
-
-                    <select id="novo-status-ocorrencia">
-                        <option value="">Selecione o próximo status</option>
-                        ${opcoes}
-                    </select>
-
-                </div>
-
-                <div class="grupo-admin-status">
-
-                    <label for="observacao-status-ocorrencia">
-                        Observação para o cidadão
-                    </label>
-
-                    <textarea
-                        id="observacao-status-ocorrencia"
-                        maxlength="1000"
-                        placeholder="Ex.: Equipe responsável acionada e atendimento programado."
-                    ></textarea>
-
-                </div>
-
-                <div class="mensagem-admin-status" id="mensagem-admin-status" hidden></div>
-
-                <button
-                    class="btn-atualizar-status"
-                    id="btn-atualizar-status"
-                    type="button"
-                    data-ocorrencia-id="${Number(ocorrencia.id) || 0}"
-                >
-                    Atualizar status
-                </button>
-
-            </div>
-        `;
-    }
-
-
-    async function atualizarStatus(
-        ocorrenciaId
-    ) {
-        if (
-            estado.atualizandoStatus
-        ) {
-            return;
-        }
-
-        const select =
-            document.getElementById(
-                "novo-status-ocorrencia"
-            );
-
-        const textarea =
-            document.getElementById(
-                "observacao-status-ocorrencia"
-            );
-
-        const mensagem =
-            document.getElementById(
-                "mensagem-admin-status"
-            );
-
-        const statusId =
-            Number(
-                select?.value
-            );
-
-        const observacao =
-            String(
-                textarea?.value || ""
-            )
-                .trim()
-                .slice(
-                    0,
-                    1000
-                );
-
-        if (
-            !Number.isInteger(
-                statusId
-            ) ||
-            statusId <= 0
-        ) {
-            mostrarMensagemAdmin(
-                mensagem,
-                "Selecione um novo status.",
-                "erro"
-            );
-
-            return;
-        }
-
-        estado.atualizandoStatus =
-            true;
-
-        const botao =
-            document.getElementById(
-                "btn-atualizar-status"
-            );
-
-        if (
-            botao
-        ) {
-            botao.disabled =
-                true;
-
-            botao.textContent =
-                "Atualizando...";
-        }
+        conteudoModal.innerHTML = renderCarregandoModal();
+        mostrarOverlay(modalEl);
 
         try {
-            const resposta =
-                await fetchAutenticado(
-                    `${API_OCORRENCIAS_ACOMPANHAMENTO}/${ocorrenciaId}/status`,
-                    {
-                        method:
-                            "PATCH",
+            const ocorrencia = await buscarOcorrencia(id);
 
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
-
-                        body:
-                            JSON.stringify({
-                                status_id:
-                                    statusId,
-
-                                observacao
-                            })
-                    }
-                );
-
-            const dados =
-                await lerResposta(
-                    resposta
-                );
-
-            if (
-                !resposta.ok ||
-                !dados?.sucesso
-            ) {
-                throw new Error(
-                    dados?.mensagem ||
-                    "Não foi possível atualizar o status."
-                );
+            if (requisicao !== estado.modal.requisicao) {
+                return;
             }
 
-            mostrarMensagemAdmin(
-                mensagem,
-                dados.mensagem ||
-                "Status atualizado com sucesso.",
-                "sucesso"
-            );
+            estado.modal.ocorrencia = ocorrencia;
+            renderizarModal(ocorrencia);
 
-            await Promise.allSettled([
-                carregarResumo(),
-                carregarLista()
-            ]);
-
-            setTimeout(
-                () => {
-                    abrirDetalhes(
-                        ocorrenciaId
-                    );
-                },
-                600
-            );
+            conteudoModal.querySelector(".btn-fechar-modal")?.focus();
 
         } catch (error) {
-            console.error(
-                "Erro ao atualizar status:",
-                error
-            );
-
-            mostrarMensagemAdmin(
-                mensagem,
-                error.message ||
-                "Não foi possível atualizar o status.",
-                "erro"
-            );
-
-        } finally {
-            estado.atualizandoStatus =
-                false;
-
-            if (
-                botao
-            ) {
-                botao.disabled =
-                    false;
-
-                botao.textContent =
-                    "Atualizar status";
+            if (requisicao !== estado.modal.requisicao) {
+                return;
             }
+
+            console.error("Erro ao abrir detalhes:", error);
+            conteudoModal.innerHTML = renderErroModal(error.message);
         }
     }
 
+    // Recarrega os dados do modal sem mostrar o "carregando" de novo.
+    async function recarregarModal(id) {
+        const requisicao = ++estado.modal.requisicao;
 
-    function mostrarMensagemAdmin(
-        elemento,
-        texto,
-        tipo
-    ) {
-        if (
-            !elemento
-        ) {
+        try {
+            const ocorrencia = await buscarOcorrencia(id);
+
+            if (requisicao !== estado.modal.requisicao || estado.modal.id !== id) {
+                return;
+            }
+
+            estado.modal.ocorrencia = ocorrencia;
+            renderizarModal(ocorrencia);
+
+        } catch (error) {
+            console.error("Erro ao atualizar detalhes:", error);
+        }
+    }
+
+    function fecharModal() {
+        if (estado.modal.id === null) {
             return;
         }
 
-        elemento.hidden =
-            false;
+        destruirMapa();
 
-        elemento.className =
-            `mensagem-admin-status ${tipo}`;
+        estado.modal.id = null;
+        estado.modal.ocorrencia = null;
+        estado.modal.requisicao++;
 
-        elemento.textContent =
-            texto;
+        esconderOverlay(modalEl);
+        atualizarTravaDeRolagem();
+
+        const foco = estado.modal.focoAnterior;
+
+        if (foco && document.contains(foco)) {
+            foco.focus();
+        }
     }
 
-
-    /*====================================================================================================
-
-    EVENTOS DOS DETALHES
-
-    ====================================================================================================*/
-
-    function registrarEventosDetalhes(
-        ocorrencia
-    ) {
-        document
-            .getElementById(
-                "btn-voltar-lista-detalhes"
-            )
-            ?.addEventListener(
-                "click",
-                voltarParaLista
-            );
-
-        document
-            .getElementById(
-                "btn-atualizar-status"
-            )
-            ?.addEventListener(
-                "click",
-                () => {
-                    atualizarStatus(
-                        Number(
-                            ocorrencia.id
-                        )
-                    );
-                }
-            );
-
-        document
-            .querySelectorAll(
-                "[data-foto-url]"
-            )
-            .forEach((botao) => {
-                botao.addEventListener(
-                    "click",
-                    () => {
-                        abrirFoto(
-                            botao.dataset.fotoUrl
-                        );
-                    }
-                );
-            });
+    function renderCarregandoModal() {
+        return `
+            <div class="modal-ocorrencia-estado">
+                <button type="button" class="btn-fechar-modal modal-fechar-flutuante" data-acao="fechar" aria-label="Fechar detalhes">${ICONES.fechar}</button>
+                <div class="spinner-ocorrencias" aria-hidden="true"></div>
+                <h2 id="modal-ocorrencia-titulo">Carregando ocorrência</h2>
+                <span>Buscando descrição, localização e histórico.</span>
+            </div>
+        `;
     }
 
+    function renderErroModal(mensagem) {
+        return `
+            <div class="modal-ocorrencia-estado">
+                <button type="button" class="btn-fechar-modal modal-fechar-flutuante" data-acao="fechar" aria-label="Fechar detalhes">${ICONES.fechar}</button>
+                <div class="modal-ocorrencia-estado-icone">${ICONES.alerta}</div>
+                <h2 id="modal-ocorrencia-titulo">Não foi possível abrir a ocorrência</h2>
+                <span>${escaparHtml(mensagem)}</span>
+                <button type="button" class="btn-tentar-novamente-ocorrencias" data-acao="tentar-novamente">Tentar novamente</button>
+            </div>
+        `;
+    }
 
-    function voltarParaLista() {
-        destruirMapaDetalhes();
+    function renderizarModal(ocorrencia) {
+        destruirMapa();
 
-        telaDetalhes
-            ?.classList.add(
-                "oculto"
-            );
+        const admin = ehAdministrador();
+        const config = obterConfigStatus(ocorrencia.status);
+        const icone = obterIconeCategoria(ocorrencia.categoria);
+        const fotos = obterFotos(ocorrencia);
 
-        telaFormulario
-            ?.classList.add(
-                "oculto"
-            );
+        const blocoCidadao = admin
+            ? `
+                <section class="cartao-detalhe">
+                    <h3 class="titulo-sessao">Registrada por</h3>
+                    ${renderCidadao(ocorrencia)}
+                </section>
+            `
+            : "";
 
-        telaOcorrencias
-            ?.classList.remove(
-                "oculto"
-            );
+        conteudoModal.innerHTML = `
+            <header class="modal-ocorrencia-cabecalho">
+                <div class="modal-ocorrencia-identidade">
+                    <div class="caixa-icone ${config.classeIcone}">
+                        <div class="icone-mascara img-icone-grande"
+                            style="-webkit-mask-image: url('${icone}'); mask-image: url('${icone}');">
+                        </div>
+                    </div>
 
-        window.scrollTo({
-            top:
-                0,
+                    <div class="modal-ocorrencia-titulos">
+                        <span class="modal-ocorrencia-codigo">${formatarCodigo(ocorrencia)}</span>
+                        <h2 id="modal-ocorrencia-titulo">${escaparHtml(ocorrencia.titulo || "Ocorrência")}</h2>
+                    </div>
+                </div>
 
-            behavior:
-                "smooth"
+                <div class="modal-ocorrencia-cabecalho-acoes">
+                    <div class="etiqueta-status ${config.classe}">${escaparHtml(config.nome)}</div>
+                    <button type="button" class="btn-fechar-modal" data-acao="fechar" aria-label="Fechar detalhes">${ICONES.fechar}</button>
+                </div>
+            </header>
+
+            <div class="modal-ocorrencia-corpo">
+                ${renderProgresso(ocorrencia, config.chave)}
+
+                <div class="modal-ocorrencia-grade">
+                    <div class="modal-ocorrencia-coluna">
+                        <section class="cartao-detalhe">
+                            <div class="caixa-descricao">
+                                <h4 class="titulo-sessao-pequeno">Descrição do problema</h4>
+                                <p class="texto-descricao">${escaparHtml(ocorrencia.descricao || "O cidadão não informou uma descrição.")}</p>
+                            </div>
+
+                            <div class="metadados-ocorrencia">
+                                <div>
+                                    <span>Categoria</span>
+                                    <strong>${escaparHtml(ocorrencia.categoria || "Sem categoria")}</strong>
+                                </div>
+                                <div>
+                                    <span>Registrada em</span>
+                                    <strong>${formatarData(ocorrencia.data_criacao || ocorrencia.data_ocorrencia, true)}</strong>
+                                </div>
+                                <div>
+                                    <span>Última atualização</span>
+                                    <strong>${formatarData(ocorrencia.data_atualizacao || ocorrencia.data_criacao || ocorrencia.data_ocorrencia, true)}</strong>
+                                </div>
+                                <div>
+                                    <span>Fotos anexadas</span>
+                                    <strong>${fotos.length}</strong>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="cartao-detalhe">
+                            <h3 class="titulo-sessao">Histórico da solicitação</h3>
+                            ${renderHistorico(ocorrencia)}
+                        </section>
+                    </div>
+
+                    <div class="modal-ocorrencia-coluna">
+                        ${blocoCidadao}
+
+                        <section class="cartao-detalhe">
+                            <h3 class="titulo-sessao">Localização</h3>
+                            <div class="caixa-endereco">${escaparHtml(obterEndereco(ocorrencia))}</div>
+                            ${renderMapa(ocorrencia)}
+                        </section>
+
+                        <section class="cartao-detalhe">
+                            <h3 class="titulo-sessao">Evidências</h3>
+                            ${renderFotos(fotos)}
+                        </section>
+                    </div>
+                </div>
+
+                ${admin ? renderPainelAcoes(config.chave) : ""}
+            </div>
+        `;
+
+        iniciarMapa(ocorrencia);
+    }
+
+    function renderProgresso(ocorrencia, chaveAtual) {
+        if (chaveAtual === "cancelado") {
+            const motivo = obterMotivoCancelamento(ocorrencia);
+
+            return `
+                <div class="progresso-status-ocorrencia">
+                    <div class="status-cancelado-progresso">
+                        <strong>Ocorrência cancelada</strong>
+                        <span>${escaparHtml(motivo)}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        const indiceAtual = FLUXO.indexOf(chaveAtual);
+
+        const etapas = FLUXO.map((chave, indice) => {
+            const concluida = indice <= indiceAtual;
+            const atual = indice === indiceAtual;
+            const conteudo = indice < indiceAtual ? ICONES.checkPequeno : indice + 1;
+
+            const etapa = `
+                <div class="etapa-status ${concluida ? "concluida" : ""} ${atual ? "atual" : ""}" ${atual ? 'aria-current="step"' : ""}>
+                    <div class="bolinha-status">${conteudo}</div>
+                    <span>${STATUS[chave].nome}</span>
+                </div>
+            `;
+
+            const linha = indice < FLUXO.length - 1
+                ? `<div class="linha-status ${indice < indiceAtual ? "concluida" : ""}"></div>`
+                : "";
+
+            return etapa + linha;
+        }).join("");
+
+        return `<div class="progresso-status-ocorrencia">${etapas}</div>`;
+    }
+
+    // O motivo do cancelamento é a observação do último registro "Cancelado" no histórico.
+    function obterMotivoCancelamento(ocorrencia) {
+        const historico = Array.isArray(ocorrencia.historico) ? ocorrencia.historico : [];
+
+        const cancelamento = historico
+            .slice()
+            .reverse()
+            .find((item) => obterChaveStatus(item.status_novo) === "cancelado");
+
+        return cancelamento?.observacao || "Consulte o histórico abaixo para mais detalhes.";
+    }
+
+    function montarItensHistorico(ocorrencia) {
+        const historico = Array.isArray(ocorrencia.historico) ? ocorrencia.historico : [];
+
+        if (historico.length === 0) {
+            return [{
+                chave: "recebido",
+                titulo: HISTORICO_PADRAO.recebido.titulo,
+                descricao: HISTORICO_PADRAO.recebido.descricao,
+                data: formatarData(ocorrencia.data_criacao || ocorrencia.data_ocorrencia, true),
+                responsavel: "Sistema"
+            }];
+        }
+
+        return historico.map((item, indice) => {
+            const registro = indice === 0 && !item.status_anterior;
+            const chave = registro ? "recebido" : (obterChaveStatus(item.status_novo) || "recebido");
+            const padrao = HISTORICO_PADRAO[chave];
+            const nomeStatus = obterConfigStatus(item.status_novo).nome;
+
+            return {
+                chave,
+                titulo: registro
+                    ? HISTORICO_PADRAO.recebido.titulo
+                    : (padrao?.titulo || `Status alterado para ${nomeStatus}`),
+                descricao: item.observacao || padrao?.descricao || `A solicitação avançou para o status ${nomeStatus}.`,
+                data: formatarData(item.data_alteracao, true),
+                responsavel: item.usuario_responsavel_nome || (registro ? "Sistema" : "Prefeitura")
+            };
         });
     }
 
+    function renderHistorico(ocorrencia) {
+        // Mais recente primeiro: dá para ver logo o que aconteceu por último.
+        const itens = montarItensHistorico(ocorrencia)
+            .reverse()
+            .map((item) => `
+                <li class="historico-ocorrencia-item" data-status="${item.chave}">
+                    <span class="historico-ocorrencia-marcador" aria-hidden="true"></span>
+                    <div class="historico-ocorrencia-cartao">
+                        <div class="historico-ocorrencia-topo">
+                            <strong>${escaparHtml(item.titulo)}</strong>
+                            <time>${escaparHtml(item.data)}</time>
+                        </div>
+                        <p>${escaparHtml(item.descricao)}</p>
+                        <span class="responsavel-historico">${escaparHtml(item.responsavel)}</span>
+                    </div>
+                </li>
+            `)
+            .join("");
 
-    /*====================================================================================================
+        return `<ol class="historico-ocorrencia">${itens}</ol>`;
+    }
 
-    VISUALIZAÇÃO DE FOTO
+    function renderCidadao(ocorrencia) {
+        if (!ocorrencia.usuario_nome) {
+            return '<p class="aviso-status-final">Os dados de quem registrou não foram informados.</p>';
+        }
 
-    ====================================================================================================*/
+        return `
+            <div class="caixa-dados-cidadao">
+                <strong>${escaparHtml(ocorrencia.usuario_nome)}</strong>
+                ${ocorrencia.usuario_email ? `<span>${escaparHtml(ocorrencia.usuario_email)}</span>` : ""}
+            </div>
+        `;
+    }
 
-    function abrirFoto(
-        url
-    ) {
+    function renderMapa(ocorrencia) {
+        if (!temCoordenadas(ocorrencia)) {
+            return `
+                <div class="caixa-mapa">
+                    <span class="mapa-sem-gps">A localização por GPS não foi registrada.</span>
+                </div>
+            `;
+        }
+
+        if (typeof window.L === "undefined") {
+            return `
+                <div class="caixa-mapa" title="${Number(ocorrencia.latitude)}, ${Number(ocorrencia.longitude)}">
+                    <div class="ponto-mapa"></div>
+                </div>
+            `;
+        }
+
+        return '<div class="caixa-mapa caixa-mapa-real" data-mapa-ocorrencia></div>';
+    }
+
+    function obterFotos(ocorrencia) {
+        return Array.isArray(ocorrencia.imagens)
+            ? ocorrencia.imagens.filter((imagem) => Boolean(imagem?.url))
+            : [];
+    }
+
+    function renderFotos(fotos) {
+        if (fotos.length === 0) {
+            return `
+                <div class="caixa-foto-vazia">
+                    <span class="texto-foto-vazia">Nenhuma foto anexada</span>
+                </div>
+            `;
+        }
+
+        const itens = fotos.map((foto, indice) => `
+            <button type="button" class="foto-evidencia" data-acao="ver-foto"
+                data-src="${escaparHtml(foto.url)}" aria-label="Ampliar foto ${indice + 1}">
+                <img src="${escaparHtml(foto.url)}" alt="Foto ${indice + 1} da ocorrência" loading="lazy">
+            </button>
+        `).join("");
+
+        return `<div class="galeria-evidencias">${itens}</div>`;
+    }
+
+    function renderPainelAcoes(chaveAtual) {
+        if (chaveAtual === "resolvido") {
+            return `
+                <section class="cartao-detalhe painel-admin-status painel-admin-final">
+                    <h3 class="titulo-sessao">Status final</h3>
+                    <p class="aviso-status-final">Esta ocorrência foi resolvida. O status não pode mais ser alterado.</p>
+                </section>
+            `;
+        }
+
+        if (chaveAtual === "cancelado") {
+            return `
+                <section class="cartao-detalhe painel-admin-status painel-admin-final">
+                    <h3 class="titulo-sessao">Status final</h3>
+                    <p class="aviso-status-final">Esta ocorrência foi cancelada. Ela só aparece para o cidadão que a registrou.</p>
+                </section>
+            `;
+        }
+
+        const proxima = PROXIMA_ETAPA[chaveAtual] || PROXIMA_ETAPA.recebido;
+        const atual = STATUS[chaveAtual] || STATUS.recebido;
+        const destino = STATUS[proxima.status];
+
+        return `
+            <section class="cartao-detalhe painel-admin-status">
+                <div class="painel-admin-cabecalho">
+                    <h3 class="titulo-sessao">Próximo passo</h3>
+
+                    <div class="transicao-status">
+                        <span class="etiqueta-status ${atual.classe}">${atual.nome}</span>
+                        <span class="seta-transicao" aria-hidden="true">${ICONES.seta}</span>
+                        <span class="etiqueta-status ${destino.classe}">${destino.nome}</span>
+                    </div>
+                </div>
+
+                <p class="texto-admin-status">
+                    ${proxima.ajuda} Se a mensagem ficar em branco, o cidadão recebe o texto de exemplo do campo.
+                </p>
+
+                <div class="painel-admin-linha">
+                    <div class="grupo-admin-status">
+                        <label for="admin-mensagem">Mensagem para o cidadão (opcional)</label>
+                        <textarea id="admin-mensagem" maxlength="1000" placeholder="${escaparHtml(proxima.mensagemPadrao)}"></textarea>
+                        <span class="contador-caracteres" data-contador="admin-mensagem">0/1000</span>
+                    </div>
+
+                    <div class="painel-admin-botoes">
+                        <button type="button" class="btn-atualizar-status" data-acao="avancar">
+                            ${ICONES.check}<span>${proxima.botao}</span>
+                        </button>
+
+                        <button type="button" class="btn-cancelar-ocorrencia" data-acao="cancelar">
+                            ${ICONES.lixeira}<span>Cancelar ocorrência</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mensagem-admin-status erro" role="alert" hidden></div>
+            </section>
+        `;
+    }
+
+    function iniciarMapa(ocorrencia) {
+        const elemento = conteudoModal.querySelector("[data-mapa-ocorrencia]");
+
+        if (!elemento || typeof window.L === "undefined" || !temCoordenadas(ocorrencia)) {
+            return;
+        }
+
+        const posicao = [Number(ocorrencia.latitude), Number(ocorrencia.longitude)];
+
+        estado.modal.mapa = window.L.map(elemento, {
+            zoomControl: true,
+            scrollWheelZoom: false
+        }).setView(posicao, 17);
+
+        window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution: "&copy; OpenStreetMap"
+        }).addTo(estado.modal.mapa);
+
+        window.L.marker(posicao)
+            .addTo(estado.modal.mapa)
+            .bindPopup(escaparHtml(ocorrencia.titulo || "Ocorrência"));
+
+        // O Leaflet precisa recalcular o tamanho depois que o modal termina de abrir.
+        setTimeout(() => {
+            estado.modal.mapa?.invalidateSize();
+        }, 280);
+    }
+
+    function destruirMapa() {
+        if (estado.modal.mapa) {
+            estado.modal.mapa.remove();
+            estado.modal.mapa = null;
+        }
+    }
+
+    function abrirFoto(url) {
         if (!url) {
             return;
         }
 
-        const overlay =
-            document.createElement(
-                "div"
-            );
-
-        overlay.className =
-            "visualizador-foto-ocorrencia";
-
+        const overlay = document.createElement("div");
+        overlay.className = "visualizador-foto-ocorrencia";
         overlay.innerHTML = `
-            <button class="fechar-visualizador-foto" type="button" aria-label="Fechar">
-                &times;
-            </button>
-
+            <button class="fechar-visualizador-foto" type="button" aria-label="Fechar foto">&times;</button>
             <img src="${escaparHtml(url)}" alt="Evidência da ocorrência">
         `;
 
-        document.body.appendChild(
-            overlay
-        );
-
-        function fechar() {
-            overlay.remove();
-        }
-
-        overlay.addEventListener(
-            "click",
-            (event) => {
-                if (
-                    event.target ===
-                    overlay
-                ) {
-                    fechar();
-                }
+        overlay.addEventListener("click", (event) => {
+            if (event.target === overlay || event.target.closest(".fechar-visualizador-foto")) {
+                overlay.remove();
             }
-        );
+        });
 
-        overlay
-            .querySelector(
-                ".fechar-visualizador-foto"
-            )
-            ?.addEventListener(
-                "click",
-                fechar
-            );
-
-        document.addEventListener(
-            "keydown",
-            function fecharEsc(
-                event
-            ) {
-                if (
-                    event.key !==
-                    "Escape"
-                ) {
-                    return;
-                }
-
-                fechar();
-
-                document.removeEventListener(
-                    "keydown",
-                    fecharEsc
-                );
-            }
-        );
+        document.body.appendChild(overlay);
+        overlay.querySelector(".fechar-visualizador-foto").focus();
     }
 
 
     /*====================================================================================================
 
-    MAPA DOS DETALHES
+    ADMIN: ALTERAR STATUS
 
     ====================================================================================================*/
 
-    function destruirMapaDetalhes() {
-        if (
-            estado.mapaDetalhes
-        ) {
-            estado.mapaDetalhes.remove();
+    function definirCarregando(botao, carregando, texto) {
+        if (!botao) {
+            return;
+        }
 
-            estado.mapaDetalhes =
-                null;
+        if (carregando) {
+            botao.dataset.htmlOriginal = botao.innerHTML;
+            botao.disabled = true;
+            botao.innerHTML = `<span class="spinner-botao" aria-hidden="true"></span><span>${escaparHtml(texto)}</span>`;
+        } else if (botao.dataset.htmlOriginal) {
+            botao.disabled = false;
+            botao.innerHTML = botao.dataset.htmlOriginal;
+            delete botao.dataset.htmlOriginal;
+        }
+    }
 
-            estado.marcadorDetalhes =
-                null;
+    // Usa a rota que já existe: PATCH /api/ocorrencias/{id}/status
+    async function enviarStatus(id, statusId, observacao) {
+        const resposta = await fetchAutenticado(
+            `${API_OCORRENCIAS_ACOMPANHAMENTO}/${id}/status`,
+            {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    status_id: statusId,
+                    observacao
+                })
+            }
+        );
+
+        const dados = await lerResposta(resposta);
+
+        if (!resposta.ok || !dados?.sucesso) {
+            throw new Error(
+                dados?.mensagem ||
+                "Não foi possível atualizar o status."
+            );
+        }
+
+        return dados;
+    }
+
+    async function atualizarTelaAposMudanca(id) {
+        await Promise.allSettled([
+            carregarResumo(),
+            carregarLista()
+        ]);
+
+        if (estado.modal.id === id) {
+            await recarregarModal(id);
+        }
+    }
+
+    async function avancarStatus(botao) {
+        const ocorrencia = estado.modal.ocorrencia;
+
+        if (estado.atualizandoStatus || !ocorrencia) {
+            return;
+        }
+
+        const id = Number(ocorrencia.id);
+        const proxima = PROXIMA_ETAPA[obterChaveStatus(ocorrencia.status)];
+
+        if (!proxima) {
+            return;
+        }
+
+        const aviso = conteudoModal.querySelector(".mensagem-admin-status");
+        const btnCancelar = conteudoModal.querySelector('[data-acao="cancelar"]');
+        const campoMensagem = conteudoModal.querySelector("#admin-mensagem");
+        const mensagem = campoMensagem ? campoMensagem.value.trim().slice(0, 1000) : "";
+
+        const mostrarAviso = (texto) => {
+            if (aviso) {
+                aviso.textContent = texto;
+                aviso.hidden = false;
+            }
+        };
+
+        if (aviso) {
+            aviso.hidden = true;
+        }
+
+        const statusId = obterIdStatus(proxima.status);
+
+        if (!statusId) {
+            mostrarAviso(`O status "${STATUS[proxima.status].nome}" não foi encontrado na lista de status do sistema.`);
+            return;
+        }
+
+        estado.atualizandoStatus = true;
+        definirCarregando(botao, true, "Salvando...");
+
+        if (btnCancelar) {
+            btnCancelar.disabled = true;
+        }
+
+        try {
+            await enviarStatus(id, statusId, mensagem || proxima.mensagemPadrao);
+
+            mostrarToast(
+                proxima.sucesso,
+                `${formatarCodigo(ocorrencia)} agora está como "${STATUS[proxima.status].nome}".`
+            );
+
+            await atualizarTelaAposMudanca(id);
+
+        } catch (error) {
+            console.error("Erro ao atualizar status:", error);
+            mostrarAviso(error.message || "Não foi possível atualizar o status.");
+
+        } finally {
+            estado.atualizandoStatus = false;
+
+            // Se o modal não foi redesenhado, devolve os botões ao normal.
+            if (document.contains(botao)) {
+                definirCarregando(botao, false);
+            }
+
+            if (btnCancelar && document.contains(btnCancelar)) {
+                btnCancelar.disabled = false;
+            }
         }
     }
 
 
-    function inicializarMapaDetalhes(
-        ocorrencia
-    ) {
-        const elemento =
-            document.getElementById(
-                "mapa-detalhes-ocorrencia"
-            );
+    /*====================================================================================================
 
-        if (
-            !elemento
-        ) {
+    ADMIN: CANCELAR OCORRÊNCIA
+
+    O cancelamento usa a mesma rota de status, enviando o id de "Cancelado"
+    e o motivo na observação. Assim ele aparece no histórico do cidadão.
+
+    ====================================================================================================*/
+
+    function iniciarCancelamento(id) {
+        if (!Number.isInteger(id) || id <= 0) {
             return;
         }
 
-        const latitude =
-            Number(
-                ocorrencia.latitude
-            );
+        const ocorrencia =
+            estado.ocorrencias.find((item) => Number(item.id) === id) ||
+            (Number(estado.modal.ocorrencia?.id) === id ? estado.modal.ocorrencia : null);
 
-        const longitude =
-            Number(
-                ocorrencia.longitude
-            );
+        const codigo = ocorrencia ? formatarCodigo(ocorrencia) : `#${id}`;
 
-        if (
-            typeof L === "undefined" ||
-            !Number.isFinite(
-                latitude
-            ) ||
-            !Number.isFinite(
-                longitude
-            )
-        ) {
-            elemento.innerHTML = `
-                <div class="mapa-detalhes-indisponivel">
-                    Localização no mapa indisponível.
-                </div>
-            `;
+        abrirDialogo(codigo, async (motivo, justificativa) => {
+            const statusId = obterIdStatus("cancelado");
 
-            return;
-        }
-
-        estado.mapaDetalhes =
-            L.map(
-                elemento,
-                {
-                    zoomControl:
-                        true
-                }
-            )
-                .setView(
-                    [
-                        latitude,
-                        longitude
-                    ],
-                    17
-                );
-
-        L.tileLayer(
-            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-            {
-                maxZoom:
-                    19,
-
-                attribution:
-                    "&copy; OpenStreetMap"
+            if (!statusId) {
+                throw new Error('O status "Cancelado" não foi encontrado na lista de status do sistema.');
             }
-        )
-            .addTo(
-                estado.mapaDetalhes
+
+            const rotulo = MOTIVOS_CANCELAMENTO[motivo] || "Motivo não informado";
+            const observacao = justificativa ? `${rotulo}. ${justificativa}` : `${rotulo}.`;
+
+            await enviarStatus(id, statusId, observacao);
+
+            mostrarToast(
+                "Ocorrência cancelada",
+                `${codigo} foi cancelada. Só quem registrou continua vendo.`
             );
 
-        estado.marcadorDetalhes =
-            L.marker([
-                latitude,
-                longitude
-            ])
-                .addTo(
-                    estado.mapaDetalhes
-                );
+            atualizarTelaAposMudanca(id);
+        });
+    }
 
-        estado.marcadorDetalhes
-            .bindPopup(
-                escaparHtml(
-                    ocorrencia.titulo ||
-                    "Ocorrência"
-                )
-            );
+    function criarDialogo() {
+        const opcoesMotivo = Object.entries(MOTIVOS_CANCELAMENTO).map(([valor, rotulo]) => `
+            <label class="opcao-motivo">
+                <input type="radio" name="motivo-cancelamento" value="${valor}">
+                <span>${rotulo}</span>
+            </label>
+        `).join("");
 
-        setTimeout(
-            () => {
-                estado.mapaDetalhes
-                    ?.invalidateSize();
-            },
-            150
-        );
+        dialogoEl = document.createElement("div");
+        dialogoEl.className = "dialogo-cancelamento-overlay";
+        dialogoEl.hidden = true;
+        dialogoEl.innerHTML = `
+            <div class="dialogo-cancelamento" role="alertdialog" aria-modal="true"
+                aria-labelledby="dialogo-cancelamento-titulo" aria-describedby="dialogo-cancelamento-texto">
+
+                <div class="dialogo-cancelamento-icone">${ICONES.lixeiraGrande}</div>
+
+                <h3 id="dialogo-cancelamento-titulo">Cancelar a ocorrência <span data-dialogo-codigo></span>?</h3>
+
+                <p id="dialogo-cancelamento-texto">
+                    Ela deixa de aparecer para os outros cidadãos. Quem registrou continua vendo a ocorrência,
+                    com o status Cancelado e o motivo que você escolher abaixo.
+                </p>
+
+                <fieldset class="motivos-cancelamento">
+                    <legend>Motivo do cancelamento</legend>
+                    <div class="lista-motivos">${opcoesMotivo}</div>
+                </fieldset>
+
+                <div class="grupo-admin-status">
+                    <label for="justificativa-cancelamento" data-rotulo-justificativa>Justificativa para o cidadão (opcional)</label>
+                    <textarea id="justificativa-cancelamento" maxlength="300"
+                        placeholder="Ex: Já existe uma ocorrência aberta para este mesmo problema."></textarea>
+                    <span class="contador-caracteres" data-contador="justificativa">0/300</span>
+                </div>
+
+                <div class="dialogo-cancelamento-erro" role="alert" hidden></div>
+
+                <div class="dialogo-cancelamento-botoes">
+                    <button type="button" class="btn-dialogo-voltar" data-acao="voltar">Voltar</button>
+                    <button type="button" class="btn-dialogo-confirmar" data-acao="confirmar">Cancelar ocorrência</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(dialogoEl);
+
+        dialogoEl.addEventListener("click", (event) => {
+            if (event.target === dialogoEl) {
+                if (!estado.dialogo.ocupado) {
+                    fecharDialogo();
+                }
+                return;
+            }
+
+            const acao = event.target.closest("[data-acao]")?.dataset.acao;
+
+            if (acao === "voltar" && !estado.dialogo.ocupado) {
+                fecharDialogo();
+            }
+
+            if (acao === "confirmar") {
+                confirmarCancelamento();
+            }
+        });
+
+        dialogoEl.addEventListener("input", (event) => {
+            if (event.target.id === "justificativa-cancelamento") {
+                dialogoEl.querySelector('[data-contador="justificativa"]').textContent =
+                    `${event.target.value.length}/300`;
+            }
+
+            esconderErroDialogo();
+        });
+
+        dialogoEl.addEventListener("change", (event) => {
+            if (event.target.name === "motivo-cancelamento") {
+                dialogoEl.querySelector("[data-rotulo-justificativa]").textContent =
+                    event.target.value === "outro"
+                        ? "Justificativa para o cidadão (obrigatória)"
+                        : "Justificativa para o cidadão (opcional)";
+
+                esconderErroDialogo();
+            }
+        });
+    }
+
+    function abrirDialogo(codigo, aoConfirmar) {
+        estado.dialogo.focoAnterior = document.activeElement;
+        estado.dialogo.aoConfirmar = aoConfirmar;
+        estado.dialogo.aberto = true;
+
+        dialogoEl.querySelector("[data-dialogo-codigo]").textContent = codigo;
+        dialogoEl.querySelectorAll('input[name="motivo-cancelamento"]').forEach((radio) => {
+            radio.checked = false;
+        });
+        dialogoEl.querySelector("#justificativa-cancelamento").value = "";
+        dialogoEl.querySelector('[data-contador="justificativa"]').textContent = "0/300";
+        dialogoEl.querySelector("[data-rotulo-justificativa]").textContent = "Justificativa para o cidadão (opcional)";
+        esconderErroDialogo();
+
+        atualizarTravaDeRolagem();
+        mostrarOverlay(dialogoEl);
+
+        setTimeout(() => {
+            dialogoEl.querySelector('input[name="motivo-cancelamento"]')?.focus();
+        }, 60);
+    }
+
+    function fecharDialogo() {
+        if (!estado.dialogo.aberto) {
+            return;
+        }
+
+        estado.dialogo.aberto = false;
+        estado.dialogo.aoConfirmar = null;
+
+        esconderOverlay(dialogoEl);
+        atualizarTravaDeRolagem();
+
+        const foco = estado.dialogo.focoAnterior;
+
+        if (foco && document.contains(foco)) {
+            foco.focus();
+        }
+    }
+
+    function mostrarErroDialogo(mensagem) {
+        const erro = dialogoEl.querySelector(".dialogo-cancelamento-erro");
+        erro.textContent = mensagem;
+        erro.hidden = false;
+    }
+
+    function esconderErroDialogo() {
+        const erro = dialogoEl?.querySelector(".dialogo-cancelamento-erro");
+
+        if (erro) {
+            erro.hidden = true;
+        }
+    }
+
+    async function confirmarCancelamento() {
+        if (estado.dialogo.ocupado || !estado.dialogo.aoConfirmar) {
+            return;
+        }
+
+        const selecionado = dialogoEl.querySelector('input[name="motivo-cancelamento"]:checked');
+        const justificativa = dialogoEl.querySelector("#justificativa-cancelamento").value.trim();
+
+        if (!selecionado) {
+            mostrarErroDialogo("Escolha o motivo do cancelamento.");
+            return;
+        }
+
+        if (selecionado.value === "outro" && justificativa.length < 10) {
+            mostrarErroDialogo("Explique o motivo para o cidadão com pelo menos 10 caracteres.");
+            return;
+        }
+
+        const btnConfirmar = dialogoEl.querySelector('[data-acao="confirmar"]');
+        const btnVoltar = dialogoEl.querySelector('[data-acao="voltar"]');
+
+        estado.dialogo.ocupado = true;
+        definirCarregando(btnConfirmar, true, "Cancelando...");
+        btnVoltar.disabled = true;
+
+        try {
+            await estado.dialogo.aoConfirmar(selecionado.value, justificativa);
+            estado.dialogo.ocupado = false;
+            fecharDialogo();
+
+        } catch (error) {
+            console.error("Erro ao cancelar ocorrência:", error);
+            mostrarErroDialogo(error.message || "Não foi possível cancelar a ocorrência.");
+
+        } finally {
+            estado.dialogo.ocupado = false;
+            definirCarregando(btnConfirmar, false);
+            btnVoltar.disabled = false;
+        }
+    }
+
+
+    /*====================================================================================================
+
+    TOAST (aviso rápido no canto da tela)
+
+    ====================================================================================================*/
+
+    function criarAreaToast() {
+        areaToast = document.createElement("div");
+        areaToast.className = "toast-ocorrencia-area";
+        areaToast.setAttribute("aria-live", "polite");
+        document.body.appendChild(areaToast);
+    }
+
+    function mostrarToast(titulo, texto) {
+        const toast = document.createElement("div");
+        toast.className = "toast-ocorrencia";
+        toast.innerHTML = `
+            <div class="toast-ocorrencia-icone">${ICONES.checkPequeno}</div>
+            <div class="toast-ocorrencia-textos">
+                <strong>${escaparHtml(titulo)}</strong>
+                <span>${escaparHtml(texto)}</span>
+            </div>
+        `;
+
+        areaToast.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add("saindo");
+            setTimeout(() => toast.remove(), 220);
+        }, 4000);
+    }
+
+
+    /*====================================================================================================
+
+    TECLADO (Esc fecha: foto > diálogo > modal)
+
+    ====================================================================================================*/
+
+    function registrarTeclado() {
+        document.addEventListener("keydown", (event) => {
+            if (event.key !== "Escape") {
+                return;
+            }
+
+            const visualizador = document.querySelector(".visualizador-foto-ocorrencia");
+
+            if (visualizador) {
+                visualizador.remove();
+                return;
+            }
+
+            if (estado.dialogo.aberto) {
+                if (!estado.dialogo.ocupado) {
+                    fecharDialogo();
+                }
+                return;
+            }
+
+            if (estado.modal.id !== null) {
+                fecharModal();
+            }
+        });
     }
 
 
@@ -2859,62 +2084,37 @@ Cancelado (pode acontecer antes de resolver)
 
     ATUALIZAÇÃO APÓS REGISTRAR NOVA OCORRÊNCIA
 
-    O arquivo de cadastro já controla a abertura e o retorno do formulário.
-
-    Este observer detecta quando o formulário volta a ser ocultado
-    e atualiza a listagem e os indicadores automaticamente.
+    O ocorrencia.js controla a abertura e o retorno do formulário.
+    Quando o formulário volta a ficar oculto, a lista e os contadores são recarregados.
 
     ====================================================================================================*/
 
     function observarFormulario() {
-        if (
-            !telaFormulario
-        ) {
+        if (!telaFormulario) {
             return;
         }
 
-        let estavaVisivel =
-            !telaFormulario.classList.contains(
-                "oculto"
-            );
+        let estavaVisivel = !telaFormulario.classList.contains("oculto");
 
-        const observer =
-            new MutationObserver(
-                () => {
-                    const estaVisivel =
-                        !telaFormulario.classList.contains(
-                            "oculto"
-                        );
+        const observer = new MutationObserver(() => {
+            const estaVisivel = !telaFormulario.classList.contains("oculto");
 
-                    if (
-                        estavaVisivel &&
-                        !estaVisivel
-                    ) {
-                        estado.pagina =
-                            1;
+            if (estavaVisivel && !estaVisivel) {
+                estado.pagina = 1;
 
-                        Promise.allSettled([
-                            carregarResumo(),
-                            carregarLista()
-                        ]);
-                    }
-
-                    estavaVisivel =
-                        estaVisivel;
-                }
-            );
-
-        observer.observe(
-            telaFormulario,
-            {
-                attributes:
-                    true,
-
-                attributeFilter: [
-                    "class"
-                ]
+                Promise.allSettled([
+                    carregarResumo(),
+                    carregarLista()
+                ]);
             }
-        );
+
+            estavaVisivel = estaVisivel;
+        });
+
+        observer.observe(telaFormulario, {
+            attributes: true,
+            attributeFilter: ["class"]
+        });
     }
 
 
@@ -2925,24 +2125,29 @@ Cancelado (pode acontecer antes de resolver)
     ====================================================================================================*/
 
     async function inicializar() {
-        if (
-            !telaOcorrencias ||
-            !containerCards
-        ) {
+        if (!telaOcorrencias || !containerCards) {
             return;
         }
 
-        registrarFiltros();
+        criarModal();
+        criarDialogo();
+        criarAreaToast();
 
+        registrarEventosLista();
+        registrarFiltros();
+        registrarTeclado();
         observarFormulario();
 
         try {
             await carregarUsuario();
 
-            if (
-                ehAdministrador()
-            ) {
-                await carregarStatusDisponiveis();
+            if (ehAdministrador()) {
+                try {
+                    await carregarStatusDisponiveis();
+                } catch (error) {
+                    // A lista continua funcionando. O erro aparece quando o admin tentar mudar um status.
+                    console.error("Erro ao carregar status:", error);
+                }
             }
 
             await Promise.allSettled([
@@ -2950,23 +2155,14 @@ Cancelado (pode acontecer antes de resolver)
                 carregarLista()
             ]);
 
-            /*
-             * O ocorrencia.js original também carrega o resumo.
-             *
-             * Para administrador, fazemos uma última leitura do resumo geral
-             * para garantir que os números exibidos sejam os administrativos.
-             */
-            if (
-                ehAdministrador()
-            ) {
+            // O ocorrencia.js também carrega o resumo (do cidadão).
+            // Para o admin, lemos o resumo geral por último para ele prevalecer.
+            if (ehAdministrador()) {
                 await carregarResumo();
             }
 
         } catch (error) {
-            console.error(
-                "Erro ao inicializar acompanhamento:",
-                error
-            );
+            console.error("Erro ao inicializar acompanhamento:", error);
 
             renderizarErroLista(
                 error.message ||
@@ -2975,16 +2171,8 @@ Cancelado (pode acontecer antes de resolver)
         }
     }
 
-
-    if (
-        document.readyState ===
-        "loading"
-    ) {
-        document.addEventListener(
-            "DOMContentLoaded",
-            inicializar
-        );
-
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", inicializar);
     } else {
         inicializar();
     }
