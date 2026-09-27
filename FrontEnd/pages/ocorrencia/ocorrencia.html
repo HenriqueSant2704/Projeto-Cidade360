@@ -7,8 +7,8 @@
     <link rel="stylesheet" href="../../../FrontEnd/pages/global/global.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="../../../FrontEnd/pages/ocorrencia/ocorrencia.css">
-    <!-- ALTERADO: ?v=2 força o navegador a baixar o CSS novo -->
-    <link rel="stylesheet" href="/FrontEnd/pages/ocorrencia/acompanhamentoOcorrencias.css?v=2">
+    <!-- ALTERADO: ?v=3 força o navegador a baixar o CSS novo -->
+    <link rel="stylesheet" href="/FrontEnd/pages/ocorrencia/acompanhamentoOcorrencias.css?v=3">
     <title>Cidade360-Ocorrências</title>
 </head>
 
@@ -334,8 +334,9 @@
                 </form>
             </div>
 
-            <!-- ALTERADO: a antiga #tela-detalhes foi removida.
-                 Os detalhes agora abrem em um modal criado pelo acompanhamentoOcorrencias.js. -->
+            <!-- Tela de detalhes: fica vazia aqui. O acompanhamentoOcorrencias.js
+                 preenche quando o usuário clica em "Detalhes". -->
+            <div id="tela-detalhes" class="oculto"></div>
 
         </div>
     </div>
@@ -345,8 +346,8 @@
     <script src="../../../FrontEnd/pages/global/logout.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="../../../FrontEnd/pages/ocorrencia/ocorrencia.js"></script>
-    <!-- ALTERADO: ?v=2 força o navegador a baixar o JS novo. O adminOcorrencias.js não é mais usado. -->
-    <script src="/FrontEnd/pages/ocorrencia/acompanhamentoOcorrencias.js?v=2"></script>
+    <!-- ALTERADO: ?v=3 força o navegador a baixar o JS novo. O adminOcorrencias.js não é mais usado. -->
+    <script src="/FrontEnd/pages/ocorrencia/acompanhamentoOcorrencias.js?v=3"></script>
     <script src="../../../FrontEnd/pages/global/global.js"></script>
 
 

@@ -3,7 +3,7 @@
  Acompanhamento de Ocorrências
 
  Complementa o ocorrencia.css sem substituir a identidade visual.
- Contém: listagem, paginação, modal de detalhes, painel do admin,
+ Contém: listagem, paginação, tela de detalhes, painel do admin,
  diálogo de cancelamento e avisos (toast).
 
  ===================================================================*/
@@ -263,89 +263,54 @@
 
 /*===================================================================
 
- Modal de Detalhes
+ Tela de Detalhes
+
+ Mesmo comportamento de antes (a lista some e os detalhes aparecem),
+ com o visual novo. O #tela-detalhes já recebe largura e espaçamento
+ do ocorrencia.css.
 
  ===================================================================*/
 
-body.modal-ocorrencia-aberto {
-    overflow: hidden;
+/* Mesma animação de troca de tela do formulário */
+#tela-detalhes {
+    animation-duration: .28s;
+    animation-fill-mode: both;
+    animation-timing-function: cubic-bezier(.22, 1, .36, 1);
 }
 
-.modal-ocorrencia-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 9000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 24px;
-    background: rgba(15, 23, 42, .55);
-    backdrop-filter: blur(3px);
-    opacity: 0;
-    transition: opacity .2s ease;
+#tela-detalhes > * {
+    flex-shrink: 0;
 }
 
-.modal-ocorrencia-overlay[hidden] {
-    display: none;
-}
-
-.modal-ocorrencia-overlay.visivel {
-    opacity: 1;
-}
-
-.modal-ocorrencia {
-    width: min(1080px, 100%);
-    max-height: calc(100vh - 48px);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    background: #f6f8fb;
-    border-radius: 28px;
-    box-shadow: 0 30px 80px rgba(15, 23, 42, .25);
-    transform: translateY(16px) scale(.98);
-    transition: transform .28s cubic-bezier(.22, 1, .36, 1);
-}
-
-.modal-ocorrencia-overlay.visivel .modal-ocorrencia {
-    transform: none;
-}
-
-.modal-ocorrencia-conteudo {
-    position: relative;
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Cabeçalho */
-
-.modal-ocorrencia-cabecalho {
+/* Cabeçalho com ícone, código, título e status */
+.detalhes-ocorrencia-cabecalho {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 20px;
-    padding: 22px 28px;
+    padding: 24px 28px;
     background: #ffffff;
-    border-bottom: 1px solid #ececec;
+    border: 1px solid #ececec;
+    border-radius: 24px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, .03);
 }
 
-.modal-ocorrencia-identidade {
+.detalhes-ocorrencia-identidade {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 18px;
     min-width: 0;
 }
 
-.modal-ocorrencia-identidade .caixa-icone {
+.detalhes-ocorrencia-identidade .caixa-icone {
     flex-shrink: 0;
 }
 
-.modal-ocorrencia-titulos {
+.detalhes-ocorrencia-titulos {
     min-width: 0;
 }
 
-.modal-ocorrencia-codigo {
+.detalhes-ocorrencia-codigo {
     display: block;
     margin-bottom: 4px;
     font-size: 12px;
@@ -354,118 +319,77 @@ body.modal-ocorrencia-aberto {
     letter-spacing: .5px;
 }
 
-.modal-ocorrencia-titulos h2 {
+.detalhes-ocorrencia-titulos h2 {
     margin: 0;
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
     line-height: 1.3;
     color: #1f2937;
 }
 
-.modal-ocorrencia-cabecalho-acoes {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+#tela-detalhes .etiqueta-status {
     flex-shrink: 0;
-}
-
-.modal-ocorrencia .etiqueta-status {
     white-space: nowrap;
 }
 
-.btn-fechar-modal {
-    width: 42px;
-    height: 42px;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    padding: 0;
-    border: 1px solid #ececec;
-    border-radius: 50%;
-    background: #ffffff;
-    color: #566987;
-    cursor: pointer;
-    transition: background-color .2s ease, color .2s ease;
-}
-
-.btn-fechar-modal:hover {
-    background: #f1f5f9;
-    color: #1f2937;
-}
-
-/* Corpo */
-
-.modal-ocorrencia-corpo {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    padding: 24px 28px 28px;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-}
-
-/* Impede que blocos com rolagem (ex.: barra de progresso) sejam esmagados */
-.modal-ocorrencia-corpo > * {
-    flex-shrink: 0;
-}
-
-.modal-ocorrencia-grade {
+/* Duas colunas: conteúdo principal e lateral */
+.detalhes-ocorrencia-grade {
     display: grid;
     grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
-    gap: 20px;
+    gap: 24px;
     align-items: start;
 }
 
-.modal-ocorrencia-coluna {
+.detalhes-ocorrencia-coluna {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 24px;
     min-width: 0;
 }
 
-.modal-ocorrencia .cartao-detalhe {
-    padding: 24px;
-    border-radius: 20px;
+#tela-detalhes .cartao-detalhe {
+    padding: 26px;
+    border-radius: 22px;
 }
 
-.modal-ocorrencia .titulo-sessao {
+#tela-detalhes .titulo-sessao {
     margin: 0 0 18px;
-    font-size: 16px;
+    font-size: 17px;
 }
 
-.modal-ocorrencia .titulo-sessao-pequeno {
+#tela-detalhes .titulo-sessao-pequeno {
     margin-top: 0;
 }
 
-.modal-ocorrencia .texto-descricao {
+#tela-detalhes .texto-descricao {
     margin: 0;
     white-space: pre-line;
 }
 
-.modal-ocorrencia .metadados-ocorrencia {
+#tela-detalhes .metadados-ocorrencia {
     margin-top: 16px;
 }
 
-.modal-ocorrencia .progresso-status-ocorrencia {
-    padding: 22px 24px;
+#tela-detalhes .progresso-status-ocorrencia {
+    padding: 24px;
 }
 
-.modal-ocorrencia .caixa-endereco {
+#tela-detalhes .caixa-endereco {
     margin-bottom: 14px;
     padding: 14px 18px;
     font-size: 14px;
 }
 
-.modal-ocorrencia .caixa-mapa {
-    height: 200px;
-}
-
-.modal-ocorrencia .caixa-mapa-real {
+#tela-detalhes .caixa-mapa {
     height: 220px;
 }
 
+#tela-detalhes .caixa-mapa-real {
+    height: 240px;
+}
+
 /* O global.css pode limitar o tamanho das imagens e quebrar os tiles do mapa */
-.modal-ocorrencia .caixa-mapa-real img {
+#tela-detalhes .caixa-mapa-real img {
     max-width: none !important;
     max-height: none !important;
 }
@@ -480,19 +404,17 @@ body.modal-ocorrencia-aberto {
     text-align: center;
 }
 
-.modal-ocorrencia .caixa-foto-vazia {
-    height: 150px;
+#tela-detalhes .caixa-foto-vazia {
+    height: 160px;
 }
 
-.modal-ocorrencia .aviso-status-final {
+#tela-detalhes .aviso-status-final {
     margin: 0;
 }
 
-/* Estados do modal: carregando e erro */
-
-.modal-ocorrencia-estado {
-    position: relative;
-    min-height: 360px;
+/* Estados: carregando e erro */
+.detalhes-ocorrencia-estado {
+    min-height: 380px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -500,24 +422,20 @@ body.modal-ocorrencia-aberto {
     gap: 10px;
     padding: 48px 28px;
     background: #ffffff;
+    border: 1px solid #ececec;
+    border-radius: 24px;
     color: #64748b;
     font-size: 14px;
     text-align: center;
 }
 
-.modal-ocorrencia-estado h2 {
-    margin: 6px 0 0;
+.detalhes-ocorrencia-estado strong {
+    margin-top: 6px;
     font-size: 17px;
     color: #1f2937;
 }
 
-.modal-fechar-flutuante {
-    position: absolute;
-    top: 18px;
-    right: 18px;
-}
-
-.modal-ocorrencia-estado-icone {
+.detalhes-ocorrencia-estado-icone {
     width: 52px;
     height: 52px;
     display: flex;
@@ -874,7 +792,7 @@ body.modal-ocorrencia-aberto {
     margin-bottom: 14px;
 }
 
-.modal-ocorrencia .painel-admin-cabecalho .titulo-sessao {
+#tela-detalhes .painel-admin-cabecalho .titulo-sessao {
     margin: 0;
 }
 
@@ -1330,7 +1248,6 @@ body.modal-ocorrencia-aberto {
  ===================================================================*/
 
 .btn-lixeira-card:focus-visible,
-.btn-fechar-modal:focus-visible,
 .btn-cancelar-ocorrencia:focus-visible,
 .btn-atualizar-status:focus-visible,
 .dialogo-cancelamento-botoes button:focus-visible,
@@ -1364,9 +1281,9 @@ body.modal-ocorrencia-aberto {
 }
 
 
-@media (max-width: 900px) {
+@media (max-width: 1000px) {
 
-    .modal-ocorrencia-grade,
+    .detalhes-ocorrencia-grade,
     .painel-admin-linha {
         grid-template-columns: 1fr;
     }
@@ -1409,80 +1326,55 @@ body.modal-ocorrencia-aberto {
         padding: 18px;
     }
 
-    /* No celular o modal vira uma "gaveta" que sobe de baixo */
-    .modal-ocorrencia-overlay {
-        align-items: flex-end;
-        padding: 0;
-    }
-
-    .modal-ocorrencia {
-        max-height: 94vh;
-        border-radius: 24px 24px 0 0;
-        transform: translateY(40px);
-    }
-
-    .modal-ocorrencia-cabecalho {
+    .detalhes-ocorrencia-cabecalho {
         flex-wrap: wrap;
         align-items: flex-start;
-        gap: 12px;
-        padding: 18px;
+        gap: 14px;
+        padding: 20px;
+        border-radius: 20px;
     }
 
-    .modal-ocorrencia-identidade {
+    .detalhes-ocorrencia-identidade {
         flex: 1 1 100%;
-        padding-right: 50px;
     }
 
-    .modal-ocorrencia-titulos h2 {
-        font-size: 18px;
+    .detalhes-ocorrencia-titulos h2 {
+        font-size: 20px;
     }
 
-    .modal-ocorrencia-cabecalho-acoes {
-        width: 100%;
-    }
-
-    .modal-ocorrencia-cabecalho .btn-fechar-modal {
-        position: absolute;
-        top: 16px;
-        right: 16px;
-    }
-
-    .modal-ocorrencia-corpo {
-        gap: 16px;
-        padding: 16px;
-    }
-
-    .modal-ocorrencia-coluna {
+    .detalhes-ocorrencia-grade,
+    .detalhes-ocorrencia-coluna {
         gap: 16px;
     }
 
-    .modal-ocorrencia .cartao-detalhe {
-        padding: 18px;
+    #tela-detalhes .cartao-detalhe {
+        padding: 20px;
+        border-radius: 20px;
     }
 
     /* Barra de progresso compacta, cabe na tela sem rolar para o lado */
-    .modal-ocorrencia .progresso-status-ocorrencia {
+    #tela-detalhes .progresso-status-ocorrencia {
         justify-content: space-between;
         padding: 18px 12px;
         overflow-x: visible;
     }
 
-    .modal-ocorrencia .etapa-status {
+    #tela-detalhes .etapa-status {
         min-width: 58px;
         flex-shrink: 0;
     }
 
-    .modal-ocorrencia .etapa-status span {
+    #tela-detalhes .etapa-status span {
         font-size: 11px;
         line-height: 1.3;
     }
 
-    .modal-ocorrencia .bolinha-status {
+    #tela-detalhes .bolinha-status {
         width: 30px;
         height: 30px;
     }
 
-    .modal-ocorrencia .linha-status {
+    #tela-detalhes .linha-status {
         flex: 1;
         width: auto;
         min-width: 10px;
@@ -1527,8 +1419,7 @@ body.modal-ocorrencia-aberto {
 
 @media (prefers-reduced-motion: reduce) {
 
-    .modal-ocorrencia-overlay,
-    .modal-ocorrencia,
+    #tela-detalhes,
     .dialogo-cancelamento-overlay,
     .dialogo-cancelamento,
     .toast-ocorrencia,
@@ -1546,7 +1437,10 @@ body.modal-ocorrencia-aberto {
 
  ===================================================================*/
 
+/* O ocorrencia.css define #tela-detalhes com display: flex,
+   que vence o .oculto. Esta regra garante que ele some. */
 #tela-ocorrencias.oculto,
-#tela-formulario.oculto {
+#tela-formulario.oculto,
+#tela-detalhes.oculto {
     display: none;
 }

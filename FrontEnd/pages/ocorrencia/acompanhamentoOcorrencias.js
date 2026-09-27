@@ -4,8 +4,8 @@ ACOMPANHAMENTO DE OCORRÊNCIAS
 
 - Listagem real das ocorrências (cidadão vê as dele, admin vê todas)
 - Filtros por status, busca e paginação
-- Detalhes em um MODAL (mesmo visual para cidadão e admin)
-- Admin: lixeira no card, "Próximo passo" no modal e cancelamento com motivo
+- Detalhes em tela cheia: a lista some e os detalhes aparecem no lugar
+- Admin: lixeira no card, "Próximo passo" nos detalhes e cancelamento com motivo
 - Atualização automática da listagem após novo registro
 
 Fluxo de status (o status "pendente" NÃO existe mais):
@@ -32,6 +32,16 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
 
     const LIMITE_POR_PAGINA = 6;
     const TEMPO_BUSCA = 350;
+
+    // PONTE TEMPORÁRIA
+    // O backend ainda usa os nomes antigos: não entende ?status=recebidos / ?status=em_analise
+    // e o resumo não manda "recebidos" nem "em_analise" separados.
+    // Enquanto isso, o front busca a lista sem filtro de status, filtra e conta aqui.
+    // Quando o backend for ajustado, troque para false e tudo volta a ser feito no servidor.
+    const PONTE_STATUS_ANTIGOS = true;
+    const FILTROS_NO_NAVEGADOR = ["recebidos", "em_analise"];
+    const LIMITE_PONTE = 50;        // itens por página ao buscar tudo (diminua se o backend recusar)
+    const MAX_PAGINAS_PONTE = 40;   // trava de segurança
 
     // Tudo que muda por status fica aqui, em um lugar só.
     const STATUS = {
@@ -143,6 +153,7 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
 
     const telaOcorrencias = document.getElementById("tela-ocorrencias");
     const telaFormulario = document.getElementById("tela-formulario");
+    const telaDetalhes = document.getElementById("tela-detalhes");
     const containerCards = document.querySelector(".container-cards-ocorrencia");
     const botoesFiltro = document.querySelectorAll(".filtro-ocorrencia button");
     const campoPesquisa = document.querySelector(".campo-pesquisa input");
@@ -160,8 +171,6 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
     const textoPerfilUsuario = document.querySelector(".perfil-usuario .usuario p");
 
     // Criados pelo próprio JS
-    let modalEl = null;
-    let conteudoModal = null;
     let dialogoEl = null;
     let areaToast = null;
 
@@ -187,12 +196,13 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
 
         atualizandoStatus: false,
 
-        modal: {
+        detalhes: {
             id: null,
             ocorrencia: null,
             requisicao: 0,
-            focoAnterior: null,
-            mapa: null
+            mapa: null,
+            rolagemLista: 0,
+            timerTela: null
         },
 
         dialogo: {
@@ -649,14 +659,30 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
             );
         }
 
-        definirNumeroResumo(numeroTotal, dados.resumo.total);
-        definirNumeroResumo(numeroRecebidos, dados.resumo.recebidos);
+        const resumo = { ...dados.resumo };
 
-        // Enquanto o backend ainda devolver "pendentes", ele é usado como "em análise".
-        definirNumeroResumo(numeroEmAnalise, dados.resumo.em_analise ?? dados.resumo.pendentes);
+        // PONTE TEMPORÁRIA: o backend ainda não conta "recebidos" e "em_analise" separados.
+        // Enquanto isso, o front conta a partir da lista.
+        if (
+            PONTE_STATUS_ANTIGOS &&
+            (resumo.recebidos === undefined || resumo.em_analise === undefined)
+        ) {
+            try {
+                const todas = await buscarTodasOcorrencias({ busca: "" });
 
-        definirNumeroResumo(numeroAndamento, dados.resumo.em_andamento);
-        definirNumeroResumo(numeroResolvidas, dados.resumo.resolvidas);
+                resumo.recebidos = todas.filter((o) => obterChaveStatus(o.status) === "recebido").length;
+                resumo.em_analise = todas.filter((o) => obterChaveStatus(o.status) === "em_analise").length;
+
+            } catch (error) {
+                console.error("Erro ao contar recebidos e em análise:", error);
+            }
+        }
+
+        definirNumeroResumo(numeroTotal, resumo.total);
+        definirNumeroResumo(numeroRecebidos, resumo.recebidos);
+        definirNumeroResumo(numeroEmAnalise, resumo.em_analise ?? resumo.pendentes);
+        definirNumeroResumo(numeroAndamento, resumo.em_andamento);
+        definirNumeroResumo(numeroResolvidas, resumo.resolvidas);
     }
 
 
@@ -666,28 +692,96 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
 
     ====================================================================================================*/
 
-    function construirUrlListagem() {
+    function construirUrlListagem({
+        pagina = estado.pagina,
+        limite = LIMITE_POR_PAGINA,
+        status = estado.filtroStatus,
+        busca = estado.busca
+    } = {}) {
         const base = ehAdministrador()
             ? `${API_OCORRENCIAS_ACOMPANHAMENTO}/admin`
             : API_OCORRENCIAS_ACOMPANHAMENTO;
 
         const parametros = new URLSearchParams();
 
-        parametros.set("pagina", String(estado.pagina));
-        parametros.set("limite", String(LIMITE_POR_PAGINA));
+        parametros.set("pagina", String(pagina));
+        parametros.set("limite", String(limite));
 
-        if (estado.filtroStatus) {
-            parametros.set("status", estado.filtroStatus);
+        if (status) {
+            parametros.set("status", status);
         }
 
-        if (estado.busca) {
-            parametros.set("busca", estado.busca);
+        if (busca) {
+            parametros.set("busca", busca);
         }
 
         return `${base}?${parametros.toString()}`;
     }
 
-    // ALTERADO: antes, se a lista estava carregando, um clique no filtro era ignorado
+    // Busca uma página da API e devolve { ocorrencias, paginacao }.
+    async function buscarPagina(url) {
+        const resposta = await fetchAutenticado(url, { method: "GET" });
+        const dados = await lerResposta(resposta);
+
+        if (!resposta.ok || !dados?.sucesso || !Array.isArray(dados.ocorrencias)) {
+            throw new Error(
+                dados?.mensagem ||
+                "Não foi possível carregar as ocorrências."
+            );
+        }
+
+        return {
+            ocorrencias: dados.ocorrencias,
+            paginacao: dados.paginacao || {}
+        };
+    }
+
+    // PONTE TEMPORÁRIA: busca todas as páginas, sem filtro de status,
+    // para o front conseguir filtrar e contar Recebido / Em análise.
+    async function buscarTodasOcorrencias({ busca = estado.busca } = {}) {
+        const todas = [];
+        let pagina = 1;
+        let totalPaginas = 1;
+
+        do {
+            const dados = await buscarPagina(
+                construirUrlListagem({ pagina, limite: LIMITE_PONTE, status: "", busca })
+            );
+
+            todas.push(...dados.ocorrencias);
+            totalPaginas = Number(dados.paginacao.total_paginas) || 1;
+            pagina++;
+
+        } while (pagina <= totalPaginas && pagina <= MAX_PAGINAS_PONTE);
+
+        return todas;
+    }
+
+    // PONTE TEMPORÁRIA: filtra e pagina no navegador.
+    async function buscarListaFiltradaNoNavegador() {
+        const esperado = FILTRO_PARA_STATUS[estado.filtroStatus];
+
+        const filtradas = (await buscarTodasOcorrencias()).filter(
+            (ocorrencia) => obterChaveStatus(ocorrencia.status) === esperado
+        );
+
+        const totalPaginas = Math.max(1, Math.ceil(filtradas.length / LIMITE_POR_PAGINA));
+        const pagina = Math.min(Math.max(1, estado.pagina), totalPaginas);
+
+        return {
+            ocorrencias: filtradas.slice(
+                (pagina - 1) * LIMITE_POR_PAGINA,
+                pagina * LIMITE_POR_PAGINA
+            ),
+            paginacao: {
+                pagina,
+                total_paginas: totalPaginas,
+                total: filtradas.length
+            }
+        };
+    }
+
+    // Antes, se a lista estava carregando, um clique no filtro era ignorado
     // (o botão ficava ativo, mas a lista não mudava). Agora toda chamada é feita e
     // só a resposta mais recente é desenhada.
     async function carregarLista() {
@@ -696,27 +790,22 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         renderizarCarregando();
 
         try {
-            const resposta = await fetchAutenticado(construirUrlListagem(), {
-                method: "GET"
-            });
+            const filtrarNoNavegador =
+                PONTE_STATUS_ANTIGOS &&
+                FILTROS_NO_NAVEGADOR.includes(estado.filtroStatus);
 
-            const dados = await lerResposta(resposta);
+            const dados = filtrarNoNavegador
+                ? await buscarListaFiltradaNoNavegador()
+                : await buscarPagina(construirUrlListagem());
 
             if (requisicao !== estado.requisicaoLista) {
                 return;
             }
 
-            if (!resposta.ok || !dados?.sucesso || !Array.isArray(dados.ocorrencias)) {
-                throw new Error(
-                    dados?.mensagem ||
-                    "Não foi possível carregar as ocorrências."
-                );
-            }
-
             estado.ocorrencias = dados.ocorrencias;
-            estado.pagina = Number(dados.paginacao?.pagina) || 1;
-            estado.totalPaginas = Number(dados.paginacao?.total_paginas) || 1;
-            estado.total = Number(dados.paginacao?.total) || 0;
+            estado.pagina = Number(dados.paginacao.pagina) || 1;
+            estado.totalPaginas = Number(dados.paginacao.total_paginas) || 1;
+            estado.total = Number(dados.paginacao.total) || 0;
 
             avisarSeFiltroFoiIgnorado();
             renderizarLista();
@@ -989,7 +1078,7 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
 
             if (detalhes) {
                 event.stopPropagation();
-                abrirModal(Number(detalhes.dataset.detalhesId));
+                abrirDetalhes(Number(detalhes.dataset.detalhesId));
                 return;
             }
 
@@ -1020,7 +1109,7 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
             const card = event.target.closest(".card-ocorrencia-dinamico");
 
             if (card && !event.target.closest("button")) {
-                abrirModal(Number(card.dataset.id));
+                abrirDetalhes(Number(card.dataset.id));
             }
         });
     }
@@ -1059,7 +1148,7 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
 
     /*====================================================================================================
 
-    OVERLAYS (abrir e fechar com animação)
+    OVERLAY DO DIÁLOGO (abrir e fechar com animação)
 
     ====================================================================================================*/
 
@@ -1081,42 +1170,60 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
     }
 
     function atualizarTravaDeRolagem() {
-        const algumAberto = estado.modal.id !== null || estado.dialogo.aberto;
-        document.body.classList.toggle("modal-ocorrencia-aberto", algumAberto);
+        document.body.classList.toggle("dialogo-ocorrencia-aberto", estado.dialogo.aberto);
     }
 
 
     /*====================================================================================================
 
-    MODAL DE DETALHES
+    TELA DE DETALHES
+
+    Igual era antes: a lista some e os detalhes aparecem no lugar.
+    O botão "Voltar para a lista" (ou a tecla Esc) faz o caminho de volta.
 
     ====================================================================================================*/
 
-    function criarModal() {
-        modalEl = document.createElement("div");
-        modalEl.className = "modal-ocorrencia-overlay";
-        modalEl.hidden = true;
-        modalEl.innerHTML = `
-            <div class="modal-ocorrencia" role="dialog" aria-modal="true" aria-labelledby="modal-ocorrencia-titulo">
-                <div class="modal-ocorrencia-conteudo"></div>
-            </div>
-        `;
+    const SETA_VOLTAR = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+            fill="none" stroke="#566987" stroke-width="2.5" stroke-linecap="round"
+            stroke-linejoin="round" aria-hidden="true">
+            <path d="M19 12H5"></path>
+            <path d="M12 19l-7-7 7-7"></path>
+        </svg>
+    `;
 
-        document.body.appendChild(modalEl);
-        conteudoModal = modalEl.querySelector(".modal-ocorrencia-conteudo");
+    function detalhesVisiveis() {
+        return Boolean(telaDetalhes) && !telaDetalhes.classList.contains("oculto");
+    }
 
-        modalEl.addEventListener("click", (event) => {
-            // Clique fora fecha, a não ser que o admin tenha digitado uma mensagem.
-            if (event.target === modalEl) {
-                const mensagem = conteudoModal.querySelector("#admin-mensagem");
+    // Mesma animação que o ocorrencia.js usa para abrir o formulário.
+    function trocarTela(saindo, entrando, aoTerminar) {
+        clearTimeout(estado.detalhes.timerTela);
 
-                if (!mensagem || !mensagem.value.trim()) {
-                    fecharModal();
-                }
+        [saindo, entrando].forEach((tela) => {
+            tela.classList.remove("animar-entrada", "animar-saida");
+        });
 
-                return;
-            }
+        saindo.classList.add("animar-saida");
 
+        estado.detalhes.timerTela = setTimeout(() => {
+            saindo.classList.add("oculto");
+            saindo.classList.remove("animar-saida");
+
+            entrando.classList.remove("oculto");
+            entrando.classList.add("animar-entrada");
+
+            aoTerminar?.();
+        }, 280);
+    }
+
+    // Um único listener para tudo que tem dentro da tela de detalhes.
+    function registrarEventosDetalhes() {
+        if (!telaDetalhes) {
+            return;
+        }
+
+        telaDetalhes.addEventListener("click", (event) => {
             const alvo = event.target.closest("[data-acao]");
 
             if (!alvo) {
@@ -1124,27 +1231,27 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
             }
 
             switch (alvo.dataset.acao) {
-                case "fechar":
-                    fecharModal();
+                case "voltar-lista":
+                    voltarParaLista();
                     break;
                 case "avancar":
                     avancarStatus(alvo);
                     break;
                 case "cancelar":
-                    iniciarCancelamento(estado.modal.id);
+                    iniciarCancelamento(estado.detalhes.id);
                     break;
                 case "ver-foto":
                     abrirFoto(alvo.dataset.src);
                     break;
                 case "tentar-novamente":
-                    abrirModal(estado.modal.id);
+                    abrirDetalhes(estado.detalhes.id);
                     break;
             }
         });
 
-        modalEl.addEventListener("input", (event) => {
+        telaDetalhes.addEventListener("input", (event) => {
             if (event.target.id === "admin-mensagem") {
-                const contador = conteudoModal.querySelector('[data-contador="admin-mensagem"]');
+                const contador = telaDetalhes.querySelector('[data-contador="admin-mensagem"]');
 
                 if (contador) {
                     contador.textContent = `${event.target.value.length}/1000`;
@@ -1171,112 +1278,124 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         return dados.ocorrencia;
     }
 
-    async function abrirModal(id) {
-        if (!Number.isInteger(id) || id <= 0) {
+    async function abrirDetalhes(id) {
+        if (!telaDetalhes || !telaOcorrencias || !Number.isInteger(id) || id <= 0) {
             return;
         }
 
-        if (estado.modal.id === null) {
-            estado.modal.focoAnterior = document.activeElement;
-        }
+        const requisicao = ++estado.detalhes.requisicao;
 
-        const requisicao = ++estado.modal.requisicao;
-
-        estado.modal.id = id;
-        estado.modal.ocorrencia = null;
+        estado.detalhes.id = id;
+        estado.detalhes.ocorrencia = null;
 
         destruirMapa();
-        atualizarTravaDeRolagem();
+        telaDetalhes.innerHTML = renderCarregandoDetalhes();
 
-        conteudoModal.innerHTML = renderCarregandoModal();
-        mostrarOverlay(modalEl);
+        if (!detalhesVisiveis()) {
+            estado.detalhes.rolagemLista = window.scrollY;
+
+            trocarTela(telaOcorrencias, telaDetalhes, () => {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+
+                // O Leaflet precisa saber o tamanho real depois que a tela aparece.
+                estado.detalhes.mapa?.invalidateSize();
+            });
+        }
 
         try {
             const ocorrencia = await buscarOcorrencia(id);
 
-            if (requisicao !== estado.modal.requisicao) {
+            if (requisicao !== estado.detalhes.requisicao) {
                 return;
             }
 
-            estado.modal.ocorrencia = ocorrencia;
-            renderizarModal(ocorrencia);
-
-            conteudoModal.querySelector(".btn-fechar-modal")?.focus();
+            estado.detalhes.ocorrencia = ocorrencia;
+            renderizarDetalhes(ocorrencia);
 
         } catch (error) {
-            if (requisicao !== estado.modal.requisicao) {
+            if (requisicao !== estado.detalhes.requisicao) {
                 return;
             }
 
             console.error("Erro ao abrir detalhes:", error);
-            conteudoModal.innerHTML = renderErroModal(error.message);
+            telaDetalhes.innerHTML = renderErroDetalhes(error.message);
         }
     }
 
-    // Recarrega os dados do modal sem mostrar o "carregando" de novo.
-    async function recarregarModal(id) {
-        const requisicao = ++estado.modal.requisicao;
+    // Recarrega os dados sem mostrar o "carregando" de novo (usado depois de mudar o status).
+    async function recarregarDetalhes(id) {
+        const requisicao = ++estado.detalhes.requisicao;
 
         try {
             const ocorrencia = await buscarOcorrencia(id);
 
-            if (requisicao !== estado.modal.requisicao || estado.modal.id !== id) {
+            if (requisicao !== estado.detalhes.requisicao || estado.detalhes.id !== id) {
                 return;
             }
 
-            estado.modal.ocorrencia = ocorrencia;
-            renderizarModal(ocorrencia);
+            estado.detalhes.ocorrencia = ocorrencia;
+            renderizarDetalhes(ocorrencia);
 
         } catch (error) {
             console.error("Erro ao atualizar detalhes:", error);
         }
     }
 
-    function fecharModal() {
-        if (estado.modal.id === null) {
+    function voltarParaLista() {
+        if (!telaDetalhes || !telaOcorrencias || estado.detalhes.id === null) {
             return;
         }
 
-        destruirMapa();
+        estado.detalhes.id = null;
+        estado.detalhes.ocorrencia = null;
+        estado.detalhes.requisicao++;
 
-        estado.modal.id = null;
-        estado.modal.ocorrencia = null;
-        estado.modal.requisicao++;
+        trocarTela(telaDetalhes, telaOcorrencias, () => {
+            destruirMapa();
+            telaDetalhes.innerHTML = "";
 
-        esconderOverlay(modalEl);
-        atualizarTravaDeRolagem();
-
-        const foco = estado.modal.focoAnterior;
-
-        if (foco && document.contains(foco)) {
-            foco.focus();
-        }
+            // Volta para o ponto da lista onde o usuário estava.
+            window.scrollTo({ top: estado.detalhes.rolagemLista, behavior: "auto" });
+        });
     }
 
-    function renderCarregandoModal() {
+    function renderBarraVoltar() {
         return `
-            <div class="modal-ocorrencia-estado">
-                <button type="button" class="btn-fechar-modal modal-fechar-flutuante" data-acao="fechar" aria-label="Fechar detalhes">${ICONES.fechar}</button>
+            <div class="cabecalho-detalhes">
+                <button class="btn-voltar" type="button" data-acao="voltar-lista">
+                    ${SETA_VOLTAR}
+                    Voltar para a lista
+                </button>
+            </div>
+        `;
+    }
+
+    function renderCarregandoDetalhes() {
+        return `
+            ${renderBarraVoltar()}
+
+            <div class="detalhes-ocorrencia-estado">
                 <div class="spinner-ocorrencias" aria-hidden="true"></div>
-                <h2 id="modal-ocorrencia-titulo">Carregando ocorrência</h2>
+                <strong>Carregando ocorrência</strong>
                 <span>Buscando descrição, localização e histórico.</span>
             </div>
         `;
     }
 
-    function renderErroModal(mensagem) {
+    function renderErroDetalhes(mensagem) {
         return `
-            <div class="modal-ocorrencia-estado">
-                <button type="button" class="btn-fechar-modal modal-fechar-flutuante" data-acao="fechar" aria-label="Fechar detalhes">${ICONES.fechar}</button>
-                <div class="modal-ocorrencia-estado-icone">${ICONES.alerta}</div>
-                <h2 id="modal-ocorrencia-titulo">Não foi possível abrir a ocorrência</h2>
+            ${renderBarraVoltar()}
+
+            <div class="detalhes-ocorrencia-estado">
+                <div class="detalhes-ocorrencia-estado-icone">${ICONES.alerta}</div>
+                <strong>Não foi possível abrir a ocorrência</strong>
                 <span>${escaparHtml(mensagem)}</span>
                 <button type="button" class="btn-tentar-novamente-ocorrencias" data-acao="tentar-novamente">Tentar novamente</button>
             </div>
         `;
     }
 
-    function renderizarModal(ocorrencia) {
+    function renderizarDetalhes(ocorrencia) {
         destruirMapa();
 
         const admin = ehAdministrador();
@@ -1293,82 +1412,79 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
             `
             : "";
 
-        conteudoModal.innerHTML = `
-            <header class="modal-ocorrencia-cabecalho">
-                <div class="modal-ocorrencia-identidade">
+        telaDetalhes.innerHTML = `
+            ${renderBarraVoltar()}
+
+            <header class="detalhes-ocorrencia-cabecalho">
+                <div class="detalhes-ocorrencia-identidade">
                     <div class="caixa-icone ${config.classeIcone}">
                         <div class="icone-mascara img-icone-grande"
                             style="-webkit-mask-image: url('${icone}'); mask-image: url('${icone}');">
                         </div>
                     </div>
 
-                    <div class="modal-ocorrencia-titulos">
-                        <span class="modal-ocorrencia-codigo">${formatarCodigo(ocorrencia)}</span>
-                        <h2 id="modal-ocorrencia-titulo">${escaparHtml(ocorrencia.titulo || "Ocorrência")}</h2>
+                    <div class="detalhes-ocorrencia-titulos">
+                        <span class="detalhes-ocorrencia-codigo">${formatarCodigo(ocorrencia)}</span>
+                        <h2>${escaparHtml(ocorrencia.titulo || "Ocorrência")}</h2>
                     </div>
                 </div>
 
-                <div class="modal-ocorrencia-cabecalho-acoes">
-                    <div class="etiqueta-status ${config.classe}">${escaparHtml(config.nome)}</div>
-                    <button type="button" class="btn-fechar-modal" data-acao="fechar" aria-label="Fechar detalhes">${ICONES.fechar}</button>
-                </div>
+                <div class="etiqueta-status ${config.classe}">${escaparHtml(config.nome)}</div>
             </header>
 
-            <div class="modal-ocorrencia-corpo">
-                ${renderProgresso(ocorrencia, config.chave)}
+            ${renderProgresso(ocorrencia, config.chave)}
 
-                <div class="modal-ocorrencia-grade">
-                    <div class="modal-ocorrencia-coluna">
-                        <section class="cartao-detalhe">
-                            <div class="caixa-descricao">
-                                <h4 class="titulo-sessao-pequeno">Descrição do problema</h4>
-                                <p class="texto-descricao">${escaparHtml(ocorrencia.descricao || "O cidadão não informou uma descrição.")}</p>
+            <div class="detalhes-ocorrencia-grade">
+                <div class="detalhes-ocorrencia-coluna">
+                    <section class="cartao-detalhe">
+                        <div class="caixa-descricao">
+                            <h4 class="titulo-sessao-pequeno">Descrição do problema</h4>
+                            <p class="texto-descricao">${escaparHtml(ocorrencia.descricao || "O cidadão não informou uma descrição.")}</p>
+                        </div>
+
+                        <div class="metadados-ocorrencia">
+                            <div>
+                                <span>Categoria</span>
+                                <strong>${escaparHtml(ocorrencia.categoria || "Sem categoria")}</strong>
                             </div>
-
-                            <div class="metadados-ocorrencia">
-                                <div>
-                                    <span>Categoria</span>
-                                    <strong>${escaparHtml(ocorrencia.categoria || "Sem categoria")}</strong>
-                                </div>
-                                <div>
-                                    <span>Registrada em</span>
-                                    <strong>${formatarData(ocorrencia.data_criacao || ocorrencia.data_ocorrencia, true)}</strong>
-                                </div>
-                                <div>
-                                    <span>Última atualização</span>
-                                    <strong>${formatarData(ocorrencia.data_atualizacao || ocorrencia.data_criacao || ocorrencia.data_ocorrencia, true)}</strong>
-                                </div>
-                                <div>
-                                    <span>Fotos anexadas</span>
-                                    <strong>${fotos.length}</strong>
-                                </div>
+                            <div>
+                                <span>Registrada em</span>
+                                <strong>${formatarData(ocorrencia.data_criacao || ocorrencia.data_ocorrencia, true)}</strong>
                             </div>
-                        </section>
+                            <div>
+                                <span>Última atualização</span>
+                                <strong>${formatarData(ocorrencia.data_atualizacao || ocorrencia.data_criacao || ocorrencia.data_ocorrencia, true)}</strong>
+                            </div>
+                            <div>
+                                <span>Fotos anexadas</span>
+                                <strong>${fotos.length}</strong>
+                            </div>
+                        </div>
+                    </section>
 
-                        <section class="cartao-detalhe">
-                            <h3 class="titulo-sessao">Histórico da solicitação</h3>
-                            ${renderHistorico(ocorrencia)}
-                        </section>
-                    </div>
-
-                    <div class="modal-ocorrencia-coluna">
-                        ${blocoCidadao}
-
-                        <section class="cartao-detalhe">
-                            <h3 class="titulo-sessao">Localização</h3>
-                            <div class="caixa-endereco">${escaparHtml(obterEndereco(ocorrencia))}</div>
-                            ${renderMapa(ocorrencia)}
-                        </section>
-
-                        <section class="cartao-detalhe">
-                            <h3 class="titulo-sessao">Evidências</h3>
-                            ${renderFotos(fotos)}
-                        </section>
-                    </div>
+                    <section class="cartao-detalhe">
+                        <h3 class="titulo-sessao">Histórico da solicitação</h3>
+                        ${renderHistorico(ocorrencia)}
+                    </section>
                 </div>
 
-                ${admin ? renderPainelAcoes(config.chave) : ""}
+                <div class="detalhes-ocorrencia-coluna">
+                    ${blocoCidadao}
+
+                    <section class="cartao-detalhe">
+                        <h3 class="titulo-sessao">Localização</h3>
+                        <div class="caixa-endereco">${escaparHtml(obterEndereco(ocorrencia))}</div>
+                        ${renderMapa(ocorrencia)}
+                    </section>
+
+                    <section class="cartao-detalhe">
+                        <h3 class="titulo-sessao">Evidências</h3>
+                        ${renderFotos(fotos)}
+                    </section>
+                </div>
             </div>
+
+            ${admin ? renderPainelAcoes(config.chave) : ""}
         `;
 
         iniciarMapa(ocorrencia);
@@ -1598,7 +1714,7 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
     }
 
     function iniciarMapa(ocorrencia) {
-        const elemento = conteudoModal.querySelector("[data-mapa-ocorrencia]");
+        const elemento = telaDetalhes.querySelector("[data-mapa-ocorrencia]");
 
         if (!elemento || typeof window.L === "undefined" || !temCoordenadas(ocorrencia)) {
             return;
@@ -1606,7 +1722,7 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
 
         const posicao = [Number(ocorrencia.latitude), Number(ocorrencia.longitude)];
 
-        estado.modal.mapa = window.L.map(elemento, {
+        estado.detalhes.mapa = window.L.map(elemento, {
             zoomControl: true,
             scrollWheelZoom: false
         }).setView(posicao, 17);
@@ -1614,22 +1730,22 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             maxZoom: 19,
             attribution: "&copy; OpenStreetMap"
-        }).addTo(estado.modal.mapa);
+        }).addTo(estado.detalhes.mapa);
 
         window.L.marker(posicao)
-            .addTo(estado.modal.mapa)
+            .addTo(estado.detalhes.mapa)
             .bindPopup(escaparHtml(ocorrencia.titulo || "Ocorrência"));
 
-        // O Leaflet precisa recalcular o tamanho depois que o modal termina de abrir.
+        // O Leaflet precisa recalcular o tamanho depois que a tela termina de aparecer.
         setTimeout(() => {
-            estado.modal.mapa?.invalidateSize();
-        }, 280);
+            estado.detalhes.mapa?.invalidateSize();
+        }, 400);
     }
 
     function destruirMapa() {
-        if (estado.modal.mapa) {
-            estado.modal.mapa.remove();
-            estado.modal.mapa = null;
+        if (estado.detalhes.mapa) {
+            estado.detalhes.mapa.remove();
+            estado.detalhes.mapa = null;
         }
     }
 
@@ -1712,13 +1828,13 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
             carregarLista()
         ]);
 
-        if (estado.modal.id === id) {
-            await recarregarModal(id);
+        if (estado.detalhes.id === id) {
+            await recarregarDetalhes(id);
         }
     }
 
     async function avancarStatus(botao) {
-        const ocorrencia = estado.modal.ocorrencia;
+        const ocorrencia = estado.detalhes.ocorrencia;
 
         if (estado.atualizandoStatus || !ocorrencia) {
             return;
@@ -1731,9 +1847,9 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
             return;
         }
 
-        const aviso = conteudoModal.querySelector(".mensagem-admin-status");
-        const btnCancelar = conteudoModal.querySelector('[data-acao="cancelar"]');
-        const campoMensagem = conteudoModal.querySelector("#admin-mensagem");
+        const aviso = telaDetalhes.querySelector(".mensagem-admin-status");
+        const btnCancelar = telaDetalhes.querySelector('[data-acao="cancelar"]');
+        const campoMensagem = telaDetalhes.querySelector("#admin-mensagem");
         const mensagem = campoMensagem ? campoMensagem.value.trim().slice(0, 1000) : "";
 
         const mostrarAviso = (texto) => {
@@ -1778,7 +1894,7 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         } finally {
             estado.atualizandoStatus = false;
 
-            // Se o modal não foi redesenhado, devolve os botões ao normal.
+            // Se a tela não foi redesenhada, devolve os botões ao normal.
             if (document.contains(botao)) {
                 definirCarregando(botao, false);
             }
@@ -1806,7 +1922,7 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
 
         const ocorrencia =
             estado.ocorrencias.find((item) => Number(item.id) === id) ||
-            (Number(estado.modal.ocorrencia?.id) === id ? estado.modal.ocorrencia : null);
+            (Number(estado.detalhes.ocorrencia?.id) === id ? estado.detalhes.ocorrencia : null);
 
         const codigo = ocorrencia ? formatarCodigo(ocorrencia) : `#${id}`;
 
@@ -2049,7 +2165,7 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
 
     /*====================================================================================================
 
-    TECLADO (Esc fecha: foto > diálogo > modal)
+    TECLADO (Esc fecha: foto > diálogo > volta da tela de detalhes)
 
     ====================================================================================================*/
 
@@ -2073,8 +2189,13 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
                 return;
             }
 
-            if (estado.modal.id !== null) {
-                fecharModal();
+            // Não volta para a lista se a pessoa estiver digitando.
+            if (event.target.closest?.("textarea, input")) {
+                return;
+            }
+
+            if (estado.detalhes.id !== null) {
+                voltarParaLista();
             }
         });
     }
@@ -2129,7 +2250,7 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
             return;
         }
 
-        criarModal();
+        registrarEventosDetalhes();
         criarDialogo();
         criarAreaToast();
 
