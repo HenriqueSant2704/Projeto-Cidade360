@@ -75,6 +75,17 @@ async function verificarAcesso() {
 
         atualizarUsuarioNoTopo(dados.usuario);
 
+        // NOVO: avisa o resto da página (menu do perfil e notificações no global.js)
+        // que o usuário logado foi confirmado.
+        window.dispatchEvent(
+            new CustomEvent(
+                "cidade360:usuario-carregado",
+                {
+                    detail: dados.usuario
+                }
+            )
+        );
+
         document.documentElement.style.visibility = "visible";
 
     } catch (error) {

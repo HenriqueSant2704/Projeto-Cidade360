@@ -1124,3 +1124,801 @@ a#menu-ativo:hover img {
     }
 
 }
+
+
+
+
+/*===================================================================
+
+  MENU SUPERIOR — NOTIFICAÇÕES, PERFIL E CONFIGURAÇÕES (NOVO)
+
+  Os painéis são criados pelo global.js e presos ao <body>.
+
+===================================================================*/
+
+
+/*-------------------------------------------------------------------
+  BOTÕES DO TOPO (estado ativo e contador)
+-------------------------------------------------------------------*/
+
+.menu-acoes {
+    transition: background-color 0.2s ease;
+}
+
+.menu-acoes:hover,
+.menu-acoes.ativo {
+    background-color: #eef3fb;
+}
+
+.menu-acoes.ativo img {
+    filter:
+        brightness(0) saturate(100%) invert(32%) sepia(96%) saturate(4200%) hue-rotate(215deg) brightness(95%) contrast(105%);
+}
+
+.menu-acoes button {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+}
+
+.menu-acoes button:focus-visible,
+.perfil-usuario:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.35);
+    outline-offset: 2px;
+}
+
+.badge-notificacao {
+    position: absolute;
+    top: 2px;
+    right: 1px;
+
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 2px solid #ffffff;
+    border-radius: 999px;
+
+    background-color: #dc2626;
+    color: #ffffff;
+
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+
+    animation: badge-aparecer 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.badge-notificacao[hidden] {
+    display: none;
+}
+
+@keyframes badge-aparecer {
+    from {
+        transform: scale(0.4);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.perfil-usuario {
+    transition: background-color 0.2s ease;
+}
+
+.perfil-usuario:hover,
+.perfil-usuario.ativo {
+    background-color: #f8fafc;
+}
+
+
+/*-------------------------------------------------------------------
+  PAINEL BASE
+-------------------------------------------------------------------*/
+
+.painel-topo {
+    position: fixed;
+    z-index: 9000;
+
+    width: 380px;
+    max-width: calc(100vw - 24px);
+    max-height: calc(100vh - 100px);
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+
+    background-color: #ffffff;
+    border: 1px solid #e7edf5;
+    border-radius: 20px;
+
+    box-shadow:
+        0 24px 60px rgba(15, 23, 42, 0.16),
+        0 2px 8px rgba(15, 23, 42, 0.05);
+
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+    transform-origin: top right;
+
+    transition:
+        opacity 0.18s ease,
+        transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.painel-topo[hidden] {
+    display: none;
+}
+
+.painel-topo.aberto {
+    opacity: 1;
+    transform: none;
+}
+
+.painel-topo-cabecalho {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+
+    padding: 18px 20px 14px;
+}
+
+.painel-topo-cabecalho h3 {
+    margin: 0;
+
+    font-size: 16px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.painel-topo-subtitulo {
+    display: block;
+    margin-top: 2px;
+
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.btn-texto-topo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    padding: 6px 10px;
+
+    border: none;
+    border-radius: 9px;
+
+    background: transparent;
+    color: #2563eb;
+
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-texto-topo:hover:not(:disabled) {
+    background-color: #eef3fb;
+}
+
+.btn-texto-topo:disabled {
+    color: #cbd5e1;
+    cursor: default;
+}
+
+
+/*-------------------------------------------------------------------
+  NOTIFICAÇÕES
+-------------------------------------------------------------------*/
+
+.abas-notificacao {
+    display: flex;
+    gap: 6px;
+
+    padding: 0 20px 14px;
+
+    border-bottom: 1px solid #eef2f7;
+}
+
+.aba-notificacao {
+    padding: 6px 13px;
+
+    border: none;
+    border-radius: 999px;
+
+    background-color: #f1f5f9;
+    color: #566987;
+
+    font-size: 12.5px;
+    font-weight: 600;
+
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.aba-notificacao:hover {
+    background-color: #e2e8f0;
+}
+
+.aba-notificacao.ativa {
+    background-color: #2563eb;
+    color: #ffffff;
+}
+
+.corpo-notificacoes {
+    flex: 1;
+    min-height: 0;
+
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+}
+
+.lista-notificacoes {
+    margin: 0;
+    padding: 6px;
+
+    list-style: none;
+}
+
+.item-notificacao {
+    position: relative;
+
+    width: 100%;
+
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+
+    padding: 12px 30px 12px 12px;
+
+    border: none;
+    border-radius: 14px;
+
+    background: transparent;
+
+    text-align: left;
+
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.item-notificacao:hover {
+    background-color: #f8fafc;
+}
+
+.item-notificacao.nao-lida {
+    background-color: #f5f9ff;
+}
+
+.item-notificacao.nao-lida:hover {
+    background-color: #edf4ff;
+}
+
+.item-notificacao:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.35);
+    outline-offset: -3px;
+}
+
+.item-notificacao-icone {
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 12px;
+}
+
+.tom-azul { background-color: #eef3fb; color: #2563eb; }
+.tom-amarelo { background-color: #fff4d8; color: #d48806; }
+.tom-verde { background-color: #dff7e9; color: #047857; }
+.tom-roxo { background-color: #f3e8fd; color: #9333ea; }
+.tom-vermelho { background-color: #fef2f2; color: #dc2626; }
+.tom-indigo { background-color: #eef2ff; color: #4f46e5; }
+
+.item-notificacao-textos {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.item-notificacao-textos strong {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.item-notificacao-textos span {
+    font-size: 13px;
+    line-height: 1.45;
+    color: #64748b;
+}
+
+.item-notificacao-textos time {
+    margin-top: 4px;
+
+    font-size: 11.5px;
+    color: #94a3b8;
+}
+
+.ponto-nao-lida {
+    position: absolute;
+    top: 17px;
+    right: 14px;
+
+    width: 8px;
+    height: 8px;
+
+    border-radius: 50%;
+
+    background-color: #2563eb;
+
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.notificacoes-estado {
+    min-height: 220px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    padding: 30px 28px;
+
+    text-align: center;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.notificacoes-estado strong {
+    font-size: 15px;
+    color: #1f2937;
+}
+
+.notificacoes-estado-icone {
+    width: 56px;
+    height: 56px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 6px;
+
+    border-radius: 18px;
+
+    background-color: #eef3fb;
+    color: #2563eb;
+}
+
+.spinner-topo {
+    width: 28px;
+    height: 28px;
+
+    margin-bottom: 6px;
+
+    border: 3px solid #e2e8f0;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+
+    animation: girar-spinner-topo 0.7s linear infinite;
+}
+
+@keyframes girar-spinner-topo {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.rodape-painel-topo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    padding: 14px;
+
+    border-top: 1px solid #eef2f7;
+
+    color: #2563eb;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+
+    transition: background-color 0.2s ease;
+}
+
+.rodape-painel-topo:hover {
+    background-color: #f8fafc;
+}
+
+
+/*-------------------------------------------------------------------
+  PERFIL
+-------------------------------------------------------------------*/
+
+.painel-perfil {
+    width: 300px;
+}
+
+.perfil-topo-cabecalho {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    padding: 20px;
+
+    background: linear-gradient(135deg, #eef3fb 0%, #f5f0ff 100%);
+    border-bottom: 1px solid #eef2f7;
+}
+
+.avatar-topo {
+    width: 50px;
+    height: 50px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: linear-gradient(135deg, #7c3aed, #2563eb);
+    color: #ffffff;
+
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
+}
+
+.perfil-topo-dados {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.perfil-topo-dados strong,
+.perfil-topo-dados > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.perfil-topo-dados strong {
+    font-size: 15px;
+    color: #1f2937;
+}
+
+.perfil-topo-dados > span {
+    font-size: 12.5px;
+    color: #64748b;
+}
+
+.selo-tipo-usuario {
+    align-self: flex-start;
+
+    margin-top: 6px;
+    padding: 3px 10px;
+
+    border: 1px solid #d8e1ef;
+    border-radius: 999px;
+
+    background-color: #ffffff;
+    color: #2563eb;
+
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 600;
+}
+
+.selo-tipo-usuario.admin {
+    border-color: #daacfd;
+    color: #9333ea;
+}
+
+.lista-opcoes-topo {
+    padding: 8px;
+}
+
+.opcao-topo {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 11px 12px;
+
+    border: none;
+    border-radius: 12px;
+
+    background: transparent;
+    color: #334155;
+
+    font-size: 14px;
+    font-weight: 500;
+    text-align: left;
+    text-decoration: none;
+
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.opcao-topo svg {
+    flex-shrink: 0;
+    color: #64748b;
+    transition: color 0.2s ease;
+}
+
+.opcao-topo:hover {
+    background-color: #f1f5f9;
+    color: #1f2937;
+}
+
+.opcao-topo:hover svg {
+    color: #2563eb;
+}
+
+.opcao-topo:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.35);
+    outline-offset: -3px;
+}
+
+.opcao-topo[aria-disabled="true"] {
+    color: #94a3b8;
+    cursor: default;
+}
+
+.opcao-topo[aria-disabled="true"]:hover {
+    background-color: transparent;
+}
+
+.opcao-topo[aria-disabled="true"] svg,
+.opcao-topo[aria-disabled="true"]:hover svg {
+    color: #cbd5e1;
+}
+
+.em-breve {
+    margin-left: auto;
+    padding: 3px 8px;
+
+    border-radius: 999px;
+
+    background-color: #f1f5f9;
+    color: #94a3b8;
+
+    font-size: 10.5px;
+    font-weight: 600;
+}
+
+.divisor-topo {
+    height: 1px;
+    margin: 6px 8px;
+
+    background-color: #eef2f7;
+}
+
+.opcao-topo.perigo {
+    color: #dc2626;
+}
+
+.opcao-topo.perigo svg {
+    color: #dc2626;
+}
+
+.opcao-topo.perigo:hover {
+    background-color: #fef2f2;
+    color: #b91c1c;
+}
+
+.opcao-topo.perigo:hover svg {
+    color: #b91c1c;
+}
+
+
+/*-------------------------------------------------------------------
+  CONFIGURAÇÕES
+-------------------------------------------------------------------*/
+
+.painel-configuracoes {
+    width: 360px;
+}
+
+.lista-configuracoes {
+    padding: 0 8px 4px;
+
+    border-top: 1px solid #eef2f7;
+}
+
+.opcao-configuracao {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    padding: 14px 12px;
+
+    border-radius: 12px;
+
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.opcao-configuracao:hover {
+    background-color: #f8fafc;
+}
+
+.opcao-configuracao-textos {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.opcao-configuracao-textos strong {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.opcao-configuracao-textos span {
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: #64748b;
+}
+
+.interruptor {
+    position: relative;
+
+    width: 42px;
+    height: 24px;
+
+    flex-shrink: 0;
+}
+
+.interruptor input {
+    position: absolute;
+    inset: 0;
+
+    margin: 0;
+
+    opacity: 0;
+    cursor: pointer;
+}
+
+.interruptor-trilho {
+    position: absolute;
+    inset: 0;
+
+    border-radius: 999px;
+
+    background-color: #cbd5e1;
+
+    pointer-events: none;
+    transition: background-color 0.2s ease;
+}
+
+.interruptor-trilho::after {
+    content: "";
+
+    position: absolute;
+    top: 3px;
+    left: 3px;
+
+    width: 18px;
+    height: 18px;
+
+    border-radius: 50%;
+
+    background-color: #ffffff;
+
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+
+    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.interruptor input:checked + .interruptor-trilho {
+    background-color: #2563eb;
+}
+
+.interruptor input:checked + .interruptor-trilho::after {
+    transform: translateX(18px);
+}
+
+.interruptor input:focus-visible + .interruptor-trilho {
+    outline: 3px solid rgba(37, 99, 235, 0.35);
+    outline-offset: 2px;
+}
+
+.rodape-configuracoes {
+    margin: 0;
+    padding: 12px 20px 16px;
+
+    border-top: 1px solid #eef2f7;
+
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+
+/*-------------------------------------------------------------------
+  PREFERÊNCIA: REDUZIR ANIMAÇÕES
+-------------------------------------------------------------------*/
+
+.reduzir-animacoes *,
+.reduzir-animacoes *::before,
+.reduzir-animacoes *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+}
+
+/* Os spinners de carregamento continuam girando */
+.reduzir-animacoes .spinner-topo,
+.reduzir-animacoes .spinner-ocorrencias,
+.reduzir-animacoes .spinner-botao {
+    animation-duration: 0.7s !important;
+    animation-iteration-count: infinite !important;
+}
+
+
+/*-------------------------------------------------------------------
+  RESPONSIVIDADE
+-------------------------------------------------------------------*/
+
+@media (max-width: 520px) {
+
+    .painel-topo,
+    .painel-perfil,
+    .painel-configuracoes {
+        width: auto;
+        max-height: calc(100vh - 90px);
+    }
+
+    .btn-texto-topo {
+        padding: 6px 8px;
+    }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .painel-topo,
+    .badge-notificacao {
+        transition: none;
+        animation: none;
+    }
+
+}
