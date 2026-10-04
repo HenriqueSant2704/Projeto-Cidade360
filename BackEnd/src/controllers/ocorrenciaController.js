@@ -7,6 +7,12 @@ const {
 } =
     require("../utils/imagemUtils");
 
+const {
+    enviarFotosCloudinary,
+    removerFotosCloudinary
+} =
+    require("../utils/fotosCloudinary");
+
 
 /*========================================================================================================
 
@@ -232,6 +238,9 @@ const OcorrenciaController = {
         req,
         res
     ) {
+        let fotosEnviadas = [];
+        let ocorrenciaSalva = false;
+
         try {
             const categoriaId =
                 inteiroPositivo(
@@ -378,25 +387,20 @@ const OcorrenciaController = {
                 }
             }
 
+            fotosEnviadas =
+                await enviarFotosCloudinary(
+                    arquivos
+                );
+
             const fotos =
-                arquivos.map((arquivo) => ({
-                    nomeArquivo:
-                        arquivo.filename,
+                fotosEnviadas.map((foto) => ({
+                    ...foto,
 
                     nomeOriginal:
                         texto(
-                            arquivo.originalname,
+                            foto.nomeOriginal,
                             255
-                        ) || "foto",
-
-                    caminhoPublico:
-                        `/uploads/ocorrencias/${arquivo.filename}`,
-
-                    mimeType:
-                        arquivo.mimetype,
-
-                    tamanhoBytes:
-                        arquivo.size
+                        ) || "foto"
                 }));
 
             const ocorrenciaId =
@@ -432,6 +436,13 @@ const OcorrenciaController = {
                     fotos
                 });
 
+            ocorrenciaSalva =
+                true;
+
+            await removerArquivosSilenciosamente(
+                arquivos
+            );
+
             return res
                 .status(201)
                 .json({
@@ -447,9 +458,33 @@ const OcorrenciaController = {
                 });
 
         } catch (error) {
+            if (!ocorrenciaSalva) {
+                await removerFotosCloudinary(
+                    fotosEnviadas
+                );
+            }
+
             await removerArquivosSilenciosamente(
                 req.files || []
             );
+
+            if (
+                error.codigoAplicacao ===
+                "FOTOS_NUVEM_INDISPONIVEIS"
+            ) {
+                console.error(
+                    "Armazenamento das fotos indisponível:",
+                    error.message
+                );
+
+                return res
+                    .status(503)
+                    .json({
+                        sucesso: false,
+                        mensagem:
+                            "Não foi possível armazenar as fotos da ocorrência. Tente novamente em alguns instantes."
+                    });
+            }
 
             if (
                 error.codigoAplicacao ===

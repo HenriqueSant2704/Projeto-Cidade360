@@ -4,6 +4,7 @@ PAINEL PRINCIPAL
 
 Responsável por:
 - Resumo das ocorrências do cidadão
+- Resumo geral e mapa municipal para o administrador
 - Pontos e nível
 - Ocorrências recentes
 - Mapa com as próprias ocorrências
@@ -353,6 +354,17 @@ function obterEnderecoOcorrenciaPainel(ocorrencia) {
 
 
 function obterConfiguracaoStatusPainel(status) {
+    if (
+        ehAdministradorPainel() &&
+        String(status || "").trim().toLowerCase() === "cancelado"
+    ) {
+        return {
+            classeStatus: "status-cancelado",
+            classeIcone: "ocorrencia-azul",
+            corMapa: "#6b7280"
+        };
+    }
+
     const valor =
         String(status || "")
             .trim()
@@ -538,6 +550,10 @@ function renderizarUsuarioPainel() {
     const usuario =
         estadoPainel.usuario || {};
 
+    if (ehAdministradorPainel()) {
+        return;
+    }
+
     if (numeroPontosPainel) {
         numeroPontosPainel.textContent =
             formatarNumeroPainel(
@@ -554,6 +570,128 @@ function renderizarUsuarioPainel() {
 
 /*========================================================================================================
 
+PAINEL ADMINISTRATIVO
+
+O perfil é confirmado pelo backend antes de escolher as consultas.
+O painel do cidadão mantém os textos, pontos e consultas originais.
+
+=========================================================================================================*/
+
+function ehAdministradorPainel() {
+    return String(
+        estadoPainel.usuario?.tipo_usuario || ""
+    )
+        .trim()
+        .toUpperCase() === "ADMIN";
+}
+
+
+function ajustarPainelAdministrador() {
+    if (!ehAdministradorPainel()) {
+        return;
+    }
+
+    const cardTotal =
+        numeroTotalPainel?.closest(
+            ".card-resumo"
+        );
+
+    const cardPendentes =
+        numeroPontosPainel?.closest(
+            ".card-resumo"
+        );
+
+    const tituloTotal =
+        cardTotal?.querySelector(
+            ".card-textos p"
+        );
+
+    const descricaoTotal =
+        cardTotal?.querySelector(
+            ".card-textos span"
+        );
+
+    const tituloPendentes =
+        cardPendentes?.querySelector(
+            ".card-textos p"
+        );
+
+    const iconePendentes =
+        cardPendentes?.querySelector(
+            ".circulo-resumo img"
+        );
+
+    if (tituloTotal) {
+        tituloTotal.textContent =
+            "Total de ocorrências";
+    }
+
+    if (descricaoTotal) {
+        descricaoTotal.textContent =
+            "Todas as ocorrências registradas";
+    }
+
+    if (tituloPendentes) {
+        tituloPendentes.textContent =
+            "Aguardando análise";
+    }
+
+    if (nivelPainel) {
+        nivelPainel.textContent =
+            "Recebidas e em análise";
+    }
+
+    if (iconePendentes) {
+        iconePendentes.src =
+            "/assets/icons/painel/resumo/prancheta-analise.png";
+    }
+
+    if (btnNivelPainel) {
+        btnNivelPainel.textContent =
+            "Ver ocorrências →";
+
+        btnNivelPainel.href =
+            PAGINA_OCORRENCIAS_PAINEL;
+    }
+
+    const tituloMapa =
+        btnVerMapaPainel?.closest(
+            ".titulo-analises"
+        )?.querySelector(
+            "h1"
+        );
+
+    const tituloRecentes =
+        btnVerTodasOcorrenciasPainel?.closest(
+            ".titulo-analises"
+        )?.querySelector(
+            "h1"
+        );
+
+    const tituloAcaoOcorrencias =
+        acaoMinhasOcorrenciasPainel?.querySelector(
+            "h2"
+        );
+
+    if (tituloMapa) {
+        tituloMapa.textContent =
+            "Mapa de ocorrências do município";
+    }
+
+    if (tituloRecentes) {
+        tituloRecentes.textContent =
+            "Ocorrências recentes";
+    }
+
+    if (tituloAcaoOcorrencias) {
+        tituloAcaoOcorrencias.innerHTML =
+            "Todas as<br>Ocorrências";
+    }
+}
+
+
+/*========================================================================================================
+
 RESUMO
 
 =========================================================================================================*/
@@ -561,7 +699,9 @@ RESUMO
 async function carregarResumoPainel() {
     const resposta =
         await fetchAutenticadoPainel(
-            `${API_URL_PAINEL}/ocorrencias/resumo`,
+            ehAdministradorPainel()
+                ? `${API_URL_PAINEL}/ocorrencias/admin/resumo`
+                : `${API_URL_PAINEL}/ocorrencias/resumo`,
             {
                 method: "GET"
             }
@@ -595,6 +735,16 @@ async function carregarResumoPainel() {
 function renderizarResumoPainel() {
     const resumo =
         estadoPainel.resumo || {};
+
+    if (
+        ehAdministradorPainel() &&
+        numeroPontosPainel
+    ) {
+        numeroPontosPainel.textContent =
+            formatarNumeroPainel(
+                resumo.pendentes
+            );
+    }
 
     if (numeroTotalPainel) {
         numeroTotalPainel.textContent =
@@ -640,7 +790,9 @@ async function carregarTodasOcorrenciasPainel() {
 
         const resposta =
             await fetchAutenticadoPainel(
-                `${API_URL_PAINEL}/ocorrencias?${parametros.toString()}`,
+                ehAdministradorPainel()
+                    ? `${API_URL_PAINEL}/ocorrencias/admin?${parametros.toString()}`
+                    : `${API_URL_PAINEL}/ocorrencias?${parametros.toString()}`,
                 {
                     method: "GET"
                 }
@@ -711,7 +863,9 @@ function renderizarOcorrenciasRecentesPainel() {
         listaOcorrenciasRecentesPainel.innerHTML = `
             <div class="painel-vazio">
                 <strong>Nenhuma ocorrência registrada.</strong>
-                <span>Quando você registrar uma ocorrência, ela aparecerá aqui.</span>
+                <span>${ehAdministradorPainel()
+                    ? "As ocorrências registradas no município aparecerão aqui."
+                    : "Quando você registrar uma ocorrência, ela aparecerá aqui."}</span>
             </div>
         `;
 
@@ -1271,9 +1425,15 @@ function inicializarMapaPainel() {
         L.control.layers(
             null,
             {
-                "Minhas ocorrências": estadoPainel.camadaMinhas,
-                "Ocorrências próximas": estadoPainel.camadaProximas,
-                "Minha localização": estadoPainel.camadaLocalizacao
+                ...(ehAdministradorPainel()
+                    ? {
+                        "Ocorrências do município": estadoPainel.camadaMinhas
+                    }
+                    : {
+                        "Minhas ocorrências": estadoPainel.camadaMinhas,
+                        "Ocorrências próximas": estadoPainel.camadaProximas,
+                        "Minha localização": estadoPainel.camadaLocalizacao
+                    })
             },
             {
                 collapsed: true
@@ -1437,6 +1597,20 @@ MARCADORES
 =========================================================================================================*/
 
 function adicionarMarcadorOcorrenciaPainel(ocorrencia, tipo) {
+    if (
+        ehAdministradorPainel() &&
+        (
+            ocorrencia.latitude == null ||
+            ocorrencia.longitude == null ||
+            String(ocorrencia.latitude).trim() === "" ||
+            String(ocorrencia.longitude).trim() === "" ||
+            Math.abs(Number(ocorrencia.latitude)) > 90 ||
+            Math.abs(Number(ocorrencia.longitude)) > 180
+        )
+    ) {
+        return null;
+    }
+
     const latitude =
         Number(
             ocorrencia.latitude
@@ -1618,6 +1792,7 @@ function abrirConsultaMapaPainel(ocorrencia, tipo) {
         );
 
     const distanciaTexto =
+        !ehAdministradorPainel() &&
         Number.isFinite(distancia)
             ? `${distancia.toFixed(2).replace(".", ",")} km de você`
             : "";
@@ -1649,7 +1824,9 @@ function abrirConsultaMapaPainel(ocorrencia, tipo) {
             <button class="fechar-modal-consulta-painel" type="button" data-fechar-consulta-painel>&times;</button>
 
             <span class="tipo-ocorrencia-mapa-painel">
-                ${tipo === "minha" ? "Sua ocorrência" : "Ocorrência próxima"}
+                ${ehAdministradorPainel()
+                    ? "Ocorrência do município"
+                    : tipo === "minha" ? "Sua ocorrência" : "Ocorrência próxima"}
             </span>
 
             <h2>${escaparHtmlPainel(ocorrencia.titulo || "Ocorrência")}</h2>
@@ -1688,7 +1865,9 @@ function abrirConsultaMapaPainel(ocorrencia, tipo) {
             ${tipo === "minha"
                 ? `
                     <button class="btn-consultar-ocorrencia-painel" id="btnAbrirOcorrenciaCompletaPainel" type="button">
-                        Ver acompanhamento completo
+                        ${ehAdministradorPainel()
+                            ? "Ver detalhes da ocorrência"
+                            : "Ver acompanhamento completo"}
                     </button>
                 `
                 : `
@@ -1884,6 +2063,12 @@ function registrarEventosPainel() {
             (event) => {
                 event.preventDefault();
 
+                if (ehAdministradorPainel()) {
+                    irParaOcorrenciasPainel();
+
+                    return;
+                }
+
                 const pontos =
                     numeroPainel(
                         estadoPainel.usuario?.pontos
@@ -1996,53 +2181,104 @@ async function inicializarPainel() {
     estadoPainel.carregando =
         true;
 
-    registrarEventosPainel();
-    inicializarMapaPainel();
+    try {
+        await carregarUsuarioPainel();
 
-    const resultados =
-        await Promise.allSettled([
-            carregarUsuarioPainel(),
-            carregarResumoPainel(),
-            carregarTodasOcorrenciasPainel(),
-            carregarCategoriasGeraisPainel()
-        ]);
+        ajustarPainelAdministrador();
+        registrarEventosPainel();
+        inicializarMapaPainel();
 
-    resultados.forEach((resultado) => {
+        const resultados =
+            await Promise.allSettled([
+                carregarResumoPainel(),
+                carregarTodasOcorrenciasPainel(),
+                carregarCategoriasGeraisPainel()
+            ]);
+
+        resultados.forEach((resultado) => {
+            if (
+                resultado.status === "rejected"
+            ) {
+                console.error(
+                    "Erro ao carregar painel:",
+                    resultado.reason
+                );
+            }
+        });
+
         if (
-            resultado.status === "rejected"
+            resultados[2]?.status === "rejected"
         ) {
+            renderizarErroCategoriasPainel();
+        }
+
+        if (ehAdministradorPainel()) {
+            if (
+                resultados[0]?.status === "rejected"
+            ) {
+                [
+                    numeroTotalPainel,
+                    numeroAndamentoPainel,
+                    numeroResolvidasPainel,
+                    numeroPontosPainel
+                ].forEach((elemento) => {
+                    if (elemento) {
+                        elemento.textContent =
+                            "—";
+                    }
+                });
+
+                mostrarMensagemPainel(
+                    "Não foi possível carregar o resumo administrativo. Atualize a página para tentar novamente.",
+                    "info"
+                );
+            }
+
+            if (
+                resultados[1]?.status === "rejected" &&
+                listaOcorrenciasRecentesPainel
+            ) {
+                listaOcorrenciasRecentesPainel.innerHTML = `
+                    <div class="painel-vazio">
+                        <strong>Não foi possível carregar as ocorrências.</strong>
+                        <span>Atualize a página para tentar novamente.</span>
+                    </div>
+                `;
+
+                mostrarMensagemPainel(
+                    "Não foi possível carregar as ocorrências do município no mapa e na lista.",
+                    "info"
+                );
+            }
+
+            return;
+        }
+
+        try {
+            await carregarOcorrenciasProximasPainel();
+
+        } catch (error) {
             console.error(
-                "Erro ao carregar painel:",
-                resultado.reason
+                "Erro ao carregar ocorrências próximas:",
+                error
+            );
+
+            mostrarMensagemPainel(
+                "Suas ocorrências foram carregadas, mas não foi possível consultar as ocorrências próximas.",
+                "info"
             );
         }
-    });
-
-
-    if (
-        resultados[3]?.status === "rejected"
-    ) {
-        renderizarErroCategoriasPainel();
-    }
-
-
-    try {
-        await carregarOcorrenciasProximasPainel();
 
     } catch (error) {
         console.error(
-            "Erro ao carregar ocorrências próximas:",
+            "Erro ao iniciar painel:",
             error
         );
 
-        mostrarMensagemPainel(
-            "Suas ocorrências foram carregadas, mas não foi possível consultar as ocorrências próximas.",
-            "info"
-        );
+    } finally {
+        estadoPainel.carregando =
+            false;
     }
-
-    estadoPainel.carregando =
-        false;
 }
 
 
