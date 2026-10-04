@@ -13,6 +13,15 @@ const {
 } =
     require("../utils/fotosCloudinary");
 
+const {
+    iniciarProcessamentoEmailsOcorrencia,
+    processarEmailsOcorrencia
+} =
+    require("../utils/emailsOcorrencia");
+
+
+iniciarProcessamentoEmailsOcorrencia();
+
 
 /*========================================================================================================
 
@@ -952,6 +961,8 @@ const OcorrenciaController = {
 
                         observacao
                     });
+
+            processarEmailsOcorrencia();
 
             return res
                 .status(200)
