@@ -8,9 +8,9 @@
     <!-- Tema claro/escuro: precisa vir antes do CSS para a página não "piscar". -->
     <script src="/FrontEnd/pages/global/tema.js?v=1"></script>
 
-    <link rel="stylesheet" href="/FrontEnd/pages/global/global.css?v=7">
+    <link rel="stylesheet" href="/FrontEnd/pages/global/global.css?v=9">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="stylesheet" href="/FrontEnd/pages/painel/painel.css?v=7">
+    <link rel="stylesheet" href="/FrontEnd/pages/painel/painel.css?v=8">
 
     <title>Cidade360-Painel</title>
 </head>
@@ -181,16 +181,19 @@
                 <div class="duas-colunas iguais">
 
                     <!-- Avisos da prefeitura -->
-                    <section class="cartao">
+                    <section class="cartao flex">
 
                         <div class="cartao-topo">
-                            <h3>Avisos e comunicados</h3>
+                            <div>
+                                <h3>Avisos e comunicados</h3>
+                                <small id="subtituloAvisosPainel">Publicados pela prefeitura</small>
+                            </div>
                             <a class="link-seta" id="btnVerAvisosPainel" href="/FrontEnd/pages/avisos/avisos.html">Ver todos</a>
                         </div>
 
-                        <div class="lista-avisos" id="avisosPainel">
-                            <p class="vazio-mini">Carregando avisos...</p>
-                        </div>
+                        <ul class="lista-compacta" id="avisosPainel">
+                            <li class="vazio-mini">Carregando avisos...</li>
+                        </ul>
 
                     </section>
 
@@ -247,13 +250,13 @@
     <!--Leaflet utilizado para exibir as ocorrências no mapa.-->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <script src="/FrontEnd/pages/global/global.js?v=7"></script>
+    <script src="/FrontEnd/pages/global/global.js?v=10"></script>
 
     <!--Ícones e status compartilhados (Painel e Ocorrências).-->
-    <script src="/FrontEnd/pages/global/icones.js?v=1"></script>
+    <script src="/FrontEnd/pages/global/icones.js?v=2"></script>
 
     <!--Script responsável pelo funcionamento do painel.-->
-    <script src="/FrontEnd/pages/painel/painel.js?v=7"></script>
+    <script src="/FrontEnd/pages/painel/painel.js?v=8"></script>
 
 </body>
 

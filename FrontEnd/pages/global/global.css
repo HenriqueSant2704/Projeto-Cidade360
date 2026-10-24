@@ -406,17 +406,39 @@ button {
     flex-direction: column;
 }
 
-/* Área das páginas (painel e ocorrências) */
+/*
+ * Área das páginas (painel, ocorrências e avisos)
+ * A largura cresce com a tela: notebook usa 1240px, monitor grande usa quase tudo.
+ */
+
+:root {
+    --largura-pagina: 1240px;
+    --respiro-pagina: 24px;
+}
+
+@media (min-width: 1440px) {
+    :root {
+        --largura-pagina: 1600px;
+        --respiro-pagina: 32px;
+    }
+}
+
+@media (min-width: 1880px) {
+    :root {
+        --largura-pagina: 1760px;
+        --respiro-pagina: 40px;
+    }
+}
 
 .pagina {
     width: 100%;
-    max-width: 1240px;
+    max-width: var(--largura-pagina);
 
     margin: 0 auto;
 
     padding-block: 28px 64px;
-    padding-left: max(24px, env(safe-area-inset-left, 0px));
-    padding-right: max(24px, env(safe-area-inset-right, 0px));
+    padding-left: max(var(--respiro-pagina), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--respiro-pagina), env(safe-area-inset-right, 0px));
 
     display: flex;
     flex-direction: column;
@@ -991,6 +1013,37 @@ button {
     margin-top: 2px;
     font-size: 11.5px;
     color: var(--muted);
+}
+
+.item-notificacao-textos .item-notificacao-rodape {
+    margin-top: 2px;
+
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.item-notificacao-rodape time {
+    margin-top: 0;
+}
+
+.pontos-notificacao {
+    padding: 1px 8px;
+
+    border-radius: 999px;
+
+    background-color: var(--s-andamento-soft);
+    color: var(--s-andamento);
+
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 600;
+}
+
+.pontos-notificacao.negativo {
+    background-color: var(--s-cancelado-soft);
+    color: var(--s-cancelado);
 }
 
 .ponto-nao-lida {

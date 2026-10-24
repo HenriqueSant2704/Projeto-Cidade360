@@ -1,10 +1,15 @@
 /*===================================================================
 
- PREFERÊNCIAS DO USUÁRIO (NOVO)
+ PREFERÊNCIAS DO USUÁRIO
 
- Salvas neste navegador. A chave NÃO começa com "cidade360_"
- de propósito: o logout.js apaga tudo que começa com "cidade360_",
- e as preferências devem continuar depois de sair da conta.
+ Tema escuro, contador do sininho e reduzir animações ficam salvos
+ na CONTA (/api/preferencias), então valem em qualquer navegador.
+ O navegador guarda só uma cópia, para a página já abrir com o
+ tema certo antes do login ser confirmado. "Menu recolhido" fica
+ só no navegador, porque depende da tela de cada aparelho.
+
+ A chave NÃO começa com "cidade360_" de propósito: o logout.js apaga
+ tudo que começa com "cidade360_", e a cópia deve continuar.
 
 ===================================================================*/
 
@@ -89,6 +94,142 @@ function aplicarPreferenciasVisuaisCidade360() {
 
 
 aplicarPreferenciasVisuaisCidade360();
+
+
+/*-------------------------------------------------------------------
+  PREFERÊNCIAS NA CONTA
+-------------------------------------------------------------------*/
+
+const API_PREFERENCIAS_CIDADE360 = "/api/preferencias";
+
+const PREFERENCIAS_DA_CONTA_CIDADE360 = [
+    "temaEscuro",
+    "contadorNotificacoes",
+    "reduzirAnimacoes"
+];
+
+// "conta" quando o servidor salvou; "navegador" enquanto o servidor não tiver a migração 008.
+let ondePreferenciasFicamCidade360 = "navegador";
+let preferenciasSincronizadasCidade360 = false;
+
+
+function tokenPreferenciasCidade360() {
+    return (
+        localStorage.getItem("cidade360_token") ||
+        sessionStorage.getItem("cidade360_token")
+    );
+}
+
+
+function preferenciasDaContaCidade360(preferencias) {
+    return Object.fromEntries(
+        PREFERENCIAS_DA_CONTA_CIDADE360.map((chave) => [chave, Boolean(preferencias[chave])])
+    );
+}
+
+
+function aplicarTodasPreferenciasCidade360() {
+    aplicarPreferenciasVisuaisCidade360();
+
+    window.aplicarTemaCidade360?.(
+        lerPreferenciasCidade360().temaEscuro
+    );
+
+    window.dispatchEvent(
+        new CustomEvent("cidade360:preferencias")
+    );
+}
+
+
+async function enviarPreferenciasDaContaCidade360(preferencias) {
+    const token = tokenPreferenciasCidade360();
+
+    if (!token) {
+        return false;
+    }
+
+    try {
+        const resposta = await fetch(API_PREFERENCIAS_CIDADE360, {
+            method: "PUT",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(preferencias)
+        });
+
+        if (resposta.ok) {
+            ondePreferenciasFicamCidade360 = "conta";
+        }
+
+        return resposta.ok;
+
+    } catch (error) {
+        console.warn("Não foi possível salvar as preferências na conta.", error);
+        return false;
+    }
+}
+
+
+/*
+  Roda uma vez por página, quando o login é confirmado:
+  - a conta já tem preferências → elas vencem e viram a cópia do navegador;
+  - a conta ainda não tem (primeiro acesso depois da atualização) → envia as do navegador;
+  - servidor sem a migração 008 (404/503) → continua só com o navegador.
+*/
+async function sincronizarPreferenciasDaContaCidade360() {
+    const token = tokenPreferenciasCidade360();
+
+    if (preferenciasSincronizadasCidade360 || !token) {
+        return;
+    }
+
+    preferenciasSincronizadasCidade360 = true;
+
+    try {
+        const resposta = await fetch(API_PREFERENCIAS_CIDADE360, {
+            headers: { Authorization: `Bearer ${token}` },
+            cache: "no-store"
+        });
+
+        const dados = await resposta.json().catch(() => null);
+
+        if (!resposta.ok || !dados?.sucesso) {
+            return;
+        }
+
+        ondePreferenciasFicamCidade360 = "conta";
+
+        const locais = lerPreferenciasCidade360();
+
+        if (!dados.preferencias) {
+            await enviarPreferenciasDaContaCidade360(preferenciasDaContaCidade360(locais));
+            return;
+        }
+
+        const mudou = PREFERENCIAS_DA_CONTA_CIDADE360.some(
+            (chave) => typeof dados.preferencias[chave] === "boolean" &&
+                dados.preferencias[chave] !== locais[chave]
+        );
+
+        salvarPreferenciasCidade360({ ...locais, ...dados.preferencias });
+
+        if (mudou) {
+            aplicarTodasPreferenciasCidade360();
+        }
+
+    } catch (error) {
+        console.warn("Não foi possível carregar as preferências da conta.", error);
+    } finally {
+        window.dispatchEvent(new CustomEvent("cidade360:preferencias"));
+    }
+}
+
+window.addEventListener("cidade360:usuario-carregado", sincronizarPreferenciasDaContaCidade360);
+
+if (window.usuarioLogado) {
+    sincronizarPreferenciasDaContaCidade360();
+}
 
 
 // Se o tema for trocado em outra aba, esta aba acompanha.
@@ -632,15 +773,16 @@ if (
     const API_TOPO = "/api";
     const PAGINA_OCORRENCIAS_TOPO = "/FrontEnd/pages/ocorrencia/ocorrencia.html";
     const LOGIN_PAGE_TOPO = "/FrontEnd/pages/login/login.html";
+    const PAGINA_AVISOS_TOPO = "/FrontEnd/pages/avisos/avisos.html";
 
     // Também não começa com "cidade360_" para sobreviver ao logout.
     const CHAVE_LIDAS = "notificacoes_lidas_cidade360";
 
     const LIMITE_NOTIFICACOES = 15;
+    const LIMITE_NOTIFICACOES_SERVIDOR = 30;
     const INTERVALO_ATUALIZACAO = 2 * 60 * 1000; // 2 minutos
 
-    // PROVISÓRIO: avisos gerais escritos aqui.
-    // Quando existir uma rota de comunicados no backend, eles podem vir de lá.
+    // Só usado no modo provisório (servidor ainda sem a tabela de notificações).
     const AVISOS_GERAIS = [
         {
             id: "boas-vindas",
@@ -723,6 +865,10 @@ if (
         usuario: null,
         ocorrencias: [],
         notificacoes: [],
+        doServidor: [],
+        // "servidor": notificações salvas no banco (/api/notificacoes).
+        // "local": modo provisório, montado a partir das ocorrências.
+        fonte: null,
         aba: "todas",
         carregando: false,
         erro: false,
@@ -857,10 +1003,14 @@ if (
         }
     }
 
-    function marcarComoLidas(ids) {
-        const lidas = lerLidas();
-        ids.forEach((id) => lidas.add(id));
-        salvarLidas(lidas);
+    function marcarComoLidas(ids, { todas = false } = {}) {
+        if (estado.fonte === "servidor") {
+            marcarLidasNoServidor(ids, todas);
+        } else {
+            const lidas = lerLidas();
+            ids.forEach((id) => lidas.add(id));
+            salvarLidas(lidas);
+        }
 
         estado.notificacoes.forEach((notificacao) => {
             if (ids.includes(notificacao.id)) {
@@ -873,10 +1023,110 @@ if (
     }
 
 
-    /*---------------------------------------------------------------
-      NOTIFICAÇÕES: MONTAGEM
+    // Atualiza a tela na hora e avisa o servidor em segundo plano.
+    function marcarLidasNoServidor(ids, todas) {
+        const token = obterToken();
 
-      Não existe rota de notificações no backend ainda.
+        if (!token) {
+            return;
+        }
+
+        const pedidos = todas
+            ? [`${API_TOPO}/notificacoes/lidas`]
+            : ids.map((id) => `${API_TOPO}/notificacoes/${encodeURIComponent(String(id).replace("srv-", ""))}/lida`);
+
+        pedidos.forEach((url) => {
+            fetch(url, {
+                method: "PATCH",
+                headers: { Authorization: `Bearer ${token}` },
+                keepalive: true
+            }).catch((error) => {
+                console.warn("Não foi possível marcar a notificação como lida.", error);
+            });
+        });
+    }
+
+
+    /*---------------------------------------------------------------
+      NOTIFICAÇÕES DO SERVIDOR
+
+      Vêm da tabela "notificacoes" (migração 007):
+      - Cidadão: cada mudança na ocorrência dele, com os pontos ganhos.
+      - Admin: cada ocorrência nova registrada.
+      - Todos: cada aviso novo publicado pela prefeitura.
+    ---------------------------------------------------------------*/
+
+    function linkDaNotificacao(notificacao) {
+        if (notificacao.aviso_id) {
+            return `${PAGINA_AVISOS_TOPO}?aviso=${Number(notificacao.aviso_id) || 0}`;
+        }
+
+        if (notificacao.ocorrencia_id) {
+            return `${PAGINA_OCORRENCIAS_TOPO}?ocorrencia=${Number(notificacao.ocorrencia_id) || 0}`;
+        }
+
+        return null;
+    }
+
+    function montarNotificacoesDoServidor() {
+        estado.notificacoes = estado.doServidor.map((notificacao) => ({
+            id: `srv-${notificacao.id}`,
+            tipo: notificacao.tipo === "aviso_novo" ? "geral" : "ocorrencia",
+            visual: notificacao.tipo === "aviso_novo"
+                ? "geral"
+                : (VISUAL_NOTIFICACAO[notificacao.status] ? notificacao.status : "recebido"),
+            titulo: notificacao.titulo,
+            texto: notificacao.texto,
+            pontos: Number(notificacao.pontos) || 0,
+            data: notificacao.data_criacao,
+            link: linkDaNotificacao(notificacao),
+            lida: Boolean(notificacao.lida)
+        }));
+    }
+
+    /*
+      Devolve true quando o servidor respondeu.
+      Devolve false quando o servidor ainda não tem a rota ou a tabela
+      (404 ou 503 NOTIFICACOES_INDISPONIVEIS): aí o sininho usa o modo provisório.
+    */
+    async function carregarDoServidor(token) {
+        const resposta = await fetch(`${API_TOPO}/notificacoes?limite=${LIMITE_NOTIFICACOES_SERVIDOR}`, {
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` },
+            cache: "no-store"
+        });
+
+        const dados = await resposta.json().catch(() => null);
+
+        if (
+            resposta.status === 404 ||
+            (resposta.status === 503 && dados?.codigo === "NOTIFICACOES_INDISPONIVEIS")
+        ) {
+            return false;
+        }
+
+        if (!resposta.ok || !dados?.sucesso || !Array.isArray(dados.notificacoes)) {
+            throw new Error(dados?.mensagem || "Resposta inválida.");
+        }
+
+        // Mantém marcadas as que o usuário acabou de ler, se o PATCH ainda estiver a caminho.
+        const lidasAgora = new Set(
+            estado.notificacoes.filter((n) => n.lida).map((n) => n.id)
+        );
+
+        estado.doServidor = dados.notificacoes.map((notificacao) => ({
+            ...notificacao,
+            lida: notificacao.lida || lidasAgora.has(`srv-${notificacao.id}`)
+        }));
+
+        return true;
+    }
+
+
+    /*---------------------------------------------------------------
+      NOTIFICAÇÕES: MODO PROVISÓRIO
+
+      Usado enquanto o servidor não tem a tabela de notificações.
       Elas são montadas a partir das ocorrências:
       - Cidadão: o status atual de cada ocorrência dele.
         Quando o status muda, nasce uma notificação nova (não lida).
@@ -884,6 +1134,11 @@ if (
     ---------------------------------------------------------------*/
 
     function montarNotificacoes() {
+        if (estado.fonte === "servidor") {
+            montarNotificacoesDoServidor();
+            return;
+        }
+
         const lidas = lerLidas();
         const admin = ehAdministrador();
 
@@ -956,6 +1211,18 @@ if (
         }
 
         try {
+            if (estado.fonte !== "local") {
+                const respondeu = await carregarDoServidor(token);
+
+                if (respondeu) {
+                    estado.fonte = "servidor";
+                    estado.erro = false;
+                    return;
+                }
+
+                estado.fonte = "local";
+            }
+
             const base = ehAdministrador()
                 ? `${API_TOPO}/ocorrencias/admin`
                 : `${API_TOPO}/ocorrencias`;
@@ -1079,7 +1346,7 @@ if (
                 <div class="notificacoes-estado">
                     <div class="notificacoes-estado-icone">${ICONES.sino}</div>
                     <strong>Tudo em dia</strong>
-                    <span>Quando houver novidades sobre suas ocorrências, elas aparecem aqui.</span>
+                    <span>Quando houver novidades sobre ocorrências e avisos, elas aparecem aqui.</span>
                 </div>
             `;
         } else {
@@ -1096,7 +1363,10 @@ if (
                                     <span class="item-notificacao-textos">
                                         <strong>${escaparHtml(notificacao.titulo)}</strong>
                                         <span>${escaparHtml(notificacao.texto)}</span>
-                                        <time>${escaparHtml(tempoRelativo(notificacao.data))}</time>
+                                        <span class="item-notificacao-rodape">
+                                            <time>${escaparHtml(tempoRelativo(notificacao.data))}</time>
+                                            ${notificacao.pontos ? `<em class="pontos-notificacao ${notificacao.pontos < 0 ? "negativo" : ""}">${notificacao.pontos > 0 ? "+" : "−"}${Math.abs(notificacao.pontos)} ${Math.abs(notificacao.pontos) === 1 ? "ponto" : "pontos"}</em>` : ""}
+                                        </span>
                                     </span>
                                     ${notificacao.lida ? "" : '<span class="ponto-nao-lida" aria-label="Não lida"></span>'}
                                 </button>
@@ -1145,7 +1415,7 @@ if (
         const acao = event.target.closest("[data-acao]")?.dataset.acao;
 
         if (acao === "marcar-todas") {
-            marcarComoLidas(estado.notificacoes.map((n) => n.id));
+            marcarComoLidas(estado.notificacoes.map((n) => n.id), { todas: true });
             return;
         }
 
@@ -1330,7 +1600,9 @@ if (
                 `).join("")}
             </div>
 
-            <p class="rodape-configuracoes">${ICONES.cadeado}As preferências ficam salvas neste navegador.</p>
+            <p class="rodape-configuracoes">${ICONES.cadeado}${ondePreferenciasFicamCidade360 === "conta"
+                ? "Salvas na sua conta. O menu recolhido vale só para este aparelho."
+                : "As preferências ficam salvas neste navegador."}</p>
         `;
     }
 
@@ -1344,6 +1616,10 @@ if (
         const preferencias = lerPreferenciasCidade360();
         preferencias[campo.dataset.preferencia] = campo.checked;
         salvarPreferenciasCidade360(preferencias);
+
+        if (PREFERENCIAS_DA_CONTA_CIDADE360.includes(campo.dataset.preferencia)) {
+            enviarPreferenciasDaContaCidade360({ [campo.dataset.preferencia]: campo.checked });
+        }
 
         if (campo.dataset.preferencia === "reduzirAnimacoes") {
             aplicarPreferenciasVisuaisCidade360();
@@ -1618,6 +1894,15 @@ if (
         estado.paineis.notificacoes?.addEventListener("click", tratarCliqueNotificacoes);
         estado.paineis.perfil?.addEventListener("click", tratarCliquePerfil);
         estado.paineis.configuracoes?.addEventListener("change", tratarMudancaConfiguracao);
+
+        // Preferências vindas da conta: contador do sininho e painel aberto acompanham.
+        window.addEventListener("cidade360:preferencias", () => {
+            atualizarContador();
+
+            if (estado.painelAberto === "configuracoes") {
+                renderizarConfiguracoes();
+            }
+        });
 
         // O authGuard.js avisa quando confirma quem está logado.
         window.addEventListener("cidade360:usuario-carregado", (event) => {

@@ -75,10 +75,11 @@ const REACAO = Object.fromEntries(REACOES.map((r) => [r.chave, r]));
 
 const API_AVISOS = "/api/avisos";
 
-// Não começa com "cidade360_" para sobreviver ao logout (mesmo padrão das notificações).
+// "Novo" vem do servidor (notificação do aviso ainda não lida, salva no banco).
+// Só o modo demonstração guarda os vistos neste navegador.
 const CHAVE_VISTOS = "avisos_vistos_cidade360";
 
-// Um aviso aparece como "Novo" se o cidadão ainda não o viu e ele tem até 7 dias.
+// Servidor sem a tabela de notificações: "Novo" = publicado nos últimos 7 dias.
 const DIAS_AVISO_NOVO = 7;
 
 const LIMITE_TITULO = 90;
@@ -267,7 +268,9 @@ function paraTela(dados) {
         foto,
         reacoes: { ...(dados.reacoes || {}) },
         minha: dados.minha_reacao || null,
-        novo: !vistos.has(Number(dados.id)) && Date.now() - criado < DIAS_AVISO_NOVO * 24 * 3600e3
+        novo: typeof dados.novo === "boolean"
+            ? dados.novo
+            : (!est.demo || !vistos.has(Number(dados.id))) && Date.now() - criado < DIAS_AVISO_NOVO * 24 * 3600e3
     };
 }
 
@@ -531,10 +534,20 @@ async function carregarAvisos() {
         renderTudo();
     }
 
-    // Os avisos exibidos agora deixam de ser "Novo" na próxima visita.
+    abrirAvisoDaUrl();
+
+    // Os avisos exibidos agora deixam de ser "Novo" na próxima visita
+    // (e somem do sininho, porque a notificação deles fica lida).
     if (!ehAdmin() && !est.erro) {
-        avisos.forEach((a) => vistos.add(a.id));
-        salvarVistos(vistos);
+        if (est.demo) {
+            avisos.forEach((a) => vistos.add(a.id));
+            salvarVistos(vistos);
+        } else if (avisos.some((a) => a.novo)) {
+            fetch("/api/notificacoes/avisos/lidas", {
+                method: "PATCH",
+                headers: { Authorization: `Bearer ${obterToken()}` }
+            }).catch(() => {});
+        }
     }
 }
 
@@ -1050,6 +1063,33 @@ document.addEventListener("click", (e) => {
     if (acao === "excluir") { est.menu = null; renderCard(id); confirmarExclusao(a); return; }
     fecharPopovers();
 });
+
+// avisos.html?aviso=12 (link do painel e do sininho): rola até o aviso e destaca.
+function abrirAvisoDaUrl() {
+    const parametros = new URLSearchParams(window.location.search);
+    const id = Number(parametros.get("aviso"));
+
+    if (!parametros.has("aviso")) return;
+
+    parametros.delete("aviso");
+    const busca = parametros.toString();
+    history.replaceState(null, "", `${window.location.pathname}${busca ? `?${busca}` : ""}${window.location.hash}`);
+
+    if (!id) return;
+
+    if (!avisos.some((a) => a.id === id)) {
+        toast("Este aviso não está mais disponível.", null, "erro");
+        return;
+    }
+
+    requestAnimationFrame(() => {
+        irPara(id);
+
+        const card = $(`#feedAvisos .aviso[data-id="${id}"]`);
+        card?.classList.add("destacado");
+        setTimeout(() => card?.classList.remove("destacado"), 2600);
+    });
+}
 
 function irPara(id) {
     if (est.filtro !== "todos" || est.busca) { est.filtro = "todos"; est.busca = ""; $("#buscaAvisos").value = ""; renderFiltros(); renderFeed(); }

@@ -19,6 +19,12 @@ const {
 } =
     require("../utils/emailsOcorrencia");
 
+const {
+    aoRegistrarOcorrencia,
+    aoMudarStatusOcorrencia
+} =
+    require("../utils/eventosNotificacao");
+
 
 iniciarProcessamentoEmailsOcorrencia();
 
@@ -447,6 +453,11 @@ const OcorrenciaController = {
 
             ocorrenciaSalva =
                 true;
+
+            // Avisa os admins e dá os pontos de registro ao cidadão.
+            await aoRegistrarOcorrencia({
+                ocorrenciaId
+            });
 
             await removerArquivosSilenciosamente(
                 arquivos
@@ -964,6 +975,19 @@ const OcorrenciaController = {
 
             processarEmailsOcorrencia();
 
+            // Avisa o cidadão no sininho e acerta os pontos dele.
+            await aoMudarStatusOcorrencia({
+                ocorrenciaId,
+
+                statusAnterior:
+                    resultado.status_anterior,
+
+                statusNovo:
+                    resultado.status_novo,
+
+                observacao
+            });
+
             return res
                 .status(200)
                 .json({
@@ -1064,4 +1088,4 @@ const OcorrenciaController = {
 };
 
 module.exports =
-    OcorrenciaController;
+    OcorrenciaController;

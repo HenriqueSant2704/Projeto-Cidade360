@@ -13,6 +13,14 @@ const {
 } =
     require("../utils/fotosCloudinary");
 
+const {
+    aoPublicarAviso
+} =
+    require("../utils/eventosNotificacao");
+
+const NotificacaoModel =
+    require("../models/notificacaoModel");
+
 
 /*========================================================================================================
 
@@ -321,6 +329,43 @@ function responderErro(
 
 /*========================================================================================================
 
+AVISOS NOVOS
+
+"novo" = o usuário ainda não leu a notificação desse aviso (tabela da migração 007).
+Sem essa tabela, o campo não vai na resposta e o front usa a regra dos últimos 7 dias.
+
+=========================================================================================================*/
+
+async function marcarAvisosNovos(
+    avisos,
+    usuarioId
+) {
+    try {
+        const naoLidos =
+            await NotificacaoModel.avisosNaoLidos(
+                usuarioId
+            );
+
+        return avisos.map((aviso) => ({
+            ...aviso,
+            novo: naoLidos.has(aviso.id)
+        }));
+
+    } catch (error) {
+        if (error?.code !== "ER_NO_SUCH_TABLE") {
+            console.error(
+                "Não foi possível verificar os avisos novos:",
+                error
+            );
+        }
+
+        return avisos;
+    }
+}
+
+
+/*========================================================================================================
+
 CONTROLLER
 
 =========================================================================================================*/
@@ -332,11 +377,17 @@ const AvisoController = {
         res
     ) {
         try {
-            const avisos =
+            const lista =
                 await AvisoModel.listar({
                     usuarioId:
                         req.usuario.id
                 });
+
+            const avisos =
+                await marcarAvisosNovos(
+                    lista,
+                    req.usuario.id
+                );
 
             return res
                 .status(200)
@@ -403,6 +454,18 @@ const AvisoController = {
                     id,
                     req.usuario.id
                 );
+
+            // Todo mundo (cidadãos e admins) recebe no sininho, menos quem publicou.
+            await aoPublicarAviso({
+                avisoId:
+                    id,
+
+                titulo:
+                    campos.titulo,
+
+                autorId:
+                    req.usuario.id
+            });
 
             return res
                 .status(201)

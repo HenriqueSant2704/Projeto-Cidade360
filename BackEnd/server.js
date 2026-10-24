@@ -38,6 +38,12 @@ const proximasOcorrenciasRoutes =
 const avisoRoutes =
     require("./src/routes/avisoRoutes");
 
+const notificacaoRoutes =
+    require("./src/routes/notificacaoRoutes");
+
+const preferenciasRoutes =
+    require("./src/routes/preferenciasRoutes");
+
 
 const app =
     express();
@@ -371,6 +377,18 @@ app.use(
 );
 
 
+app.use(
+    "/api/notificacoes",
+    notificacaoRoutes
+);
+
+
+app.use(
+    "/api/preferencias",
+    preferenciasRoutes
+);
+
+
 // ============================================================
 // API NÃO ENCONTRADA
 // ============================================================
@@ -501,4 +519,4 @@ async function iniciarServidor() {
 }
 
 
-iniciarServidor();
+iniciarServidor();

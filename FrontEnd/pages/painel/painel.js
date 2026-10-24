@@ -27,7 +27,7 @@ const PAGINA_AVISOS_PAINEL = "/FrontEnd/pages/avisos/avisos.html";
 
 const LIMITE_OCORRENCIAS_PAINEL = 50;
 const LIMITE_RECENTES_PAINEL = 5;
-const LIMITE_AVISOS_PAINEL = 3;
+const LIMITE_AVISOS_PAINEL = 5;
 const LIMITE_CATEGORIAS_PAINEL = 6;
 const RAIO_OCORRENCIAS_PROXIMAS_KM = 5;
 
@@ -77,6 +77,7 @@ const btnVerTodasCategoriasPainel = document.getElementById("btnVerTodasCategori
 const btnVerMapaPainel = document.getElementById("btnVerMapaPainel");
 const btnVerTodasOcorrenciasPainel = document.getElementById("btnVerTodasOcorrenciasPainel");
 const btnVerAvisosPainel = document.getElementById("btnVerAvisosPainel");
+const subtituloAvisosPainel = document.getElementById("subtituloAvisosPainel");
 const toastPainel = document.getElementById("toastPainel");
 
 
@@ -673,7 +674,14 @@ async function carregarAvisosPainel() {
     const dados = await lerRespostaPainel(resposta);
 
     if (!resposta.ok || !dados?.sucesso || !Array.isArray(dados.avisos)) {
-        throw new Error(dados?.mensagem || "Não foi possível carregar os avisos.");
+        const erro = new Error(dados?.mensagem || "Não foi possível carregar os avisos.");
+
+        // 404 = servidor sem a rota; 503 AVISOS_INDISPONIVEL = banco sem a migração 006.
+        erro.indisponivel =
+            resposta.status === 404 ||
+            dados?.codigo === "AVISOS_INDISPONIVEL";
+
+        throw erro;
     }
 
     // Fixados primeiro, depois os mais novos
@@ -689,48 +697,122 @@ async function carregarAvisosPainel() {
 }
 
 
-function renderizarAvisosPainel(falhou = false) {
+function linkAvisoPainel(id) {
+    return `${PAGINA_AVISOS_PAINEL}?aviso=${Number(id) || 0}`;
+}
+
+
+function dataEventoAvisoPainel(valor) {
+    // data_evento vem sem fuso ("2026-10-31T09:00:00"): é o horário digitado pela prefeitura.
+    const data = valor ? new Date(valor) : null;
+
+    if (!data || Number.isNaN(data.getTime())) {
+        return "";
+    }
+
+    return data
+        .toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
+        .replace(".", "");
+}
+
+
+/*
+  erro = undefined → lista normal
+  erro.indisponivel → o servidor ainda não tem os avisos (migração 006 pendente)
+  outro erro → falha de conexão, com botão para tentar de novo
+*/
+function renderizarAvisosPainel(erro) {
     if (!avisosPainel) {
         return;
     }
 
-    if (falhou) {
-        avisosPainel.innerHTML = `<p class="vazio-mini">Não foi possível carregar os avisos agora.</p>`;
+    if (erro) {
+        if (subtituloAvisosPainel) {
+            subtituloAvisosPainel.textContent = "Publicados pela prefeitura";
+        }
+
+        avisosPainel.innerHTML = erro.indisponivel
+            ? `
+                <li class="vazio-mini vazio-avisos">
+                    <span class="ico-vazio">${iconePainel("megafone", 22)}</span>
+                    <strong>Os avisos chegam em breve</strong>
+                    <span>Assim que o servidor for atualizado, os comunicados da prefeitura aparecem aqui.</span>
+                </li>
+            `
+            : `
+                <li class="vazio-mini vazio-avisos">
+                    <strong>Não foi possível carregar os avisos</strong>
+                    <span>Verifique sua conexão e tente de novo.</span>
+                    <button type="button" class="btn-secundario btn-pequeno" data-recarregar-avisos>Tentar novamente</button>
+                </li>
+            `;
+
+        avisosPainel.querySelector("[data-recarregar-avisos]")?.addEventListener("click", () => {
+            avisosPainel.innerHTML = `<li class="vazio-mini">Carregando avisos...</li>`;
+            carregarAvisosPainel().catch(renderizarAvisosPainel);
+        });
+
         return;
+    }
+
+    const total = estadoPainel.avisos.length;
+
+    if (subtituloAvisosPainel) {
+        subtituloAvisosPainel.textContent = total > 0
+            ? `${plural(total, "aviso publicado", "avisos publicados")} pela prefeitura`
+            : "Publicados pela prefeitura";
     }
 
     const avisos = estadoPainel.avisos.slice(0, LIMITE_AVISOS_PAINEL);
 
     if (avisos.length === 0) {
-        avisosPainel.innerHTML = `<p class="vazio-mini">Nenhum aviso publicado ainda.</p>`;
+        avisosPainel.innerHTML = `
+            <li class="vazio-mini vazio-avisos">
+                <span class="ico-vazio">${iconePainel("megafone", 22)}</span>
+                <strong>Nenhum aviso publicado ainda</strong>
+                <span>${ehAdministradorPainel()
+                    ? "Use \"Publicar aviso\" para comunicar a população."
+                    : "Quando a prefeitura publicar um comunicado, ele aparece aqui."}</span>
+            </li>
+        `;
         return;
     }
 
     avisosPainel.innerHTML = avisos
         .map((aviso) => {
-            const categoria = CATEGORIAS_AVISO_PAINEL[aviso.categoria] || CATEGORIAS_AVISO_PAINEL.servicos;
             const chave = CATEGORIAS_AVISO_PAINEL[aviso.categoria] ? aviso.categoria : "servicos";
+            const categoria = CATEGORIAS_AVISO_PAINEL[chave];
+            const dataEvento = dataEventoAvisoPainel(aviso.data_evento);
+
+            const detalhes = [
+                aviso.fixado ? "Fixado" : "",
+                dataEvento ? `Acontece em ${dataEvento}` : "",
+                tempoRelativo(aviso.data_criacao)
+            ].filter(Boolean).join(" · ");
 
             return `
-                <a class="mini-aviso" data-cat="${chave}" href="${PAGINA_AVISOS_PAINEL}">
-                    <span class="thumb">${aviso.foto_url
-                        ? `<img src="${escaparHtmlPainel(aviso.foto_url)}" alt="" loading="lazy">`
-                        : iconePainel(categoria.icone, 24)}</span>
-                    <span class="textos">
-                        <strong>${escaparHtmlPainel(aviso.titulo)}</strong>
-                        <span>${categoria.nome} · ${tempoRelativo(aviso.data_criacao)}${aviso.fixado ? " · Fixado" : ""}</span>
-                    </span>
-                </a>
+                <li>
+                    <a class="item-compacto item-aviso" data-cat="${chave}" href="${linkAvisoPainel(aviso.id)}" title="${escaparHtmlPainel(aviso.titulo)}">
+                        <span class="ico">${aviso.foto_url
+                            ? `<img src="${escaparHtmlPainel(aviso.foto_url)}" alt="" loading="lazy">`
+                            : iconePainel(categoria.icone, 20)}</span>
+                        <span class="textos">
+                            <strong>${aviso.fixado ? `<span class="pino-fixado" aria-label="Fixado">${iconePainel("pino", 13)}</span>` : ""}${escaparHtmlPainel(aviso.titulo)}</strong>
+                            <span class="sub">${escaparHtmlPainel(detalhes)}</span>
+                        </span>
+                        <span class="pilula pilula-categoria">${categoria.nome}</span>
+                    </a>
+                </li>
             `;
         })
         .join("");
 
     // Foto que não carregou volta para o ícone da categoria
-    avisosPainel.querySelectorAll(".thumb img").forEach((imagem) => {
+    avisosPainel.querySelectorAll(".ico img").forEach((imagem) => {
         imagem.addEventListener("error", () => {
-            const item = imagem.closest(".mini-aviso");
+            const item = imagem.closest(".item-aviso");
             const categoria = CATEGORIAS_AVISO_PAINEL[item?.dataset.cat] || CATEGORIAS_AVISO_PAINEL.servicos;
-            imagem.parentElement.innerHTML = iconePainel(categoria.icone, 24);
+            imagem.parentElement.innerHTML = iconePainel(categoria.icone, 20);
         }, { once: true });
     });
 }
@@ -1369,7 +1451,7 @@ async function inicializarPainel() {
         }
 
         if (resultados[3].status === "rejected") {
-            renderizarAvisosPainel(true);
+            renderizarAvisosPainel(resultados[3].reason);
         }
 
         if (ehAdministradorPainel()) {

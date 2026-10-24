@@ -30,7 +30,8 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
     const API_USUARIO_ACOMPANHAMENTO = "/api/me";
     const LOGIN_PAGE_ACOMPANHAMENTO = "/FrontEnd/pages/login/login.html";
 
-    const LIMITE_POR_PAGINA = 6;
+    // Monitor grande mostra 4 colunas: 12 cards = 3 linhas cheias. Notebook e celular: 6.
+    const LIMITE_POR_PAGINA = window.matchMedia("(min-width: 1440px)").matches ? 12 : 6;
     const TEMPO_BUSCA = 350;
 
     // PONTE TEMPORÁRIA

@@ -37,6 +37,7 @@ window.Cidade360 = window.Cidade360 || {};
         x: ['<path d="M18 6 6 18M6 6l12 12"/>'],
         lixeira: ['<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>'],
         megafone: ['<path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>'],
+        pino: ['<path d="M12 17v5"/><path d="M9 3h6l-1 7 4 4H6l4-4z"/>'],
         calendario: ['<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'],
         medalha: ['<circle cx="12" cy="9" r="6"/><path d="m8.5 13.5-1.5 8.5 5-3 5 3-1.5-8.5"/>'],
         estrela: ['<path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/>'],
