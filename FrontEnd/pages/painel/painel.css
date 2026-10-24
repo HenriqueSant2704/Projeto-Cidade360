@@ -256,6 +256,17 @@
     text-decoration: underline;
 }
 
+/* "Ver todas" dos avisos é um link para a página de avisos */
+.titulo-analises a.btn-ver-todas {
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.titulo-analises a.btn-ver-todas:hover {
+    text-decoration: underline;
+}
+
 .container-lista-ocorrencias {
     flex-grow: 1;
     display: flex;

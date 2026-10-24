@@ -245,13 +245,17 @@ async function removerFotosCloudinary(
 
 ENVIA AS FOTOS VALIDADAS
 
+A pasta padrão é a das ocorrências; os avisos usam "cidade360/avisos".
 Cada foto possui um identificador aleatório, sem nome ou email do cidadão.
 Se algum envio falhar, tenta limpar os uploads desta mesma tentativa.
 
 =========================================================================================================*/
 
 async function enviarFotosCloudinary(
-    arquivos = []
+    arquivos = [],
+    {
+        pasta = "cidade360/ocorrencias"
+    } = {}
 ) {
     obterConfiguracaoCloudinary();
 
@@ -261,7 +265,7 @@ async function enviarFotosCloudinary(
     try {
         for (const arquivo of arquivos) {
             const publicId =
-                `cidade360/ocorrencias/${crypto.randomUUID()}`;
+                `${pasta}/${crypto.randomUUID()}`;
 
             tentativas.push({
                 publicId

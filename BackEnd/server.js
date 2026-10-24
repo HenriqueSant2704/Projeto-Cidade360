@@ -35,6 +35,9 @@ const estatisticasPainelRoutes =
 const proximasOcorrenciasRoutes =
     require("./src/routes/proximasOcorrenciasRoutes");
 
+const avisoRoutes =
+    require("./src/routes/avisoRoutes");
+
 
 const app =
     express();
@@ -359,6 +362,12 @@ app.use(
 app.use(
     "/api/ocorrencias-proximas",
     proximasOcorrenciasRoutes
+);
+
+
+app.use(
+    "/api/avisos",
+    avisoRoutes
 );
 
 

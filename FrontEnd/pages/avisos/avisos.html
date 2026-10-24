@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="/FrontEnd/pages/global/global.css">
+    <link rel="stylesheet" href="/FrontEnd/pages/avisos/avisos.css?v=1">
+
+    <title>Cidade360-Avisos</title>
+</head>
+
+<body>
+    <div class="container-sistema">
+
+        <div class="menu-lateral">
+
+            <div class="logo">
+                <img src="/assets/img/global/logo/logo-cidade360.png" alt="">
+            </div>
+
+            <div class="menu-corpo">
+
+                <div class="menu-secao">Principal</div>
+
+                <ul class="menu-lista">
+
+                    <li class="menu-item">
+                        <a href="/">
+                            <img src="/assets/icons/global/painel-de-controle.png">
+                            <span>Painel</span>
+                        </a>
+                    </li>
+
+                    <li class="menu-item">
+                        <a href="/FrontEnd/pages/ocorrencia/ocorrencia.html">
+                            <img src="/assets/icons/global/aviso-previo.png">
+                            <span>Ocorrências</span>
+                        </a>
+                    </li>
+
+                </ul>
+
+                <div class="menu-secao">Comunicação</div>
+
+                <ul class="menu-lista">
+
+                    <li class="menu-item">
+                        <a href="#">
+                            <img src="/assets/icons/global/tag.png">
+                            <span>Campanhas</span>
+                        </a>
+                    </li>
+
+                    <li class="menu-item" id="menu-ativo">
+                        <a href="/FrontEnd/pages/avisos/avisos.html">
+                            <img src="/assets/icons/global/campanha.png">
+                            <span>Avisos</span>
+                        </a>
+                    </li>
+
+                    <li class="menu-item">
+                        <a href="#">
+                            <img src="/assets/icons/global/agenda.png">
+                            <span>Eventos</span>
+                        </a>
+                    </li>
+
+                </ul>
+
+            </div>
+
+        </div>
+
+
+        <div class="container-conteudo">
+
+            <div class="menu-topo">
+
+                <div class="titulo-pagina">
+
+                    <button class="minimizar-menu" id="btnMinimizarMenuPainel" type="button">
+                        <img src="/assets/icons/global/cardapio.png" alt="">
+                    </button>
+
+                    <h1>Avisos</h1>
+
+                </div>
+
+
+                <div class="opcoes-menu-topo">
+
+                    <div class="menu-acoes">
+                        <button type="button">
+                            <img src="/assets/icons/global/configuracoes.png" alt="">
+                        </button>
+                    </div>
+
+                    <div class="menu-acoes">
+                        <button type="button">
+                            <img src="/assets/icons/global/notificacao.png" alt="">
+                        </button>
+                    </div>
+
+                    <div class="perfil-usuario">
+
+                        <div class="usuario">
+                            <span>Usuário</span>
+                            <p>Usuário</p>
+                        </div>
+
+                        <div class="foto-usuario">
+                            <img src="/assets/icons/global/do-utilizador.png" alt="">
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =====================================================
+                 AVISOS
+                 O conteúdo do feed e da lateral é montado pelo avisos.js.
+            ====================================================== -->
+
+            <main class="pagina-avisos" id="paginaAvisos">
+
+                <section class="caixa-titulo">
+                    <div class="textos">
+                        <h2 id="tituloAvisos">Avisos da Prefeitura</h2>
+                        <p id="subtituloAvisos">Eventos, inaugurações, obras e serviços da cidade em um só lugar. Reaja aos avisos para mostrar à prefeitura o que você achou.</p>
+                    </div>
+
+                    <!-- Botão "Novo aviso": aparece só para administradores -->
+                    <div id="acaoTopoAvisos"></div>
+                </section>
+
+                <div id="avisoModoDemo" hidden></div>
+
+                <div class="barra-filtros">
+                    <div class="filtros" id="filtrosAvisos" role="toolbar" aria-label="Filtrar por categoria"></div>
+
+                    <label class="busca">
+                        <span class="sr">Buscar avisos</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                        <input id="buscaAvisos" type="search" placeholder="Buscar avisos" autocomplete="off">
+                    </label>
+                </div>
+
+                <div class="grade">
+                    <section class="feed" id="feedAvisos" aria-live="polite">
+                        <div class="esqueleto"></div>
+                        <div class="esqueleto"></div>
+                    </section>
+
+                    <aside class="lateral" id="lateralAvisos"></aside>
+                </div>
+
+            </main>
+
+        </div>
+
+    </div>
+
+
+    <!-- Painel de criação, diálogos, imagem ampliada e toasts -->
+    <div class="av-camadas" id="avisosCamadas">
+        <div class="toasts" id="toastsAvisos" aria-live="polite"></div>
+    </div>
+
+
+    <!--Script para controlar o Login do usuário, e redirecionar para a página de login caso não esteja logado.-->
+    <script src="/FrontEnd/pages/global/authGuard.js"></script>
+
+    <!--Script para realizar o logout do usuário.-->
+    <script src="/FrontEnd/pages/global/logout.js"></script>
+
+    <script src="/FrontEnd/pages/global/global.js"></script>
+
+    <!--PROVISÓRIO: dados de exemplo usados só enquanto o banco não tiver as tabelas de avisos.-->
+    <script src="/FrontEnd/pages/avisos/avisosDemo.js?v=1"></script>
+
+    <!--Script responsável pela página de avisos.-->
+    <script src="/FrontEnd/pages/avisos/avisos.js?v=1"></script>
+
+</body>
+
+</html>
