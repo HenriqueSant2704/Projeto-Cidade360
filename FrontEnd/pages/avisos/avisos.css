@@ -6,7 +6,7 @@ Página de avisos: feed com reações (cidadão e admin) e painel lateral de cri
 O menu lateral e o topo continuam vindo do global.css.
 
 As cores ficam em variáveis dentro de .pagina-avisos e .av-camadas (painel, diálogos e toasts).
-O tema escuro já está pronto em html[data-tema="escuro"]: falta só a opção nas Configurações.
+O tema escuro usa html[data-tema="escuro"] (opção "Tema escuro" nas Configurações).
 
 =========================================================================================================*/
 
@@ -66,7 +66,7 @@ BASE
     width: 100%;
     max-width: 1240px;
     margin: 0 auto;
-    padding: 0 30px;
+    padding: 28px 24px 64px;
 
     display: flex;
     flex-direction: column;
@@ -75,10 +75,6 @@ BASE
     color: var(--ink);
     font-size: 15px;
     -webkit-font-smoothing: antialiased;
-}
-
-html[data-tema="escuro"] .container-conteudo {
-    background-color: var(--bg);
 }
 
 .pagina-avisos *,
@@ -477,7 +473,7 @@ RESPONSIVO
 }
 
 @media (max-width: 640px) {
-    .pagina-avisos { padding: 0 16px; gap: 16px; }
+    .pagina-avisos { padding: 18px 16px 48px; gap: 16px; }
     .caixa-titulo { padding: 22px 20px; border-radius: 24px; }
     .caixa-titulo h2 { font-size: 23px; }
     #acaoTopoAvisos { width: 100%; }

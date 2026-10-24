@@ -5,10 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="/FrontEnd/pages/global/global.css">
-    <link rel="stylesheet" href="/FrontEnd/pages/painel/painel.css">
+    <!-- Tema claro/escuro: precisa vir antes do CSS para a página não "piscar". -->
+    <script src="/FrontEnd/pages/global/tema.js?v=1"></script>
+
+    <link rel="stylesheet" href="/FrontEnd/pages/global/global.css?v=7">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="stylesheet" href="/FrontEnd/pages/painel/painel-funcional.css?v=6">
+    <link rel="stylesheet" href="/FrontEnd/pages/painel/painel.css?v=7">
 
     <title>Cidade360-Painel</title>
 </head>
@@ -16,74 +18,70 @@
 <body>
     <div class="container-sistema">
 
-        <div class="menu-lateral">
+        <nav class="menu-lateral" aria-label="Menu principal">
 
-            <div class="logo">
-                <img src="/assets/img/global/logo/logo-cidade360.png" alt="">
-            </div>
+            <a class="logo" href="/" aria-label="Cidade360, ir para o painel">
+                <img src="/assets/img/global/logo/icone-cidade360.png" alt="">
+                <span>Cidade<b>360</b></span>
+            </a>
 
             <div class="menu-corpo">
 
                 <div class="menu-secao">Principal</div>
 
                 <ul class="menu-lista">
-
                     <li class="menu-item" id="menu-ativo">
-                        <a href="/">
-                            <img src="/assets/icons/global/painel-de-controle.png">
+                        <a href="/" title="Painel" aria-current="page">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
                             <span>Painel</span>
                         </a>
                     </li>
-
                     <li class="menu-item">
-                        <a href="/FrontEnd/pages/ocorrencia/ocorrencia.html">
-                            <img src="/assets/icons/global/aviso-previo.png">
+                        <a href="/FrontEnd/pages/ocorrencia/ocorrencia.html" title="Ocorrências">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.3 3.9-8.2 14a2 2 0 0 0 1.7 3h16.4a2 2 0 0 0 1.7-3l-8.2-14a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
                             <span>Ocorrências</span>
                         </a>
                     </li>
-
                 </ul>
 
                 <div class="menu-secao">Comunicação</div>
 
                 <ul class="menu-lista">
-
                     <li class="menu-item">
-                        <a href="#avisosComunicados" data-comunicacao-painel="Campanhas">
-                            <img src="/assets/icons/global/tag.png">
+                        <a class="item-breve" role="link" aria-disabled="true" title="Campanhas (em breve)">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>
                             <span>Campanhas</span>
+                            <small class="tag-breve">Em breve</small>
                         </a>
                     </li>
-
                     <li class="menu-item">
-                        <a href="/FrontEnd/pages/avisos/avisos.html">
-                            <img src="/assets/icons/global/campanha.png">
+                        <a href="/FrontEnd/pages/avisos/avisos.html" title="Avisos">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
                             <span>Avisos</span>
                         </a>
                     </li>
-
                     <li class="menu-item">
-                        <a href="#avisosComunicados" data-comunicacao-painel="Eventos">
-                            <img src="/assets/icons/global/agenda.png">
+                        <a class="item-breve" role="link" aria-disabled="true" title="Eventos (em breve)">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
                             <span>Eventos</span>
+                            <small class="tag-breve">Em breve</small>
                         </a>
                     </li>
-
                 </ul>
 
             </div>
 
-        </div>
+        </nav>
 
 
         <div class="container-conteudo">
 
-            <div class="menu-topo">
+            <header class="menu-topo">
 
                 <div class="titulo-pagina">
 
-                    <button class="minimizar-menu" id="btnMinimizarMenuPainel" type="button">
-                        <img src="/assets/icons/global/cardapio.png" alt="">
+                    <button class="minimizar-menu btn-icone" id="btnMinimizarMenuPainel" type="button" aria-label="Abrir menu">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
 
                     <h1>Painel</h1>
@@ -94,31 +92,16 @@
                 <div class="opcoes-menu-topo">
 
                     <div class="menu-acoes">
-
-                        <button id="btnSair" class="btn-sair" type="button">
-                            <img src="/assets/icons/global/sair.png" alt="sair">
+                        <button class="btn-icone" id="btnConfiguracoesPainel" type="button" aria-label="Configurações">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.2 2h-.4a2 2 0 0 0-2 2v.2a2 2 0 0 1-1 1.7l-.4.3a2 2 0 0 1-2 0l-.2-.1a2 2 0 0 0-2.7.7l-.2.4a2 2 0 0 0 .7 2.7l.2.1a2 2 0 0 1 1 1.7v.5a2 2 0 0 1-1 1.7l-.2.1a2 2 0 0 0-.7 2.7l.2.4a2 2 0 0 0 2.7.7l.2-.1a2 2 0 0 1 2 0l.4.3a2 2 0 0 1 1 1.7v.2a2 2 0 0 0 2 2h.4a2 2 0 0 0 2-2v-.2a2 2 0 0 1 1-1.7l.4-.3a2 2 0 0 1 2 0l.2.1a2 2 0 0 0 2.7-.7l.2-.4a2 2 0 0 0-.7-2.7l-.2-.1a2 2 0 0 1-1-1.7v-.5a2 2 0 0 1 1-1.7l.2-.1a2 2 0 0 0 .7-2.7l-.2-.4a2 2 0 0 0-2.7-.7l-.2.1a2 2 0 0 1-2 0l-.4-.3a2 2 0 0 1-1-1.7V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
                         </button>
-
                     </div>
-
 
                     <div class="menu-acoes">
-
-                        <button id="btnConfiguracoesPainel" type="button">
-                            <img src="/assets/icons/global/configuracoes.png" alt="">
+                        <button class="btn-icone" id="btnNotificacoesPainel" type="button" aria-label="Notificações">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
                         </button>
-
                     </div>
-
-
-                    <div class="menu-acoes">
-
-                        <button id="btnNotificacoesPainel" type="button">
-                            <img src="/assets/icons/global/notificacao.png" alt="">
-                        </button>
-
-                    </div>
-
 
                     <div class="perfil-usuario" id="perfilUsuarioPainel">
 
@@ -127,296 +110,132 @@
                             <p>Usuário</p>
                         </div>
 
-                        <div class="foto-usuario">
-                            <img src="/assets/icons/global/do-utilizador.png" alt="">
-                        </div>
+                        <div class="foto-usuario" aria-hidden="true"></div>
 
                     </div>
 
                 </div>
 
-            </div>
+            </header>
 
 
-            <!-- =====================================================
-                 RESUMO
-            ====================================================== -->
 
-            <div class="container-resumo">
+            <main class="pagina painel">
 
-                <div class="card-resumo">
+                <!-- Boas-vindas: preenchida pelo painel.js (cidadão ou prefeitura) -->
+                <section class="boas-vindas" id="boasVindasPainel" aria-live="polite">
+                    <div class="textos">
+                        <small>&nbsp;</small>
+                        <h2>Carregando seu painel...</h2>
+                    </div>
+                </section>
 
-                    <div class="card-conteudo">
 
-                        <div class="circulo-resumo cor-azul">
-                            <img src="/assets/icons/painel/resumo/prancheta.png">
+                <!-- Números principais -->
+                <div class="kpis" id="kpisPainel">
+                    <div class="kpi carregando"></div>
+                    <div class="kpi carregando"></div>
+                    <div class="kpi carregando"></div>
+                    <div class="kpi carregando"></div>
+                </div>
+
+
+                <div class="duas-colunas">
+
+                    <!-- Mapa (Leaflet) -->
+                    <section class="cartao">
+
+                        <div class="cartao-topo">
+                            <div>
+                                <h3 id="tituloMapaPainel">Ocorrências perto de você</h3>
+                                <small>Toque em um pino para ver os detalhes</small>
+                            </div>
+
+                            <button class="btn-icone" id="btnVerMapaPainel" type="button" aria-label="Ver mapa em tela cheia" title="Tela cheia"></button>
                         </div>
 
-                        <div class="card-textos">
-                            <h1 id="numeroTotalPainel">0</h1>
-                            <p>Minhas ocorrências</p>
-                            <span>Total registradas</span>
+                        <div class="mapa" id="mapaPainel"></div>
+
+                        <div class="legenda" id="legendaPainel"></div>
+
+                    </section>
+
+
+                    <!-- Ocorrências recentes -->
+                    <section class="cartao flex">
+
+                        <div class="cartao-topo">
+                            <h3 id="tituloRecentesPainel">Minhas ocorrências recentes</h3>
+                            <a class="link-seta" id="btnVerTodasOcorrenciasPainel" href="/FrontEnd/pages/ocorrencia/ocorrencia.html">Ver todas</a>
                         </div>
 
-                    </div>
+                        <ul class="lista-compacta" id="listaOcorrenciasRecentesPainel">
+                            <li class="vazio-mini">Carregando ocorrências...</li>
+                        </ul>
 
-                    <div class="card-acao">
-                        <a href="/FrontEnd/pages/ocorrencia/ocorrencia.html" class="link-azul" data-ir-ocorrencias>
-                            Ver todas &rarr;
-                        </a>
-                    </div>
+                    </section>
 
                 </div>
 
 
-                <div class="card-resumo">
+                <div class="duas-colunas iguais">
 
-                    <div class="card-conteudo">
+                    <!-- Avisos da prefeitura -->
+                    <section class="cartao">
 
-                        <div class="circulo-resumo cor-laranja">
-                            <img src="/assets/icons/painel/resumo/prancheta-analise.png">
+                        <div class="cartao-topo">
+                            <h3>Avisos e comunicados</h3>
+                            <a class="link-seta" id="btnVerAvisosPainel" href="/FrontEnd/pages/avisos/avisos.html">Ver todos</a>
                         </div>
 
-                        <div class="card-textos">
-                            <h1 id="numeroAndamentoPainel">0</h1>
-                            <p>Em andamento</p>
-                            <span>Em atendimento</span>
+                        <div class="lista-avisos" id="avisosPainel">
+                            <p class="vazio-mini">Carregando avisos...</p>
                         </div>
 
-                    </div>
+                    </section>
 
-                    <div class="card-acao">
-                        <a href="/FrontEnd/pages/ocorrencia/ocorrencia.html" class="link-laranja" data-ir-ocorrencias>
-                            Ver todas &rarr;
-                        </a>
-                    </div>
+
+                    <!-- Atalhos -->
+                    <section class="cartao">
+
+                        <div class="cartao-topo">
+                            <h3>Ações rápidas</h3>
+                        </div>
+
+                        <div class="acoes-rapidas" id="acoesRapidasPainel"></div>
+
+                    </section>
 
                 </div>
 
 
-                <div class="card-resumo">
+                <!-- Ranking de categorias (todas as ocorrências da cidade) -->
+                <section class="cartao">
 
-                    <div class="card-conteudo">
-
-                        <div class="circulo-resumo cor-verde">
-                            <img src="/assets/icons/painel/resumo/prancheta-concluidas.png">
+                    <div class="cartao-topo">
+                        <div>
+                            <h3>Categorias mais registradas</h3>
+                            <small>Todas as ocorrências do município</small>
                         </div>
 
-                        <div class="card-textos">
-                            <h1 id="numeroResolvidasPainel">0</h1>
-                            <p>Resolvidas</p>
-                            <span>Ocorrências concluídas</span>
-                        </div>
-
+                        <button class="link-seta" id="btnVerTodasCategoriasPainel" type="button" hidden>Ver todas</button>
                     </div>
 
-                    <div class="card-acao">
-                        <a href="/FrontEnd/pages/ocorrencia/ocorrencia.html" class="link-verde" data-ir-ocorrencias>
-                            Ver todas &rarr;
-                        </a>
-                    </div>
+                    <ul class="ranking" id="categoriasPainel">
+                        <li class="vazio-mini">Carregando categorias...</li>
+                    </ul>
 
-                </div>
+                </section>
 
-
-                <div class="card-resumo">
-
-                    <div class="card-conteudo">
-
-                        <div class="circulo-resumo cor-roxo">
-                            <img src="/assets/icons/painel/resumo/estrela.png">
-                        </div>
-
-                        <div class="card-textos">
-                            <h1 id="numeroPontosPainel">0</h1>
-                            <p>Pontos acumulados</p>
-                            <span id="nivelPainel">Nível: Cidadão Iniciante</span>
-                        </div>
-
-                    </div>
-
-                    <div class="card-acao">
-                        <a href="#" class="link-roxo" id="btnNivelPainel">
-                            Ver meu nível &rarr;
-                        </a>
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- =====================================================
-                 MAPA E OCORRÊNCIAS RECENTES
-            ====================================================== -->
-
-            <div class="container-analises">
-
-                <div class="card-analises">
-
-                    <div class="titulo-analises">
-
-                        <h1>Ocorrências perto de você</h1>
-
-                        <button id="btnVerMapaPainel" type="button">
-                            Ver mapa completo
-                            <img src="/assets/icons/painel/ocorrencia/expandir-setas.png" alt="">
-                        </button>
-
-                    </div>
-
-                    <div class="mapa-ocorrencias">
-                        <div id="mapaPainel"></div>
-                    </div>
-
-                    <div class="legendas-mapa-ocorrencias">
-
-                        <div class="legenda-item">
-                            <div class="circulo-ocorrencia cor-azul-ocorrencia"></div>
-                            <span>Recebido</span>
-                        </div>
-
-                        <div class="legenda-item">
-                            <div class="circulo-ocorrencia cor-laranja-ocorrencia"></div>
-                            <span>Em análise</span>
-                        </div>
-
-                        <div class="legenda-item">
-                            <div class="circulo-ocorrencia cor-verde-ocorrencia"></div>
-                            <span>Em andamento</span>
-                        </div>
-
-                        <div class="legenda-item">
-                            <div class="circulo-ocorrencia cor-roxo-ocorrencia"></div>
-                            <span>Resolvidas</span>
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <div class="card-analises">
-
-                    <div class="titulo-analises">
-
-                        <h1>Minhas ocorrências recentes</h1>
-
-                        <button class="btn-ver-todas" id="btnVerTodasOcorrenciasPainel" type="button">
-                            Ver todas
-                        </button>
-
-                    </div>
-
-                    <div class="container-lista-ocorrencias" id="listaOcorrenciasRecentesPainel">
-
-                        <div class="painel-vazio">
-                            <strong>Carregando ocorrências...</strong>
-                            <span>Aguarde um instante.</span>
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- =====================================================
-                 AVISOS E AÇÕES RÁPIDAS
-            ====================================================== -->
-
-            <div class="container-analises" id="avisosComunicados">
-
-                <div class="card-analises">
-
-                    <div class="titulo-analises">
-
-                        <h1>Avisos e comunicados</h1>
-
-                        <a class="btn-ver-todas" href="/FrontEnd/pages/avisos/avisos.html">
-                            Ver todas
-                        </a>
-
-                    </div>
-
-                    <div class="container-lista-avisos">
-
-                        <div class="painel-vazio">
-                            <strong>Nenhum comunicado disponível.</strong>
-                            <span>Os comunicados oficiais aparecerão aqui.</span>
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <div class="card-analises">
-
-                    <div class="titulo-analises">
-                        <h1>Ações rápidas</h1>
-                    </div>
-
-
-                    <div class="container-acoes-rapidas">
-
-                        <div class="card-acao-rapida" id="acaoNovaOcorrenciaPainel" role="button" tabindex="0">
-                            <img src="/assets/icons/painel/acoes-rapidas/mais-azul.png" alt="">
-                            <h2>Nova<br>Ocorrência</h2>
-                        </div>
-
-                        <div class="card-acao-rapida" data-comunicacao-painel="Avisos" role="button" tabindex="0">
-                            <img src="/assets/icons/painel/acoes-rapidas/avisos-verde.png" alt="">
-                            <h2>Ver<br>Avisos</h2>
-                        </div>
-
-                        <div class="card-acao-rapida" id="acaoMinhasOcorrenciasPainel" role="button" tabindex="0">
-                            <img src="/assets/icons/painel/acoes-rapidas/ocorrencia-laranja.png" alt="">
-                            <h2>Minhas<br>Ocorrências</h2>
-                        </div>
-
-                        <div class="card-acao-rapida" data-comunicacao-painel="Eventos" role="button" tabindex="0">
-                            <img src="/assets/icons/painel/acoes-rapidas/evento-roxo.png" alt="">
-                            <h2>Ver<br>Eventos</h2>
-                        </div>
-
-                    </div>
-
-
-                    <div class="titulo-categorias">
-
-                        <h1>Categorias mais registradas</h1>
-
-                        <a href="#" id="btnVerTodasCategoriasPainel">
-                            Ver todas
-                        </a>
-
-                    </div>
-
-
-                    <div class="container-categorias" id="categoriasPainel">
-
-                        <div class="painel-vazio painel-vazio-categorias">
-                            <strong>Carregando categorias...</strong>
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
+            </main>
 
         </div>
 
     </div>
 
 
-    <!-- =========================================================
-         MENSAGENS
-    ========================================================== -->
-
-    <div class="toast-painel" id="toastPainel"></div>
+    <!-- Mensagens rápidas -->
+    <div class="toasts" id="toastPainel" aria-live="polite"></div>
 
 
     <!--Script para controlar o Login do usuário, e redirecionar para a página de login caso não esteja logado.-->
@@ -428,14 +247,13 @@
     <!--Leaflet utilizado para exibir as ocorrências no mapa.-->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <script src="/FrontEnd/pages/global/global.js"></script>
+    <script src="/FrontEnd/pages/global/global.js?v=7"></script>
+
+    <!--Ícones e status compartilhados (Painel e Ocorrências).-->
+    <script src="/FrontEnd/pages/global/icones.js?v=1"></script>
 
     <!--Script responsável pelo funcionamento do painel.-->
-    <script src="/FrontEnd/pages/painel/painel.js?v=6"></script>
-
-    
-
-    
+    <script src="/FrontEnd/pages/painel/painel.js?v=7"></script>
 
 </body>
 

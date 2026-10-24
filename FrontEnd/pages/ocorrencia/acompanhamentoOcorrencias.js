@@ -43,33 +43,17 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
     const LIMITE_PONTE = 50;        // itens por página ao buscar tudo (diminua se o backend recusar)
     const MAX_PAGINAS_PONTE = 40;   // trava de segurança
 
-    // Tudo que muda por status fica aqui, em um lugar só.
-    const STATUS = {
-        recebido: {
-            nome: "Recebido",
-            classe: "status-recebidos",
-            classeIcone: "icone-recebidos"
-        },
-        em_analise: {
-            nome: "Em análise",
-            classe: "status-emanalise",
-            classeIcone: "icone-emanalise"
-        },
-        em_andamento: {
-            nome: "Em andamento",
-            classe: "status-andamento",
-            classeIcone: "icone-andamento"
-        },
-        resolvido: {
-            nome: "Resolvido",
-            classe: "status-resolvido",
-            classeIcone: "icone-resolvido"
-        },
-        cancelado: {
-            nome: "Cancelado",
-            classe: "status-cancelado-acompanhamento",
-            classeIcone: "icone-cancelado-acompanhamento"
-        }
+    // Nome, ícone e posição de cada status (compartilhado com o Painel, em icones.js).
+    // As cores vêm do CSS: .st[data-st="..."]
+    const { STATUS, icone, iconeCategoria, pilula, PINO, tempoRelativo, iniciais } = window.Cidade360;
+
+    // O que o cidadão vê no quadro "Agora" dos detalhes.
+    const AGORA_CIDADAO = {
+        recebido: ["Recebemos sua ocorrência", "A prefeitura vai analisar o problema em breve. Você recebe uma notificação a cada mudança de status."],
+        em_analise: ["A prefeitura está analisando", "A equipe está avaliando o problema e definindo quem vai atender."],
+        em_andamento: ["Equipe em atendimento", "Uma equipe foi designada e está trabalhando para resolver o problema no local."],
+        resolvido: ["Problema resolvido", "Obrigado por ajudar a cuidar da cidade! Se o problema voltar, registre uma nova ocorrência."],
+        cancelado: ["Ocorrência cancelada", "Veja o motivo acima. Se o problema continuar, você pode registrar uma nova ocorrência."]
     };
 
     const FLUXO = [
@@ -163,16 +147,15 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
     const numeroEmAnalise = document.querySelector(".numero.emanalise");
     const numeroAndamento = document.querySelector(".numero.andamento");
     const numeroResolvidas = document.querySelector(".numero.resolvido");
+    const numeroCancelados = document.querySelector(".numero.cancelado");
 
-    const caixaTituloPagina = document.querySelector(".caixa-titulo .titulo");
-    const tituloPaginaOcorrencias = document.querySelector(".caixa-titulo .titulo h2");
-    const descricaoPaginaOcorrencias = document.querySelector(".caixa-titulo > p");
+    const tituloPaginaOcorrencias = document.querySelector("#tela-ocorrencias .titulo-lista");
+    const descricaoPaginaOcorrencias = document.querySelector("#tela-ocorrencias .descricao-lista");
     const btnNovaOcorrencia = document.getElementById("btn-nova-ocorrencia");
-    const textoPerfilUsuario = document.querySelector(".perfil-usuario .usuario p");
+    const areaToast = document.getElementById("toastOcorrencias");
 
-    // Criados pelo próprio JS
+    // Criado pelo próprio JS
     let dialogoEl = null;
-    let areaToast = null;
 
 
     /*====================================================================================================
@@ -220,21 +203,24 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
 
     ====================================================================================================*/
 
-    function svg(caminhos, tamanho = 18, espessura = 2) {
-        return `<svg xmlns="http://www.w3.org/2000/svg" width="${tamanho}" height="${tamanho}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${espessura}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${caminhos}</svg>`;
-    }
-
-    const CAMINHO_LIXEIRA = '<path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>';
-
+    // Os desenhos ficam em /FrontEnd/pages/global/icones.js (mesmos do Painel).
     const ICONES = {
-        lixeira: svg(CAMINHO_LIXEIRA),
-        lixeiraGrande: svg(CAMINHO_LIXEIRA, 24),
-        fechar: svg('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>', 20),
-        check: svg('<path d="M20 6 9 17l-5-5"/>', 18, 2.6),
-        checkPequeno: svg('<path d="M20 6 9 17l-5-5"/>', 15, 3),
-        seta: svg('<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>', 16),
-        escudo: svg('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>', 14, 2.2),
-        alerta: svg('<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>', 22)
+        lixeira: icone("lixeira", 16),
+        lixeiraGrande: icone("lixeira", 22),
+        bloqueio: icone("bloqueio", 16),
+        bloqueioGrande: icone("bloqueio", 22),
+        fechar: icone("x", 18),
+        check: icone("check", 16),
+        seta: icone("direita", 14),
+        setaVer: icone("direita", 15),
+        voltar: icone("voltar", 17),
+        predio: icone("predio", 14),
+        etiqueta: icone("etiqueta", 15),
+        local: icone("local", 15),
+        localGrande: icone("local", 18),
+        alerta: icone("alerta", 22),
+        anterior: icone("voltar", 16),
+        proxima: icone("direita", 16)
     };
 
 
@@ -386,7 +372,11 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
             ocorrencia?.cidade
         ]
             .map((item) => String(item || "").trim())
-            .filter(Boolean);
+            .filter(Boolean)
+            // Não repete o bairro/cidade se o endereço digitado já tiver ("Praça X - Centro" + "Centro")
+            .filter((item, indice, lista) =>
+                !lista.slice(0, indice).some((anterior) => normalizarTexto(anterior).includes(normalizarTexto(item)))
+            );
 
         if (partes.length > 0) {
             return partes.join(" - ");
@@ -471,37 +461,11 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         return encontrado ? Number(encontrado.id) || null : null;
     }
 
-    function obterIconeCategoria(categoria) {
-        const valor = normalizarTexto(categoria);
-
-        if (valor.includes("buraco") || valor.includes("via")) {
-            return "/assets/icons/painel/ocorrencia/estrada.png";
-        }
-
-        if (valor.includes("iluminacao") || valor.includes("poste")) {
-            return "/assets/icons/painel/ocorrencia/iluminacao-publica.png";
-        }
-
-        if (valor.includes("lixo") || valor.includes("coleta")) {
-            return "/assets/icons/painel/ocorrencia/lixeira-de-reciclagem.png";
-        }
-
-        if (valor.includes("praga")) {
-            return "/assets/icons/painel/ocorrencia/controle-de-pragas.png";
-        }
-
-        if (valor.includes("manutencao")) {
-            return "/assets/icons/painel/ocorrencia/manutencao.png";
-        }
-
-        if (valor.includes("arvore") || valor.includes("caida")) {
-            return "/assets/icons/painel/ocorrencia/arvore-caida.png";
-        }
-
-        return "/assets/icons/painel/ocorrencia/3-pontos.png";
-    }
-
     function obterFiltroBotao(botao) {
+        if (botao?.dataset.filtro !== undefined) {
+            return botao.dataset.filtro;
+        }
+
         const texto = normalizarTexto(botao?.textContent);
 
         if (texto === "recebidos") return "recebidos";
@@ -570,19 +534,13 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         document.body.classList.add("modo-admin");
 
         if (tituloPaginaOcorrencias) {
-            tituloPaginaOcorrencias.textContent = "Todas as Ocorrências";
-        }
-
-        if (caixaTituloPagina && !caixaTituloPagina.querySelector(".selo-admin")) {
-            caixaTituloPagina.insertAdjacentHTML(
-                "beforeend",
-                `<span class="selo-admin">${ICONES.escudo}Prefeitura</span>`
-            );
+            tituloPaginaOcorrencias.innerHTML =
+                `Todas as Ocorrências <span class="selo-prefeitura">${ICONES.predio}Prefeitura</span>`;
         }
 
         if (descricaoPaginaOcorrencias) {
             descricaoPaginaOcorrencias.textContent =
-                "Analise as ocorrências registradas pelos cidadãos, aceite as válidas e acompanhe cada uma até a resolução.";
+                "Analise, atualize o status e mantenha o cidadão informado em cada etapa do atendimento.";
         }
 
         if (btnNovaOcorrencia) {
@@ -590,11 +548,7 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         }
 
         if (campoPesquisa) {
-            campoPesquisa.placeholder = "Buscar por título, local, cidadão ou categoria...";
-        }
-
-        if (textoPerfilUsuario) {
-            textoPerfilUsuario.textContent = "Administrador";
+            campoPesquisa.placeholder = "Buscar ocorrências";
         }
     }
 
@@ -683,6 +637,7 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         definirNumeroResumo(numeroEmAnalise, resumo.em_analise ?? resumo.pendentes);
         definirNumeroResumo(numeroAndamento, resumo.em_andamento);
         definirNumeroResumo(numeroResolvidas, resumo.resolvidas);
+        definirNumeroResumo(numeroCancelados, resumo.canceladas);
     }
 
 
@@ -851,13 +806,10 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
             return;
         }
 
-        containerCards.innerHTML = `
-            <div class="estado-lista-ocorrencias">
-                <div class="spinner-ocorrencias"></div>
-                <strong>Carregando ocorrências...</strong>
-                <span>Buscando as solicitações atualizadas.</span>
-            </div>
-        `;
+        // Esqueleto dos cards enquanto a lista carrega
+        containerCards.innerHTML = Array.from({ length: 3 }, () =>
+            '<div class="card-oc esqueleto" aria-hidden="true"></div>'
+        ).join("") + '<span class="sr">Carregando ocorrências...</span>';
     }
 
     function renderizarErroLista(mensagem) {
@@ -866,10 +818,12 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         }
 
         containerCards.innerHTML = `
-            <div class="estado-lista-ocorrencias estado-erro-ocorrencias">
+            <div class="vazio">
+                <span class="emoji">⚠️</span>
                 <strong>Não foi possível carregar as ocorrências.</strong>
-                <span>${escaparHtml(mensagem)}</span>
-                <button class="btn-tentar-novamente-ocorrencias" data-acao-lista="tentar-novamente" type="button">
+                ${escaparHtml(mensagem)}
+                <br>
+                <button class="btn-secundario" data-acao-lista="tentar-novamente" type="button">
                     Tentar novamente
                 </button>
             </div>
@@ -884,124 +838,100 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         const existeFiltro = Boolean(estado.filtroStatus || estado.busca);
 
         const titulo = existeFiltro
-            ? "Nenhuma ocorrência encontrada."
+            ? "Nenhuma ocorrência por aqui"
             : ehAdministrador()
-                ? "Nenhuma ocorrência registrada ainda."
-                : "Você ainda não possui ocorrências registradas.";
+                ? "Nenhuma ocorrência registrada ainda"
+                : "Você ainda não possui ocorrências registradas";
 
-        const texto = existeFiltro
-            ? "Altere os filtros ou a busca para visualizar outros resultados."
-            : ehAdministrador()
-                ? "Quando um cidadão registrar uma ocorrência, ela aparece aqui."
-                : "Registre uma nova ocorrência para acompanhar o atendimento por aqui.";
+        const texto = estado.busca
+            ? "Tente buscar com outras palavras."
+            : existeFiltro
+                ? "Nenhuma ocorrência com esse status no momento."
+                : ehAdministrador()
+                    ? "Quando um cidadão registrar uma ocorrência, ela aparece aqui."
+                    : "Registre uma nova ocorrência para acompanhar o atendimento por aqui.";
 
         const botao = !existeFiltro && !ehAdministrador()
             ? `
-                <button class="btn-tentar-novamente-ocorrencias" data-acao-lista="primeira-ocorrencia" type="button">
-                    Registrar nova ocorrência
+                <br>
+                <button class="btn-primario" data-acao-lista="primeira-ocorrencia" type="button">
+                    ${icone("mais", 18)}Registrar nova ocorrência
                 </button>
             `
             : "";
 
         containerCards.innerHTML = `
-            <div class="estado-lista-ocorrencias">
-                <div class="icone-estado-vazio-ocorrencias">
-                    <img src="/assets/icons/global/aviso-previo.png" alt="">
-                </div>
+            <div class="vazio">
+                <span class="emoji">${estado.busca ? "🔎" : "📭"}</span>
                 <strong>${titulo}</strong>
-                <span>${texto}</span>
+                ${texto}
                 ${botao}
             </div>
         `;
     }
 
-    function montarCard(ocorrencia) {
+    function montarCard(ocorrencia, indice = 0) {
         const id = Number(ocorrencia.id) || 0;
         const config = obterConfigStatus(ocorrencia.status);
-        const icone = obterIconeCategoria(ocorrencia.categoria);
+        const chave = config.chave || "recebido";
+        const passo = STATUS[chave]?.passo ?? 0;
         const codigo = formatarCodigo(ocorrencia);
-        const data = formatarData(ocorrencia.data_criacao || ocorrencia.data_ocorrencia);
+        const data = tempoRelativo(ocorrencia.data_criacao || ocorrencia.data_ocorrencia) || formatarData(ocorrencia.data_criacao);
         const endereco = obterEndereco(ocorrencia);
         const admin = ehAdministrador();
+        const titulo = ocorrencia.titulo || "Ocorrência";
 
         const cidadao = admin && ocorrencia.usuario_nome
-            ? `
-                <div class="item-info">
-                    <div class="icone-info">
-                        <div class="icone-mascara img-icone-pequeno"
-                            style="-webkit-mask-image: url('/assets/icons/global/do-utilizador.png'); mask-image: url('/assets/icons/global/do-utilizador.png');">
-                        </div>
-                    </div>
-                    <span>${escaparHtml(ocorrencia.usuario_nome)}</span>
-                </div>
-            `
+            ? `<div class="cidadao-linha"><i>${escaparHtml(iniciais(ocorrencia.usuario_nome))}</i>${escaparHtml(ocorrencia.usuario_nome)}</div>`
             : "";
 
         const lixeira = admin && podeCancelar(config.chave)
             ? `
-                <button class="btn-lixeira-card" type="button" data-cancelar-id="${id}"
+                <button class="btn-lixeira" type="button" data-cancelar-id="${id}"
                     title="Cancelar ocorrência" aria-label="Cancelar ocorrência ${codigo}">
                     ${ICONES.lixeira}
                 </button>
             `
             : "";
 
+        // Cancelada não tem progresso: a barrinha fica vazia.
+        const progresso = [0, 1, 2, 3]
+            .map((etapa) => `<i class="${chave !== "cancelado" && etapa <= passo ? "on" : ""}"></i>`)
+            .join("");
+
         return `
-            <div class="card-ocorrencias card-ocorrencia-dinamico ${config.chave === "cancelado" ? "card-cancelado" : ""}" data-id="${id}">
+            <article class="card-oc st${chave === "cancelado" ? " cancelada" : ""}" data-st="${chave}"
+                data-id="${id}" data-detalhes-id="${id}" tabindex="0" role="link"
+                aria-label="${escaparHtml(titulo)}, ${escaparHtml(config.nome)}" style="--i:${indice}">
 
-                <div class="topo-card">
-                    <div class="caixa-icone ${config.classeIcone}">
-                        <div class="icone-mascara img-icone-grande"
-                            style="-webkit-mask-image: url('${icone}'); mask-image: url('${icone}');">
-                        </div>
-                    </div>
-
-                    <div class="etiqueta-status ${config.classe}">
-                        ${escaparHtml(config.nome)}
-                    </div>
+                <div class="topo">
+                    <span class="ico">${iconeCategoria(ocorrencia.categoria, 22)}</span>
+                    ${pilula(chave)}
                 </div>
 
-                <h3 class="titulo-card">
-                    ${escaparHtml(ocorrencia.titulo || "Ocorrência")}
-                </h3>
+                <h3>${escaparHtml(titulo)}</h3>
 
-                <div class="lista-infos">
-                    <div class="item-info">
-                        <div class="icone-info">
-                            <div class="icone-mascara img-icone-pequeno"
-                                style="-webkit-mask-image: url('/assets/icons/global/painel-de-controle.png'); mask-image: url('/assets/icons/global/painel-de-controle.png');">
-                            </div>
-                        </div>
-                        <span>${escaparHtml(ocorrencia.categoria || "Sem categoria")}</span>
-                    </div>
-
-                    <div class="item-info">
-                        <div class="icone-info">
-                            <div class="icone-mascara img-icone-pequeno"
-                                style="-webkit-mask-image: url('/assets/icons/painel/nova-ocorrencias/pin-de-localizacao.png'); mask-image: url('/assets/icons/painel/nova-ocorrencias/pin-de-localizacao.png');">
-                            </div>
-                        </div>
-                        <span>${escaparHtml(endereco)}</span>
-                    </div>
-
+                <div class="infos">
+                    <div class="info">${ICONES.etiqueta}<span>${escaparHtml(ocorrencia.categoria || "Sem categoria")}</span></div>
+                    <div class="info">${ICONES.local}<span>${escaparHtml(endereco)}</span></div>
                     ${cidadao}
                 </div>
 
-                <div class="rodape-card">
-                    <div class="dados-registro">
-                        <span class="codigo">${codigo}</span>
-                        <span class="data">${data}</span>
+                <div class="mini-progresso" aria-hidden="true">${progresso}</div>
+
+                <div class="rodape">
+                    <div>
+                        <div class="codigo">${codigo}</div>
+                        <div class="data">${escaparHtml(data)}</div>
                     </div>
 
                     <div class="acoes-card">
                         ${lixeira}
-                        <button class="btn-detalhes" type="button" data-detalhes-id="${id}">
-                            Detalhes
-                        </button>
+                        <span class="ver">Ver detalhes ${ICONES.setaVer}</span>
                     </div>
                 </div>
 
-            </div>
+            </article>
         `;
     }
 
@@ -1016,8 +946,10 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         }
 
         containerCards.innerHTML =
-            estado.ocorrencias.map(montarCard).join("") +
-            `<div class="paginacao-ocorrencias">${montarPaginacao()}</div>`;
+            estado.ocorrencias.map((ocorrencia, indice) => montarCard(ocorrencia, indice)).join("") +
+            (estado.totalPaginas > 1 || estado.total > LIMITE_POR_PAGINA
+                ? `<div class="paginacao">${montarPaginacao()}</div>`
+                : "");
     }
 
     function montarPaginacao() {
@@ -1031,23 +963,21 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         const fim = Math.min(pagina * LIMITE_POR_PAGINA, estado.total);
 
         return `
-            <div class="paginacao-informacao">
+            <span class="paginacao-informacao">
                 Exibindo ${inicio}-${fim} de ${estado.total}
-            </div>
+            </span>
 
             <div class="paginacao-botoes">
-                <button class="btn-paginacao" data-acao-lista="pagina-anterior" type="button"
+                <button class="btn-icone" data-acao-lista="pagina-anterior" type="button"
                     aria-label="Página anterior" ${pagina <= 1 ? "disabled" : ""}>
-                    &larr;
+                    ${ICONES.anterior}
                 </button>
 
-                <span class="pagina-atual-ocorrencias">
-                    Página ${pagina} de ${totalPaginas}
-                </span>
+                <span>Página ${pagina} de ${totalPaginas}</span>
 
-                <button class="btn-paginacao" data-acao-lista="proxima-pagina" type="button"
+                <button class="btn-icone" data-acao-lista="proxima-pagina" type="button"
                     aria-label="Próxima página" ${pagina >= totalPaginas ? "disabled" : ""}>
-                    &rarr;
+                    ${ICONES.proxima}
                 </button>
             </div>
         `;
@@ -1055,7 +985,7 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
 
     function rolarParaLista() {
         document
-            .querySelector(".container-filtro-ocorrencias")
+            .querySelector("#tela-ocorrencias .barra-filtros")
             ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
@@ -1105,11 +1035,13 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
             }
         });
 
-        containerCards.addEventListener("dblclick", (event) => {
-            const card = event.target.closest(".card-ocorrencia-dinamico");
+        // O card inteiro abre os detalhes: Enter ou espaço também funcionam.
+        containerCards.addEventListener("keydown", (event) => {
+            const card = event.target.closest?.(".card-oc[data-detalhes-id]");
 
-            if (card && !event.target.closest("button")) {
-                abrirDetalhes(Number(card.dataset.id));
+            if (card && event.target === card && (event.key === "Enter" || event.key === " ")) {
+                event.preventDefault();
+                abrirDetalhes(Number(card.dataset.detalhesId));
             }
         });
     }
@@ -1121,11 +1053,17 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
 
     ====================================================================================================*/
 
+    function marcarFiltro(botaoAtivo) {
+        botoesFiltro.forEach((item) => {
+            item.classList.toggle("ativo", item === botaoAtivo);
+            item.setAttribute("aria-pressed", String(item === botaoAtivo));
+        });
+    }
+
     function registrarFiltros() {
         botoesFiltro.forEach((botao) => {
             botao.addEventListener("click", () => {
-                botoesFiltro.forEach((item) => item.classList.remove("ativo"));
-                botao.classList.add("ativo");
+                marcarFiltro(botao);
 
                 estado.filtroStatus = obterFiltroBotao(botao);
                 estado.pagina = 1;
@@ -1153,24 +1091,24 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
     ====================================================================================================*/
 
     function mostrarOverlay(elemento) {
-        clearTimeout(elemento._timerFechar);
         elemento.hidden = false;
-
-        requestAnimationFrame(() => {
-            elemento.classList.add("visivel");
-        });
     }
 
     function esconderOverlay(elemento) {
-        elemento.classList.remove("visivel");
+        const fundo = elemento.querySelector(".fundo");
 
-        elemento._timerFechar = setTimeout(() => {
+        fundo?.classList.add("fechando");
+        elemento.querySelector(".dialogo")?.classList.add("saindo");
+
+        setTimeout(() => {
             elemento.hidden = true;
+            fundo?.classList.remove("fechando");
+            elemento.querySelector(".dialogo")?.classList.remove("saindo");
         }, 220);
     }
 
     function atualizarTravaDeRolagem() {
-        document.body.classList.toggle("dialogo-ocorrencia-aberto", estado.dialogo.aberto);
+        document.body.classList.toggle("dialogo-aberto", estado.dialogo.aberto);
     }
 
 
@@ -1182,15 +1120,6 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
     O botão "Voltar para a lista" (ou a tecla Esc) faz o caminho de volta.
 
     ====================================================================================================*/
-
-    const SETA_VOLTAR = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-            fill="none" stroke="#566987" stroke-width="2.5" stroke-linecap="round"
-            stroke-linejoin="round" aria-hidden="true">
-            <path d="M19 12H5"></path>
-            <path d="M12 19l-7-7 7-7"></path>
-        </svg>
-    `;
 
     function detalhesVisiveis() {
         return Boolean(telaDetalhes) && !telaDetalhes.classList.contains("oculto");
@@ -1361,12 +1290,10 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
 
     function renderBarraVoltar() {
         return `
-            <div class="cabecalho-detalhes">
-                <button class="btn-voltar" type="button" data-acao="voltar-lista">
-                    ${SETA_VOLTAR}
-                    Voltar para a lista
-                </button>
-            </div>
+            <button class="voltar" type="button" data-acao="voltar-lista">
+                ${ICONES.voltar}
+                Voltar para ocorrências
+            </button>
         `;
     }
 
@@ -1374,11 +1301,11 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         return `
             ${renderBarraVoltar()}
 
-            <div class="detalhes-ocorrencia-estado">
-                <div class="spinner-ocorrencias" aria-hidden="true"></div>
+            <section class="cartao estado-detalhe">
+                <span class="girando azul" aria-hidden="true"></span>
                 <strong>Carregando ocorrência</strong>
                 <span>Buscando descrição, localização e histórico.</span>
-            </div>
+            </section>
         `;
     }
 
@@ -1386,12 +1313,12 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         return `
             ${renderBarraVoltar()}
 
-            <div class="detalhes-ocorrencia-estado">
-                <div class="detalhes-ocorrencia-estado-icone">${ICONES.alerta}</div>
+            <section class="cartao estado-detalhe">
+                <span class="icone-erro">${ICONES.alerta}</span>
                 <strong>Não foi possível abrir a ocorrência</strong>
                 <span>${escaparHtml(mensagem)}</span>
-                <button type="button" class="btn-tentar-novamente-ocorrencias" data-acao="tentar-novamente">Tentar novamente</button>
-            </div>
+                <button type="button" class="btn-secundario" data-acao="tentar-novamente">Tentar novamente</button>
+            </section>
         `;
     }
 
@@ -1400,91 +1327,97 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
 
         const admin = ehAdministrador();
         const config = obterConfigStatus(ocorrencia.status);
-        const icone = obterIconeCategoria(ocorrencia.categoria);
+        const chave = config.chave || "recebido";
         const fotos = obterFotos(ocorrencia);
+        const codigo = formatarCodigo(ocorrencia);
+        const categoria = ocorrencia.categoria || "Sem categoria";
+        const registrada = ocorrencia.data_criacao || ocorrencia.data_ocorrencia;
+        const atualizada = ocorrencia.data_atualizacao || registrada;
 
-        const blocoCidadao = admin
-            ? `
-                <section class="cartao-detalhe">
-                    <h3 class="titulo-sessao">Registrada por</h3>
+        const colunaDireita = [];
+
+        if (admin) {
+            colunaDireita.push(renderPainelAcoes(chave));
+            colunaDireita.push(`
+                <section class="cartao">
+                    <div class="cartao-topo"><h3>Registrada por</h3></div>
                     ${renderCidadao(ocorrencia)}
                 </section>
-            `
-            : "";
+            `);
+        } else {
+            const [titulo, texto] = AGORA_CIDADAO[chave] || AGORA_CIDADAO.recebido;
+
+            colunaDireita.push(`
+                <section class="cartao st" data-st="${chave}">
+                    <div class="agora-box">
+                        <span class="ico">${icone(STATUS[chave]?.icone || "entrada", 20)}</span>
+                        <div>
+                            <strong>${titulo}</strong>
+                            <p>${texto}</p>
+                        </div>
+                    </div>
+                </section>
+            `);
+        }
+
+        colunaDireita.push(`
+            <section class="cartao">
+                <div class="cartao-topo"><h3>Localização</h3></div>
+                <div class="endereco">${ICONES.localGrande}<span>${escaparHtml(obterEndereco(ocorrencia))}</span></div>
+                ${renderMapa(ocorrencia)}
+            </section>
+        `);
 
         telaDetalhes.innerHTML = `
             ${renderBarraVoltar()}
 
-            <header class="detalhes-ocorrencia-cabecalho">
-                <div class="detalhes-ocorrencia-identidade">
-                    <div class="caixa-icone ${config.classeIcone}">
-                        <div class="icone-mascara img-icone-grande"
-                            style="-webkit-mask-image: url('${icone}'); mask-image: url('${icone}');">
+            <section class="cartao st" data-st="${chave}">
+                <div class="cab-detalhe">
+                    <div class="ident">
+                        <span class="ico">${iconeCategoria(categoria, 26)}</span>
+                        <div class="titulos">
+                            <small>${codigo} · ${escaparHtml(categoria)}</small>
+                            <h2>${escaparHtml(ocorrencia.titulo || "Ocorrência")}</h2>
                         </div>
                     </div>
-
-                    <div class="detalhes-ocorrencia-titulos">
-                        <span class="detalhes-ocorrencia-codigo">${formatarCodigo(ocorrencia)}</span>
-                        <h2>${escaparHtml(ocorrencia.titulo || "Ocorrência")}</h2>
-                    </div>
+                    ${pilula(chave)}
                 </div>
 
-                <div class="etiqueta-status ${config.classe}">${escaparHtml(config.nome)}</div>
-            </header>
+                <div class="area-progresso">${renderProgresso(ocorrencia, chave)}</div>
+            </section>
 
-            ${renderProgresso(ocorrencia, config.chave)}
+            <div class="grade-detalhe">
+                <div class="coluna">
+                    <section class="cartao">
+                        <div class="cartao-topo"><h3>Descrição</h3></div>
+                        <p class="descricao">${escaparHtml(ocorrencia.descricao || "O cidadão não informou uma descrição.")}</p>
 
-            <div class="detalhes-ocorrencia-grade">
-                <div class="detalhes-ocorrencia-coluna">
-                    <section class="cartao-detalhe">
-                        <div class="caixa-descricao">
-                            <h4 class="titulo-sessao-pequeno">Descrição do problema</h4>
-                            <p class="texto-descricao">${escaparHtml(ocorrencia.descricao || "O cidadão não informou uma descrição.")}</p>
-                        </div>
-
-                        <div class="metadados-ocorrencia">
-                            <div>
-                                <span>Categoria</span>
-                                <strong>${escaparHtml(ocorrencia.categoria || "Sem categoria")}</strong>
-                            </div>
-                            <div>
-                                <span>Registrada em</span>
-                                <strong>${formatarData(ocorrencia.data_criacao || ocorrencia.data_ocorrencia, true)}</strong>
-                            </div>
-                            <div>
-                                <span>Última atualização</span>
-                                <strong>${formatarData(ocorrencia.data_atualizacao || ocorrencia.data_criacao || ocorrencia.data_ocorrencia, true)}</strong>
-                            </div>
-                            <div>
-                                <span>Fotos anexadas</span>
-                                <strong>${fotos.length}</strong>
-                            </div>
+                        <div class="meta">
+                            <div><span>Categoria</span><strong>${escaparHtml(categoria)}</strong></div>
+                            <div><span>Registrada em</span><strong>${formatarDataHora(registrada)}</strong></div>
+                            <div><span>Código</span><strong>${codigo}</strong></div>
+                            <div><span>Última atualização</span><strong>${escaparHtml(tempoRelativo(atualizada) || formatarData(atualizada))}</strong></div>
                         </div>
                     </section>
 
-                    <section class="cartao-detalhe">
-                        <h3 class="titulo-sessao">Histórico da solicitação</h3>
+                    <section class="cartao">
+                        <div class="cartao-topo">
+                            <h3>Evidências</h3>
+                            <small>${fotos.length ? `${fotos.length} ${fotos.length === 1 ? "foto" : "fotos"}` : "Sem fotos"}</small>
+                        </div>
+                        ${renderFotos(fotos)}
+                    </section>
+
+                    <section class="cartao">
+                        <div class="cartao-topo"><h3>Histórico</h3><small>Mais recente primeiro</small></div>
                         ${renderHistorico(ocorrencia)}
                     </section>
                 </div>
 
-                <div class="detalhes-ocorrencia-coluna">
-                    ${blocoCidadao}
-
-                    <section class="cartao-detalhe">
-                        <h3 class="titulo-sessao">Localização</h3>
-                        <div class="caixa-endereco">${escaparHtml(obterEndereco(ocorrencia))}</div>
-                        ${renderMapa(ocorrencia)}
-                    </section>
-
-                    <section class="cartao-detalhe">
-                        <h3 class="titulo-sessao">Evidências</h3>
-                        ${renderFotos(fotos)}
-                    </section>
+                <div class="coluna">
+                    ${colunaDireita.join("")}
                 </div>
             </div>
-
-            ${admin ? renderPainelAcoes(config.chave) : ""}
         `;
 
         iniciarMapa(ocorrencia);
@@ -1495,8 +1428,9 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
             const motivo = obterMotivoCancelamento(ocorrencia);
 
             return `
-                <div class="progresso-status-ocorrencia">
-                    <div class="status-cancelado-progresso">
+                <div class="faixa-cancelada">
+                    ${ICONES.bloqueioGrande}
+                    <div>
                         <strong>Ocorrência cancelada</strong>
                         <span>${escaparHtml(motivo)}</span>
                     </div>
@@ -1504,28 +1438,27 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
             `;
         }
 
-        const indiceAtual = FLUXO.indexOf(chaveAtual);
+        const indiceAtual = Math.max(0, FLUXO.indexOf(chaveAtual));
+        const resolvido = chaveAtual === "resolvido";
 
-        const etapas = FLUXO.map((chave, indice) => {
-            const concluida = indice <= indiceAtual;
-            const atual = indice === indiceAtual;
-            const conteudo = indice < indiceAtual ? ICONES.checkPequeno : indice + 1;
+        const passos = FLUXO.map((chave, indice) => {
+            const feito = indice < indiceAtual || (resolvido && indice === indiceAtual);
+            const atual = indice === indiceAtual && !resolvido;
 
-            const etapa = `
-                <div class="etapa-status ${concluida ? "concluida" : ""} ${atual ? "atual" : ""}" ${atual ? 'aria-current="step"' : ""}>
-                    <div class="bolinha-status">${conteudo}</div>
+            return `
+                <div class="passo${feito ? " feito" : ""}${atual ? " atual" : ""}" ${atual ? 'aria-current="step"' : ""}>
+                    <span class="bola">${feito ? ICONES.check : indice + 1}</span>
                     <span>${STATUS[chave].nome}</span>
                 </div>
             `;
-
-            const linha = indice < FLUXO.length - 1
-                ? `<div class="linha-status ${indice < indiceAtual ? "concluida" : ""}"></div>`
-                : "";
-
-            return etapa + linha;
         }).join("");
 
-        return `<div class="progresso-status-ocorrencia">${etapas}</div>`;
+        return `
+            <div class="stepper">
+                <div class="trilho-passos"><i style="width:${(indiceAtual / (FLUXO.length - 1)) * 100}%"></i></div>
+                ${passos}
+            </div>
+        `;
     }
 
     // O motivo do cancelamento é a observação do último registro "Cancelado" no histórico.
@@ -1548,7 +1481,7 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
                 chave: "recebido",
                 titulo: HISTORICO_PADRAO.recebido.titulo,
                 descricao: HISTORICO_PADRAO.recebido.descricao,
-                data: formatarData(ocorrencia.data_criacao || ocorrencia.data_ocorrencia, true),
+                data: formatarDataHora(ocorrencia.data_criacao || ocorrencia.data_ocorrencia),
                 responsavel: "Sistema"
             }];
         }
@@ -1565,7 +1498,7 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
                     ? HISTORICO_PADRAO.recebido.titulo
                     : (padrao?.titulo || `Status alterado para ${nomeStatus}`),
                 descricao: item.observacao || padrao?.descricao || `A solicitação avançou para o status ${nomeStatus}.`,
-                data: formatarData(item.data_alteracao, true),
+                data: formatarDataHora(item.data_alteracao),
                 responsavel: item.usuario_responsavel_nome || (registro ? "Sistema" : "Prefeitura")
             };
         });
@@ -1576,54 +1509,49 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         const itens = montarItensHistorico(ocorrencia)
             .reverse()
             .map((item) => `
-                <li class="historico-ocorrencia-item" data-status="${item.chave}">
-                    <span class="historico-ocorrencia-marcador" aria-hidden="true"></span>
-                    <div class="historico-ocorrencia-cartao">
-                        <div class="historico-ocorrencia-topo">
+                <li class="st" data-st="${item.chave}">
+                    <span class="marca" aria-hidden="true"></span>
+                    <div>
+                        <div class="topo-hist">
                             <strong>${escaparHtml(item.titulo)}</strong>
                             <time>${escaparHtml(item.data)}</time>
                         </div>
                         <p>${escaparHtml(item.descricao)}</p>
-                        <span class="responsavel-historico">${escaparHtml(item.responsavel)}</span>
+                        <span class="resp">${escaparHtml(item.responsavel)}</span>
                     </div>
                 </li>
             `)
             .join("");
 
-        return `<ol class="historico-ocorrencia">${itens}</ol>`;
+        return `<ol class="linha-tempo">${itens}</ol>`;
     }
 
     function renderCidadao(ocorrencia) {
         if (!ocorrencia.usuario_nome) {
-            return '<p class="aviso-status-final">Os dados de quem registrou não foram informados.</p>';
+            return '<p class="texto-suave">Os dados de quem registrou não foram informados.</p>';
         }
 
         return `
-            <div class="caixa-dados-cidadao">
-                <strong>${escaparHtml(ocorrencia.usuario_nome)}</strong>
-                ${ocorrencia.usuario_email ? `<span>${escaparHtml(ocorrencia.usuario_email)}</span>` : ""}
+            <div class="cidadao-box">
+                <span class="avatar-p">${escaparHtml(iniciais(ocorrencia.usuario_nome))}</span>
+                <div>
+                    <strong>${escaparHtml(ocorrencia.usuario_nome)}</strong>
+                    <span>${escaparHtml(ocorrencia.usuario_email || "Cidadão")}</span>
+                </div>
             </div>
         `;
     }
 
     function renderMapa(ocorrencia) {
         if (!temCoordenadas(ocorrencia)) {
-            return `
-                <div class="caixa-mapa">
-                    <span class="mapa-sem-gps">A localização por GPS não foi registrada.</span>
-                </div>
-            `;
+            return '<div class="sem-foto">A localização por GPS não foi registrada.</div>';
         }
 
         if (typeof window.L === "undefined") {
-            return `
-                <div class="caixa-mapa" title="${Number(ocorrencia.latitude)}, ${Number(ocorrencia.longitude)}">
-                    <div class="ponto-mapa"></div>
-                </div>
-            `;
+            return `<div class="sem-foto">${Number(ocorrencia.latitude).toFixed(5)}, ${Number(ocorrencia.longitude).toFixed(5)}</div>`;
         }
 
-        return '<div class="caixa-mapa caixa-mapa-real" data-mapa-ocorrencia></div>';
+        return '<div class="mapa pequeno" data-mapa-ocorrencia></div>';
     }
 
     function obterFotos(ocorrencia) {
@@ -1634,81 +1562,64 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
 
     function renderFotos(fotos) {
         if (fotos.length === 0) {
-            return `
-                <div class="caixa-foto-vazia">
-                    <span class="texto-foto-vazia">Nenhuma foto anexada</span>
-                </div>
-            `;
+            return `<div class="sem-foto">${ehAdministrador() ? "O cidadão" : "Você"} não enviou fotos nesta ocorrência.</div>`;
         }
 
         const itens = fotos.map((foto, indice) => `
-            <button type="button" class="foto-evidencia" data-acao="ver-foto"
+            <button type="button" class="foto" data-acao="ver-foto"
                 data-src="${escaparHtml(foto.url)}" aria-label="Ampliar foto ${indice + 1}">
                 <img src="${escaparHtml(foto.url)}" alt="Foto ${indice + 1} da ocorrência" loading="lazy">
             </button>
         `).join("");
 
-        return `<div class="galeria-evidencias">${itens}</div>`;
+        return `<div class="galeria">${itens}</div>`;
     }
 
     function renderPainelAcoes(chaveAtual) {
-        if (chaveAtual === "resolvido") {
+        if (chaveAtual === "resolvido" || chaveAtual === "cancelado") {
             return `
-                <section class="cartao-detalhe painel-admin-status painel-admin-final">
-                    <h3 class="titulo-sessao">Status final</h3>
-                    <p class="aviso-status-final">Esta ocorrência foi resolvida. O status não pode mais ser alterado.</p>
-                </section>
-            `;
-        }
-
-        if (chaveAtual === "cancelado") {
-            return `
-                <section class="cartao-detalhe painel-admin-status painel-admin-final">
-                    <h3 class="titulo-sessao">Status final</h3>
-                    <p class="aviso-status-final">Esta ocorrência foi cancelada. Ela só aparece para o cidadão que a registrou.</p>
+                <section class="cartao st" data-st="${chaveAtual}">
+                    <div class="final-box">
+                        ${icone(STATUS[chaveAtual].icone, 26)}
+                        <div>
+                            <strong>${chaveAtual === "resolvido" ? "Atendimento concluído" : "Ocorrência encerrada"}</strong>
+                            ${chaveAtual === "resolvido"
+                                ? "O status desta ocorrência não pode mais ser alterado."
+                                : "Ela foi cancelada e só aparece para o cidadão que a registrou."}
+                        </div>
+                    </div>
                 </section>
             `;
         }
 
         const proxima = PROXIMA_ETAPA[chaveAtual] || PROXIMA_ETAPA.recebido;
-        const atual = STATUS[chaveAtual] || STATUS.recebido;
-        const destino = STATUS[proxima.status];
 
         return `
-            <section class="cartao-detalhe painel-admin-status">
-                <div class="painel-admin-cabecalho">
-                    <h3 class="titulo-sessao">Próximo passo</h3>
-
-                    <div class="transicao-status">
-                        <span class="etiqueta-status ${atual.classe}">${atual.nome}</span>
-                        <span class="seta-transicao" aria-hidden="true">${ICONES.seta}</span>
-                        <span class="etiqueta-status ${destino.classe}">${destino.nome}</span>
-                    </div>
+            <section class="cartao proximo-passo">
+                <div class="cartao-topo">
+                    <h3>Próximo passo</h3>
+                    <span class="transicao">${pilula(chaveAtual)}${ICONES.seta}${pilula(proxima.status)}</span>
                 </div>
 
-                <p class="texto-admin-status">
-                    ${proxima.ajuda} Se a mensagem ficar em branco, o cidadão recebe o texto de exemplo do campo.
-                </p>
+                <p class="ajuda">${proxima.ajuda}</p>
 
-                <div class="painel-admin-linha">
-                    <div class="grupo-admin-status">
-                        <label for="admin-mensagem">Mensagem para o cidadão (opcional)</label>
-                        <textarea id="admin-mensagem" maxlength="1000" placeholder="${escaparHtml(proxima.mensagemPadrao)}"></textarea>
-                        <span class="contador-caracteres" data-contador="admin-mensagem">0/1000</span>
-                    </div>
-
-                    <div class="painel-admin-botoes">
-                        <button type="button" class="btn-atualizar-status" data-acao="avancar">
-                            ${ICONES.check}<span>${proxima.botao}</span>
-                        </button>
-
-                        <button type="button" class="btn-cancelar-ocorrencia" data-acao="cancelar">
-                            ${ICONES.lixeira}<span>Cancelar ocorrência</span>
-                        </button>
-                    </div>
+                <div class="campo">
+                    <label for="admin-mensagem">Mensagem para o cidadão <small data-contador="admin-mensagem">0/1000</small></label>
+                    <textarea id="admin-mensagem" maxlength="1000" placeholder="${escaparHtml(proxima.mensagemPadrao)}"></textarea>
+                    <span class="dica-campo">Opcional. Se ficar em branco, enviamos a mensagem sugerida.</span>
                 </div>
 
                 <div class="mensagem-admin-status erro" role="alert" hidden></div>
+
+                <div class="botoes">
+                    <button type="button" class="btn-primario" data-acao="avancar">
+                        ${ICONES.check}<span>${proxima.botao}</span>
+                    </button>
+
+                    <button type="button" class="btn-cancelar-oc" data-acao="cancelar">
+                        ${ICONES.bloqueio}<span>Cancelar ocorrência</span>
+                    </button>
+                </div>
             </section>
         `;
     }
@@ -1721,6 +1632,7 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         }
 
         const posicao = [Number(ocorrencia.latitude), Number(ocorrencia.longitude)];
+        const chave = obterChaveStatus(ocorrencia.status) || "recebido";
 
         estado.detalhes.mapa = window.L.map(elemento, {
             zoomControl: true,
@@ -1732,9 +1644,15 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
             attribution: "&copy; OpenStreetMap"
         }).addTo(estado.detalhes.mapa);
 
-        window.L.marker(posicao)
-            .addTo(estado.detalhes.mapa)
-            .bindPopup(escaparHtml(ocorrencia.titulo || "Ocorrência"));
+        window.L.marker(posicao, {
+            icon: window.L.divIcon({
+                className: "pino-mapa",
+                html: `<span class="pino st" data-st="${chave}">${PINO}</span>`,
+                iconSize: [30, 38],
+                iconAnchor: [15, 38]
+            }),
+            title: ocorrencia.titulo || "Ocorrência"
+        }).addTo(estado.detalhes.mapa);
 
         // O Leaflet precisa recalcular o tamanho depois que a tela termina de aparecer.
         setTimeout(() => {
@@ -1755,20 +1673,43 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         }
 
         const overlay = document.createElement("div");
-        overlay.className = "visualizador-foto-ocorrencia";
+        overlay.className = "lightbox visualizador-foto-ocorrencia";
+        overlay.setAttribute("role", "dialog");
+        overlay.setAttribute("aria-label", "Foto ampliada");
         overlay.innerHTML = `
-            <button class="fechar-visualizador-foto" type="button" aria-label="Fechar foto">&times;</button>
+            <button class="btn-icone fechar-visualizador-foto" type="button" aria-label="Fechar foto">${ICONES.fechar}</button>
             <img src="${escaparHtml(url)}" alt="Evidência da ocorrência">
         `;
 
-        overlay.addEventListener("click", (event) => {
-            if (event.target === overlay || event.target.closest(".fechar-visualizador-foto")) {
-                overlay.remove();
-            }
-        });
+        // Toque em qualquer lugar fecha a foto
+        overlay.addEventListener("click", () => fecharFoto(overlay));
 
         document.body.appendChild(overlay);
         overlay.querySelector(".fechar-visualizador-foto").focus();
+    }
+
+    function fecharFoto(overlay = document.querySelector(".visualizador-foto-ocorrencia")) {
+        if (!overlay || overlay.classList.contains("fechando")) {
+            return;
+        }
+
+        overlay.classList.add("fechando");
+        setTimeout(() => overlay.remove(), 250);
+    }
+
+    function formatarDataHora(valor) {
+        const data = new Date(valor);
+
+        if (!valor || Number.isNaN(data.getTime())) {
+            return "--";
+        }
+
+        const dia = data
+            .toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric" })
+            .replace(/\./g, "")
+            .replace(/ de /g, " ");
+
+        return `${dia}, ${data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
     }
 
 
@@ -1786,7 +1727,7 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         if (carregando) {
             botao.dataset.htmlOriginal = botao.innerHTML;
             botao.disabled = true;
-            botao.innerHTML = `<span class="spinner-botao" aria-hidden="true"></span><span>${escaparHtml(texto)}</span>`;
+            botao.innerHTML = `<span class="girando" aria-hidden="true"></span><span>${escaparHtml(texto)}</span>`;
         } else if (botao.dataset.htmlOriginal) {
             botao.disabled = false;
             botao.innerHTML = botao.dataset.htmlOriginal;
@@ -1949,45 +1890,46 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
 
     function criarDialogo() {
         const opcoesMotivo = Object.entries(MOTIVOS_CANCELAMENTO).map(([valor, rotulo]) => `
-            <label class="opcao-motivo">
+            <label class="motivo">
                 <input type="radio" name="motivo-cancelamento" value="${valor}">
                 <span>${rotulo}</span>
             </label>
         `).join("");
 
         dialogoEl = document.createElement("div");
-        dialogoEl.className = "dialogo-cancelamento-overlay";
+        dialogoEl.className = "camada-dialogo";
         dialogoEl.hidden = true;
         dialogoEl.innerHTML = `
-            <div class="dialogo-cancelamento" role="alertdialog" aria-modal="true"
+            <div class="fundo" data-acao="fundo"></div>
+
+            <div class="dialogo largo" role="alertdialog" aria-modal="true"
                 aria-labelledby="dialogo-cancelamento-titulo" aria-describedby="dialogo-cancelamento-texto">
 
-                <div class="dialogo-cancelamento-icone">${ICONES.lixeiraGrande}</div>
+                <div class="icone-perigo">${ICONES.bloqueioGrande}</div>
 
-                <h3 id="dialogo-cancelamento-titulo">Cancelar a ocorrência <span data-dialogo-codigo></span>?</h3>
+                <h3 id="dialogo-cancelamento-titulo">Cancelar <span data-dialogo-codigo></span>?</h3>
 
                 <p id="dialogo-cancelamento-texto">
                     Ela deixa de aparecer para os outros cidadãos. Quem registrou continua vendo a ocorrência,
-                    com o status Cancelado e o motivo que você escolher abaixo.
+                    com o status Cancelado e o motivo que você escolher.
                 </p>
 
-                <fieldset class="motivos-cancelamento">
-                    <legend>Motivo do cancelamento</legend>
-                    <div class="lista-motivos">${opcoesMotivo}</div>
-                </fieldset>
+                <div class="motivos" role="radiogroup" aria-label="Motivo do cancelamento">${opcoesMotivo}</div>
 
-                <div class="grupo-admin-status">
-                    <label for="justificativa-cancelamento" data-rotulo-justificativa>Justificativa para o cidadão (opcional)</label>
+                <div class="campo">
+                    <label for="justificativa-cancelamento">
+                        <span data-rotulo-justificativa>Justificativa para o cidadão (opcional)</span>
+                        <small data-contador="justificativa">0/300</small>
+                    </label>
                     <textarea id="justificativa-cancelamento" maxlength="300"
-                        placeholder="Ex: Já existe uma ocorrência aberta para este mesmo problema."></textarea>
-                    <span class="contador-caracteres" data-contador="justificativa">0/300</span>
+                        placeholder="Ex.: Já existe uma ocorrência aberta para este mesmo problema."></textarea>
                 </div>
 
-                <div class="dialogo-cancelamento-erro" role="alert" hidden></div>
+                <span class="erro dialogo-cancelamento-erro" role="alert" hidden></span>
 
-                <div class="dialogo-cancelamento-botoes">
-                    <button type="button" class="btn-dialogo-voltar" data-acao="voltar">Voltar</button>
-                    <button type="button" class="btn-dialogo-confirmar" data-acao="confirmar">Cancelar ocorrência</button>
+                <div class="acoes">
+                    <button type="button" class="btn-secundario" data-acao="voltar">Voltar</button>
+                    <button type="button" class="btn-perigo" data-acao="confirmar">Cancelar ocorrência</button>
                 </div>
             </div>
         `;
@@ -1995,16 +1937,9 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         document.body.appendChild(dialogoEl);
 
         dialogoEl.addEventListener("click", (event) => {
-            if (event.target === dialogoEl) {
-                if (!estado.dialogo.ocupado) {
-                    fecharDialogo();
-                }
-                return;
-            }
-
             const acao = event.target.closest("[data-acao]")?.dataset.acao;
 
-            if (acao === "voltar" && !estado.dialogo.ocupado) {
+            if ((acao === "fundo" || acao === "voltar") && !estado.dialogo.ocupado) {
                 fecharDialogo();
             }
 
@@ -2137,28 +2072,27 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
     ====================================================================================================*/
 
     function criarAreaToast() {
-        areaToast = document.createElement("div");
-        areaToast.className = "toast-ocorrencia-area";
-        areaToast.setAttribute("aria-live", "polite");
-        document.body.appendChild(areaToast);
+        // A área dos toasts já existe no HTML (#toastOcorrencias).
     }
 
     function mostrarToast(titulo, texto) {
+        if (!areaToast) {
+            return;
+        }
+
         const toast = document.createElement("div");
-        toast.className = "toast-ocorrencia";
+        toast.className = "toast";
+        toast.setAttribute("role", "status");
         toast.innerHTML = `
-            <div class="toast-ocorrencia-icone">${ICONES.checkPequeno}</div>
-            <div class="toast-ocorrencia-textos">
-                <strong>${escaparHtml(titulo)}</strong>
-                <span>${escaparHtml(texto)}</span>
-            </div>
+            <span class="ok">${icone("check", 14)}</span>
+            <span><strong>${escaparHtml(titulo)}</strong><small>${escaparHtml(texto)}</small></span>
         `;
 
         areaToast.appendChild(toast);
 
         setTimeout(() => {
             toast.classList.add("saindo");
-            setTimeout(() => toast.remove(), 220);
+            toast.addEventListener("animationend", () => toast.remove(), { once: true });
         }, 4000);
     }
 
@@ -2175,10 +2109,8 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
                 return;
             }
 
-            const visualizador = document.querySelector(".visualizador-foto-ocorrencia");
-
-            if (visualizador) {
-                visualizador.remove();
+            if (document.querySelector(".visualizador-foto-ocorrencia")) {
+                fecharFoto();
                 return;
             }
 
@@ -2245,6 +2177,51 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
 
     ====================================================================================================*/
 
+    /*====================================================================================================
+
+    LINKS DO PAINEL
+
+    ocorrencia.html?status=resolvido   abre a lista já filtrada
+    ocorrencia.html?ocorrencia=7       abre os detalhes da ocorrência 7
+    ocorrencia.html?nova=1             abre o formulário de nova ocorrência (cidadão)
+
+    ====================================================================================================*/
+
+    const STATUS_PARA_FILTRO = {
+        recebido: "recebidos",
+        em_analise: "em_analise",
+        em_andamento: "em_andamento",
+        resolvido: "resolvidos",
+        cancelado: "cancelados"
+    };
+
+    function aplicarParametrosDaUrl() {
+        const parametros = new URLSearchParams(window.location.search);
+
+        const status = parametros.get("status");
+        const filtro = STATUS_PARA_FILTRO[status] || (Object.values(STATUS_PARA_FILTRO).includes(status) ? status : "");
+        const botaoFiltro = [...botoesFiltro].find((botao) => obterFiltroBotao(botao) === filtro);
+
+        if (filtro && botaoFiltro) {
+            estado.filtroStatus = filtro;
+            marcarFiltro(botaoFiltro);
+        }
+
+        const id = Number(parametros.get("ocorrencia"));
+
+        if (Number.isInteger(id) && id > 0) {
+            abrirDetalhes(id);
+        } else if (parametros.get("nova") === "1" && !ehAdministrador()) {
+            btnNovaOcorrencia?.click();
+        }
+
+        // Limpa o endereço para o "atualizar" da página não repetir a ação.
+        if (parametros.has("status") || parametros.has("ocorrencia") || parametros.has("nova")) {
+            window.history.replaceState(null, "", window.location.pathname);
+        }
+    }
+
+
     async function inicializar() {
         if (!telaOcorrencias || !containerCards) {
             return;
@@ -2270,6 +2247,8 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
                     console.error("Erro ao carregar status:", error);
                 }
             }
+
+            aplicarParametrosDaUrl();
 
             await Promise.allSettled([
                 carregarResumo(),

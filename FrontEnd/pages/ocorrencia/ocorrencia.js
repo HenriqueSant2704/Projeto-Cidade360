@@ -1,3 +1,17 @@
+/*========================================================================================================
+
+NOVA OCORRÊNCIA
+
+- Abre e fecha o formulário
+- Categorias (vindas do banco) em botões
+- Mapa (Leaflet) com GPS ou toque no mapa
+- Fotos (obrigatória pelo menos 1, até 5, JPG/PNG/WEBP até 5 MB)
+- Envio para POST /api/ocorrencias
+
+A listagem e os detalhes ficam no acompanhamentoOcorrencias.js.
+
+=========================================================================================================*/
+
 const telaOcorrencias = document.getElementById("tela-ocorrencias");
 const telaFormulario = document.getElementById("tela-formulario");
 
@@ -18,7 +32,9 @@ function abrirFormulario() {
         telaFormulario.classList.remove("oculto");
         telaFormulario.classList.add("animar-entrada");
 
-    }, 350);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+
+    }, 250);
 
 }
 
@@ -35,7 +51,7 @@ function voltarOcorrencias() {
         telaOcorrencias.classList.remove("oculto");
         telaOcorrencias.classList.add("animar-entrada");
 
-    }, 350);
+    }, 250);
 
 }
 
@@ -53,13 +69,14 @@ INTEGRAÇÃO DE OCORRÊNCIAS
 =========================================================================================================*/
 
 const API_OCORRENCIAS = "/api/ocorrencias";
-const LOGIN_PAGE_OCORRENCIAS = "../../../FrontEnd/pages/login/login.html";
+const LOGIN_PAGE_OCORRENCIAS = "/FrontEnd/pages/login/login.html";
 const MAX_FOTOS = 5;
 const TAMANHO_MAXIMO_FOTO = 5 * 1024 * 1024;
 
 const formOcorrencia = document.getElementById("form-ocorrencia");
 const tituloOcorrenciaInput = document.getElementById("ocorrencia-titulo");
 const categoriaOcorrenciaSelect = document.getElementById("ocorrencia-categoria");
+const gradeCategoriasOcorrencia = document.getElementById("categorias-ocorrencia");
 const descricaoOcorrenciaTextarea = document.getElementById("ocorrencia-descricao");
 const enderecoOcorrenciaInput = document.getElementById("ocorrencia-endereco");
 const latitudeOcorrenciaInput = document.getElementById("ocorrencia-latitude");
@@ -67,14 +84,20 @@ const longitudeOcorrenciaInput = document.getElementById("ocorrencia-longitude")
 const precisaoOcorrenciaInput = document.getElementById("ocorrencia-precisao");
 const btnGpsOcorrencia = document.getElementById("btn-gps");
 const mapaPreviewOcorrencia = document.getElementById("mapa-ocorrencia");
+const textoLocalizacaoOcorrencia = document.getElementById("texto-localizacao");
 const fotosOcorrenciaInput = document.getElementById("fotos");
 const areaUploadOcorrencia = document.getElementById("area-upload");
+const textoUploadOcorrencia = document.getElementById("texto-upload");
 const listaFotosOcorrencia = document.getElementById("lista-fotos");
 const btnEnviarOcorrencia = document.getElementById("btn-enviar-ocorrencia");
 const mensagemOcorrencia = document.getElementById("mensagem-ocorrencia");
+const toastOcorrencias = document.getElementById("toastOcorrencias");
 
-// ALTERADO: o status "pendente" não existe mais.
-// Os contadores agora são "recebidos" e "em análise" (classes que já existem no HTML).
+const etapaDetalhes = document.getElementById("etapa-detalhes");
+const etapaLocalizacao = document.getElementById("etapa-localizacao");
+const etapaFotos = document.getElementById("etapa-fotos");
+
+// Contadores das abas (o "pendente" não existe mais: são "recebidos" e "em análise").
 const numeroTotalOcorrencias = document.querySelector(".numero.total");
 const numeroRecebidosOcorrencias = document.querySelector(".numero.recebidos");
 const numeroEmAnaliseOcorrencias = document.querySelector(".numero.emanalise");
@@ -102,7 +125,7 @@ let circuloPrecisaoOcorrencia = null;
 const conteudoOriginalBotaoEnviarOcorrencia = btnEnviarOcorrencia.innerHTML;
 const conteudoOriginalBotaoGps = btnGpsOcorrencia.innerHTML;
 
-
+const iconeOcorrencia = (nome, tamanho) => window.Cidade360.icone(nome, tamanho);
 
 
 /*========================================================================================================
@@ -110,7 +133,6 @@ const conteudoOriginalBotaoGps = btnGpsOcorrencia.innerHTML;
 AUTENTICAÇÃO E API
 
 =========================================================================================================*/
-
 
 function obterTokenOcorrencias() {
     return (
@@ -181,6 +203,54 @@ function limparMensagemOcorrencia() {
     mensagemOcorrencia.textContent = "";
     mensagemOcorrencia.hidden = true;
     mensagemOcorrencia.className = "mensagem-ocorrencia";
+
+    document.querySelectorAll("#form-ocorrencia [data-erro-para]").forEach((erro) => {
+        erro.hidden = true;
+        erro.textContent = "";
+    });
+}
+
+// Mostra o erro logo abaixo do campo com problema.
+function mostrarErroCampoOcorrencia(campo, mensagem) {
+    const erro = campo?.id
+        ? document.querySelector(`#form-ocorrencia [data-erro-para="${campo.id}"]`)
+        : null;
+
+    if (!erro) {
+        mostrarMensagemOcorrencia(mensagem);
+        return;
+    }
+
+    erro.textContent = mensagem;
+    erro.hidden = false;
+}
+
+// Aviso rápido no canto da tela (mesmo visual do resto do sistema).
+function mostrarToastOcorrencia(titulo, texto = "") {
+    if (!toastOcorrencias) {
+        return;
+    }
+
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.setAttribute("role", "status");
+    toast.innerHTML = `
+        <span class="ok">${iconeOcorrencia("check", 14)}</span>
+        <span><strong></strong>${texto ? "<small></small>" : ""}</span>
+    `;
+
+    toast.querySelector("strong").textContent = titulo;
+
+    if (texto) {
+        toast.querySelector("small").textContent = texto;
+    }
+
+    toastOcorrencias.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add("saindo");
+        toast.addEventListener("animationend", () => toast.remove(), { once: true });
+    }, 4000);
 }
 
 
@@ -225,8 +295,11 @@ async function carregarCategoriasOcorrencia() {
         });
 
         categoriaOcorrenciaSelect.disabled = false;
+
+        renderizarBotoesCategoria(dados.categorias);
     } catch (error) {
         categoriaOcorrenciaSelect.innerHTML = '<option value="">Não foi possível carregar as categorias</option>';
+        gradeCategoriasOcorrencia.innerHTML = '<p class="vazio-mini">Não foi possível carregar as categorias.</p>';
 
         mostrarMensagemOcorrencia(
             error.message ||
@@ -234,6 +307,52 @@ async function carregarCategoriasOcorrencia() {
         );
     }
 }
+
+// Um botão por categoria. O valor escolhido vai para o <select> escondido,
+// que continua sendo o campo lido na validação e no envio.
+function renderizarBotoesCategoria(categorias) {
+    gradeCategoriasOcorrencia.innerHTML = "";
+
+    categorias.forEach((categoria) => {
+        const botao = document.createElement("button");
+        botao.type = "button";
+        botao.className = "cat-op";
+        botao.setAttribute("role", "radio");
+        botao.setAttribute("aria-checked", "false");
+        botao.dataset.categoriaId = String(categoria.id);
+        botao.innerHTML = window.Cidade360.iconeCategoria(categoria.nome, 18);
+        botao.append(categoria.nome);
+
+        gradeCategoriasOcorrencia.appendChild(botao);
+    });
+
+    sincronizarBotoesCategoria();
+}
+
+function sincronizarBotoesCategoria() {
+    gradeCategoriasOcorrencia.querySelectorAll(".cat-op").forEach((botao) => {
+        botao.setAttribute(
+            "aria-checked",
+            String(botao.dataset.categoriaId === categoriaOcorrenciaSelect.value)
+        );
+    });
+}
+
+gradeCategoriasOcorrencia.addEventListener("click", (event) => {
+    const botao = event.target.closest(".cat-op");
+
+    if (!botao) {
+        return;
+    }
+
+    categoriaOcorrenciaSelect.value = botao.dataset.categoriaId;
+    categoriaOcorrenciaSelect.dispatchEvent(new Event("change", { bubbles: true }));
+});
+
+categoriaOcorrenciaSelect.addEventListener("change", () => {
+    sincronizarBotoesCategoria();
+    atualizarEtapasOcorrencia();
+});
 
 
 /*========================================================================================================
@@ -254,8 +373,6 @@ function inicializarMapaOcorrencia() {
         );
         return;
     }
-
-    mapaPreviewOcorrencia.classList.add("mapa-ativo");
 
     mapaOcorrencia = L.map(mapaPreviewOcorrencia, {
         zoomControl: true
@@ -293,7 +410,14 @@ function atualizarMarcadorOcorrencia(latitude, longitude) {
             longitude
         ], {
             draggable: true,
-            autoPan: true
+            autoPan: true,
+            icon: L.divIcon({
+                className: "pino-mapa",
+                html: `<span class="pino st" data-st="recebido">${window.Cidade360.PINO}</span>`,
+                iconSize: [30, 38],
+                iconAnchor: [15, 38],
+                popupAnchor: [0, -34]
+            })
         }).addTo(mapaOcorrencia);
 
         marcadorOcorrencia.on("dragend", () => {
@@ -320,9 +444,14 @@ function atualizarMarcadorOcorrencia(latitude, longitude) {
 
     marcadorOcorrencia
         .bindPopup(
-            `<strong>Local da ocorrência</strong><br>${textoPrecisao}<br>Arraste o alfinete para ajustar.`
+            `<div class="balao"><strong>Local da ocorrência</strong><span class="sub">${textoPrecisao}</span><span class="sub">Arraste o pino para ajustar.</span></div>`,
+            { className: "balao-mapa" }
         )
         .openPopup();
+
+    if (textoLocalizacaoOcorrencia) {
+        textoLocalizacaoOcorrencia.textContent = "Local marcado. Toque de novo ou arraste o pino para ajustar.";
+    }
 }
 
 function atualizarCirculoPrecisaoOcorrencia(latitude, longitude, precisao) {
@@ -345,6 +474,7 @@ function atualizarCirculoPrecisaoOcorrencia(latitude, longitude, precisao) {
     ], {
         radius: precisao,
         weight: 1,
+        color: "#2563eb",
         fillOpacity: 0.12
     }).addTo(mapaOcorrencia);
 }
@@ -404,6 +534,8 @@ function atualizarLocalizacaoOcorrencia(
             animate: true
         });
     }
+
+    atualizarEtapasOcorrencia();
 }
 
 function mensagemErroGeolocalizacaoOcorrencias(error) {
@@ -426,10 +558,7 @@ function definirEstadoBotaoGps(carregando) {
     btnGpsOcorrencia.disabled = carregando;
 
     if (carregando) {
-        btnGpsOcorrencia.innerHTML = conteudoOriginalBotaoGps.replace(
-            "Usar GPS",
-            "Obtendo localização..."
-        );
+        btnGpsOcorrencia.innerHTML = '<span class="girando azul" aria-hidden="true"></span><span>Obtendo localização...</span>';
     } else {
         btnGpsOcorrencia.innerHTML = conteudoOriginalBotaoGps;
     }
@@ -475,7 +604,8 @@ function usarGpsOcorrencia() {
         (error) => {
             definirEstadoBotaoGps(false);
 
-            mostrarMensagemOcorrencia(
+            mostrarErroCampoOcorrencia(
+                mapaPreviewOcorrencia,
                 mensagemErroGeolocalizacaoOcorrencias(error)
             );
         },
@@ -504,6 +634,10 @@ function limparLocalizacaoOcorrencia() {
     if (circuloPrecisaoOcorrencia && mapaOcorrencia) {
         mapaOcorrencia.removeLayer(circuloPrecisaoOcorrencia);
         circuloPrecisaoOcorrencia = null;
+    }
+
+    if (textoLocalizacaoOcorrencia) {
+        textoLocalizacaoOcorrencia.textContent = "Toque no mapa para marcar o local";
     }
 }
 
@@ -563,16 +697,21 @@ function removerFotoOcorrencia(id) {
 function renderizarFotosOcorrencia() {
     listaFotosOcorrencia.innerHTML = "";
 
-    if (estadoOcorrencia.fotos.length === 0) {
-        areaUploadOcorrencia.classList.remove("com-fotos");
-        return;
-    }
+    const quantidade = estadoOcorrencia.fotos.length;
 
-    areaUploadOcorrencia.classList.add("com-fotos");
+    listaFotosOcorrencia.hidden = quantidade === 0;
+    areaUploadOcorrencia.classList.toggle("compacta", quantidade > 0);
+    areaUploadOcorrencia.hidden = quantidade >= MAX_FOTOS;
+
+    if (textoUploadOcorrencia) {
+        textoUploadOcorrencia.textContent = quantidade > 0
+            ? `Adicionar outra foto (${quantidade}/${MAX_FOTOS})`
+            : "Toque para tirar foto";
+    }
 
     estadoOcorrencia.fotos.forEach((foto) => {
         const item = document.createElement("div");
-        item.className = "foto-preview-item";
+        item.className = "f";
 
         const imagem = document.createElement("img");
         imagem.src = foto.previewUrl;
@@ -580,9 +719,8 @@ function renderizarFotosOcorrencia() {
 
         const remover = document.createElement("button");
         remover.type = "button";
-        remover.className = "btn-remover-foto";
         remover.setAttribute("aria-label", "Remover foto");
-        remover.textContent = "×";
+        remover.innerHTML = iconeOcorrencia("x", 14);
 
         remover.addEventListener("click", (event) => {
             event.preventDefault();
@@ -595,23 +733,14 @@ function renderizarFotosOcorrencia() {
         listaFotosOcorrencia.appendChild(item);
     });
 
-    if (estadoOcorrencia.fotos.length < MAX_FOTOS) {
-        const adicionar = document.createElement("div");
-        adicionar.className = "adicionar-foto-item";
-        adicionar.innerHTML = `
-            <strong>+</strong>
-            <span>Adicionar foto</span>
-        `;
-
-        listaFotosOcorrencia.appendChild(adicionar);
-    }
+    atualizarEtapasOcorrencia();
 }
 
-function adicionarFotosOcorrencia() {
+function adicionarFotosOcorrencia(lista = fotosOcorrenciaInput.files) {
     limparMensagemOcorrencia();
 
     const arquivos = Array.from(
-        fotosOcorrenciaInput.files || []
+        lista || []
     );
 
     fotosOcorrenciaInput.value = "";
@@ -622,7 +751,8 @@ function adicionarFotosOcorrencia() {
 
     for (const arquivo of arquivos) {
         if (estadoOcorrencia.fotos.length >= MAX_FOTOS) {
-            mostrarMensagemOcorrencia(
+            mostrarErroCampoOcorrencia(
+                areaUploadOcorrencia,
                 `Você pode adicionar no máximo ${MAX_FOTOS} fotos por ocorrência.`
             );
             break;
@@ -631,7 +761,7 @@ function adicionarFotosOcorrencia() {
         const erroFoto = validarArquivoFotoOcorrencias(arquivo);
 
         if (erroFoto) {
-            mostrarMensagemOcorrencia(erroFoto);
+            mostrarErroCampoOcorrencia(areaUploadOcorrencia, erroFoto);
             continue;
         }
 
@@ -654,6 +784,59 @@ function adicionarFotosOcorrencia() {
 
     renderizarFotosOcorrencia();
 }
+
+
+/*========================================================================================================
+
+ETAPAS E CONTADORES
+
+O número de cada etapa fica azul quando a etapa está completa.
+
+=========================================================================================================*/
+
+function atualizarEtapasOcorrencia() {
+    const titulo = tituloOcorrenciaInput.value.trim();
+    const descricao = descricaoOcorrenciaTextarea.value.trim();
+
+    etapaDetalhes?.classList.toggle(
+        "ok",
+        titulo.length >= 5 &&
+        Number(categoriaOcorrenciaSelect.value) > 0 &&
+        descricao.length >= 15
+    );
+
+    etapaLocalizacao?.classList.toggle(
+        "ok",
+        Number.isFinite(estadoOcorrencia.latitude) &&
+        Number.isFinite(estadoOcorrencia.longitude)
+    );
+
+    etapaFotos?.classList.toggle(
+        "ok",
+        estadoOcorrencia.fotos.length > 0
+    );
+}
+
+function atualizarContadorOcorrencia(campo) {
+    const contador = document.querySelector(`[data-contador="${campo.id}"]`);
+
+    if (contador) {
+        contador.textContent = `${campo.value.length}/${campo.maxLength}`;
+    }
+}
+
+[tituloOcorrenciaInput, descricaoOcorrenciaTextarea].forEach((campo) => {
+    campo.addEventListener("input", () => {
+        atualizarContadorOcorrencia(campo);
+        atualizarEtapasOcorrencia();
+
+        const erro = document.querySelector(`[data-erro-para="${campo.id}"]`);
+
+        if (erro) {
+            erro.hidden = true;
+        }
+    });
+});
 
 
 /*========================================================================================================
@@ -737,13 +920,18 @@ function focarCampoOcorrencias(campo) {
         return;
     }
 
-    campo.scrollIntoView({
+    // O select de categoria fica escondido: rola até os botões.
+    const alvo = campo === categoriaOcorrenciaSelect
+        ? gradeCategoriasOcorrencia.querySelector(".cat-op") || gradeCategoriasOcorrencia
+        : campo;
+
+    alvo.scrollIntoView({
         behavior: "smooth",
         block: "center"
     });
 
-    if (typeof campo.focus === "function") {
-        campo.focus({
+    if (typeof alvo.focus === "function") {
+        alvo.focus({
             preventScroll: true
         });
     }
@@ -756,7 +944,7 @@ RESUMO
 
 =========================================================================================================*/
 
-// ALTERADO: se o backend não mandar o campo, mostra "-" em vez de um número inventado.
+// Se o backend não mandar o campo, mostra "-" em vez de um número inventado.
 function definirNumeroOcorrencias(elemento, valor) {
     if (!elemento) {
         return;
@@ -796,7 +984,6 @@ async function carregarResumoOcorrencias() {
             dados.resumo.total
         );
 
-        // ALTERADO: "pendentes" foi substituído por "recebidos" e "em_analise".
         definirNumeroOcorrencias(
             numeroRecebidosOcorrencias,
             dados.resumo.recebidos
@@ -837,7 +1024,7 @@ function definirEstadoEnvioOcorrencia(enviando) {
     btnEnviarOcorrencia.disabled = enviando;
 
     if (enviando) {
-        btnEnviarOcorrencia.textContent = "Registrando ocorrência...";
+        btnEnviarOcorrencia.innerHTML = '<span class="girando" aria-hidden="true"></span><span>Registrando ocorrência...</span>';
     } else {
         btnEnviarOcorrencia.innerHTML = conteudoOriginalBotaoEnviarOcorrencia;
     }
@@ -847,6 +1034,10 @@ function limparFormularioOcorrencia() {
     formOcorrencia.reset();
     liberarFotosOcorrencia();
     limparLocalizacaoOcorrencia();
+    sincronizarBotoesCategoria();
+
+    [tituloOcorrenciaInput, descricaoOcorrenciaTextarea].forEach(atualizarContadorOcorrencia);
+    atualizarEtapasOcorrencia();
 }
 
 async function registrarOcorrencia() {
@@ -859,7 +1050,7 @@ async function registrarOcorrencia() {
     const validacao = validarFormularioOcorrencia();
 
     if (!validacao.valido) {
-        mostrarMensagemOcorrencia(validacao.mensagem);
+        mostrarErroCampoOcorrencia(validacao.campo, validacao.mensagem);
         focarCampoOcorrencias(validacao.campo);
         return;
     }
@@ -940,21 +1131,18 @@ async function registrarOcorrencia() {
             dados.ocorrencia?.id
         );
 
-        mostrarMensagemOcorrencia(
+        mostrarToastOcorrencia(
+            "Ocorrência registrada",
             Number.isInteger(idOcorrencia) &&
             idOcorrencia > 0
-                ? `Ocorrência #${idOcorrencia} registrada com sucesso.`
-                : "Ocorrência registrada com sucesso.",
-            "sucesso"
+                ? `OC-${new Date().getFullYear()}-${String(idOcorrencia).padStart(4, "0")} foi enviada para a prefeitura.`
+                : "Ela foi enviada para a prefeitura."
         );
 
         limparFormularioOcorrencia();
         await carregarResumoOcorrencias();
 
-        setTimeout(() => {
-            voltarOcorrencias();
-            limparMensagemOcorrencia();
-        }, 900);
+        voltarOcorrencias();
     } catch (error) {
         console.error(
             "Erro ao registrar ocorrência:",
@@ -963,7 +1151,7 @@ async function registrarOcorrencia() {
 
         if (error instanceof TypeError) {
             mostrarMensagemOcorrencia(
-                "Não foi possível conectar ao servidor. Verifique se o backend está em execução e tente novamente."
+                "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente."
             );
         } else {
             mostrarMensagemOcorrencia(
@@ -987,7 +1175,7 @@ btnNovaOcorrencia.addEventListener("click", () => {
     setTimeout(() => {
         inicializarMapaOcorrencia();
         mapaOcorrencia?.invalidateSize();
-    }, 400);
+    }, 300);
 });
 
 btnGpsOcorrencia.addEventListener("click", (event) => {
@@ -995,7 +1183,23 @@ btnGpsOcorrencia.addEventListener("click", (event) => {
     usarGpsOcorrencia();
 });
 
-fotosOcorrenciaInput.addEventListener("change", adicionarFotosOcorrencia);
+fotosOcorrenciaInput.addEventListener("change", () => adicionarFotosOcorrencia());
+
+// Arrastar fotos para a área (computador)
+areaUploadOcorrencia.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    areaUploadOcorrencia.classList.add("arrastando");
+});
+
+areaUploadOcorrencia.addEventListener("dragleave", () => {
+    areaUploadOcorrencia.classList.remove("arrastando");
+});
+
+areaUploadOcorrencia.addEventListener("drop", (event) => {
+    event.preventDefault();
+    areaUploadOcorrencia.classList.remove("arrastando");
+    adicionarFotosOcorrencia(event.dataTransfer?.files);
+});
 
 formOcorrencia.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -1011,8 +1215,6 @@ window.addEventListener("beforeunload", () => {
         URL.revokeObjectURL(foto.previewUrl);
     });
 });
-
-
 
 
 /*========================================================================================================

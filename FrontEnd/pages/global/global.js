@@ -18,7 +18,10 @@ const PREFERENCIAS_PADRAO_CIDADE360 = {
 
     contadorNotificacoes: true,
 
-    reduzirAnimacoes: false
+    reduzirAnimacoes: false,
+
+    // Tema escuro (o tema.js aplica antes da página aparecer)
+    temaEscuro: false
 
 };
 
@@ -86,6 +89,22 @@ function aplicarPreferenciasVisuaisCidade360() {
 
 
 aplicarPreferenciasVisuaisCidade360();
+
+
+// Se o tema for trocado em outra aba, esta aba acompanha.
+window.addEventListener("storage", (event) => {
+
+    if (event.key !== CHAVE_PREFERENCIAS_CIDADE360) {
+        return;
+    }
+
+    aplicarPreferenciasVisuaisCidade360();
+
+    window.aplicarTemaCidade360?.(
+        lerPreferenciasCidade360().temaEscuro
+    );
+
+});
 
 
 /*===================================================================
@@ -678,6 +697,11 @@ if (
         ajustes: svg('<path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/>'),
         ajuda: svg('<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>'),
         sair: svg('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>'),
+        lua: svg('<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>', 16),
+        colunas: svg('<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>', 16),
+        onda: svg('<path d="M2 12c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/>', 16),
+        bolinha: svg('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>', 16),
+        cadeado: svg('<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>', 13),
         seta: svg('<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>', 16)
     };
 
@@ -1239,24 +1263,36 @@ if (
 
 
     /*---------------------------------------------------------------
-      PAINEL DE CONFIGURAÇÕES (PROVISÓRIO)
+      PAINEL DE CONFIGURAÇÕES
     ---------------------------------------------------------------*/
 
     const OPCOES_CONFIGURACAO = [
         {
-            chave: "contadorNotificacoes",
-            titulo: "Contador de notificações",
-            texto: "Mostra a bolinha vermelha com o número de não lidas no sino."
+            secao: "Aparência",
+            chave: "temaEscuro",
+            icone: ICONES.lua,
+            titulo: "Tema escuro",
+            novo: true,
+            texto: "Cores escuras, mais confortáveis à noite."
         },
         {
             chave: "menuRecolhido",
-            titulo: "Começar com o menu recolhido",
-            texto: "No computador, o menu lateral abre só com os ícones."
+            icone: ICONES.colunas,
+            titulo: "Menu recolhido",
+            texto: "No computador, o menu lateral mostra só os ícones."
+        },
+        {
+            secao: "Notificações e acessibilidade",
+            chave: "contadorNotificacoes",
+            icone: ICONES.bolinha,
+            titulo: "Contador de notificações",
+            texto: "Mostra o número de não lidas no sino."
         },
         {
             chave: "reduzirAnimacoes",
+            icone: ICONES.onda,
             titulo: "Reduzir animações",
-            texto: "Deixa as transições do sistema mais rápidas e discretas."
+            texto: "Deixa as transições mais rápidas e discretas."
         }
     ];
 
@@ -1273,15 +1309,16 @@ if (
             <div class="painel-topo-cabecalho">
                 <div>
                     <h3>Configurações</h3>
-                    <span class="painel-topo-subtitulo">Ajustes rápidos deste navegador</span>
+                    <span class="painel-topo-subtitulo">Ajustes rápidos do Cidade360</span>
                 </div>
             </div>
 
             <div class="lista-configuracoes">
                 ${OPCOES_CONFIGURACAO.map((opcao) => `
+                    ${opcao.secao ? `<div class="secao-configuracao">${opcao.secao}</div>` : ""}
                     <label class="opcao-configuracao">
                         <span class="opcao-configuracao-textos">
-                            <strong>${opcao.titulo}</strong>
+                            <strong>${opcao.icone}${opcao.titulo}${opcao.novo ? '<span class="novo-recurso">Novo</span>' : ""}</strong>
                             <span>${opcao.texto}</span>
                         </span>
 
@@ -1293,7 +1330,7 @@ if (
                 `).join("")}
             </div>
 
-            <p class="rodape-configuracoes">Mais opções serão adicionadas em breve.</p>
+            <p class="rodape-configuracoes">${ICONES.cadeado}As preferências ficam salvas neste navegador.</p>
         `;
     }
 
@@ -1310,6 +1347,10 @@ if (
 
         if (campo.dataset.preferencia === "reduzirAnimacoes") {
             aplicarPreferenciasVisuaisCidade360();
+        }
+
+        if (campo.dataset.preferencia === "temaEscuro") {
+            window.aplicarTemaCidade360?.(campo.checked, true);
         }
 
         if (campo.dataset.preferencia === "contadorNotificacoes") {
@@ -1510,6 +1551,12 @@ if (
         const mudouDeUsuario = estado.usuario?.id !== usuario.id;
 
         estado.usuario = usuario;
+
+        // Avatar do topo: iniciais do nome (verde-escuro para a prefeitura)
+        document.querySelectorAll(".opcoes-menu-topo .foto-usuario").forEach((avatar) => {
+            avatar.textContent = iniciais(usuario.nome);
+            avatar.classList.toggle("admin", ehAdministrador());
+        });
 
         if (estado.painelAberto === "perfil") {
             renderizarPerfil();

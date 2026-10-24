@@ -3,26 +3,36 @@
 PAINEL PRINCIPAL
 
 Responsável por:
-- Resumo das ocorrências do cidadão
-- Resumo geral e mapa municipal para o administrador
-- Pontos e nível
+- Boas-vindas, nível e pontos do cidadão
+- Resumo geral e taxa de resolução para o administrador
 - Ocorrências recentes
-- Mapa com as próprias ocorrências
-- Ocorrências próximas da localização atual
+- Mapa com as próprias ocorrências e as ocorrências próximas
 - Consulta de cada ocorrência diretamente pelo mapa
+- Prévia dos avisos da prefeitura
+- Ranking das categorias mais registradas na cidade
 - Tratamento de carregamento e erros
+
+Os dados continuam vindo das mesmas rotas da API.
+Os ícones e os status compartilhados ficam em /FrontEnd/pages/global/icones.js.
 
 =========================================================================================================*/
 
 const API_URL_PAINEL = "/api";
 const API_OCORRENCIAS_PROXIMAS = "/api/ocorrencias-proximas";
 const API_ESTATISTICAS_PAINEL = "/api/estatisticas-painel";
+const API_AVISOS_PAINEL = "/api/avisos";
 const PAGINA_LOGIN_PAINEL = "/FrontEnd/pages/login/login.html";
 const PAGINA_OCORRENCIAS_PAINEL = "/FrontEnd/pages/ocorrencia/ocorrencia.html";
+const PAGINA_AVISOS_PAINEL = "/FrontEnd/pages/avisos/avisos.html";
 
 const LIMITE_OCORRENCIAS_PAINEL = 50;
 const LIMITE_RECENTES_PAINEL = 5;
+const LIMITE_AVISOS_PAINEL = 3;
+const LIMITE_CATEGORIAS_PAINEL = 6;
 const RAIO_OCORRENCIAS_PROXIMAS_KM = 5;
+
+const { icone: iconePainel, iconeCategoria, chaveStatus, STATUS, pilula, PINO, tempoRelativo } =
+    window.Cidade360;
 
 
 /*========================================================================================================
@@ -37,6 +47,7 @@ const estadoPainel = {
     ocorrencias: [],
     ocorrenciasProximas: [],
     categoriasGerais: [],
+    avisos: [],
     localizacaoUsuario: null,
     mapa: null,
     camadaMinhas: null,
@@ -53,98 +64,25 @@ ELEMENTOS
 
 =========================================================================================================*/
 
-
-
-const numeroTotalPainel =
-    document.getElementById(
-        "numeroTotalPainel"
-    );
-
-const numeroAndamentoPainel =
-    document.getElementById(
-        "numeroAndamentoPainel"
-    );
-
-const numeroResolvidasPainel =
-    document.getElementById(
-        "numeroResolvidasPainel"
-    );
-
-const numeroPontosPainel =
-    document.getElementById(
-        "numeroPontosPainel"
-    );
-
-const nivelPainel =
-    document.getElementById(
-        "nivelPainel"
-    );
-
-const listaOcorrenciasRecentesPainel =
-    document.getElementById(
-        "listaOcorrenciasRecentesPainel"
-    );
-
-const categoriasPainel =
-    document.getElementById(
-        "categoriasPainel"
-    );
-
-
-const btnVerTodasCategoriasPainel =
-    document.getElementById(
-        "btnVerTodasCategoriasPainel"
-    );
-
-const btnVerMapaPainel =
-    document.getElementById(
-        "btnVerMapaPainel"
-    );
-
-const btnVerTodasOcorrenciasPainel =
-    document.getElementById(
-        "btnVerTodasOcorrenciasPainel"
-    );
-
-const btnNivelPainel =
-    document.getElementById(
-        "btnNivelPainel"
-    );
-
-const acaoNovaOcorrenciaPainel =
-    document.getElementById(
-        "acaoNovaOcorrenciaPainel"
-    );
-
-const acaoMinhasOcorrenciasPainel =
-    document.getElementById(
-        "acaoMinhasOcorrenciasPainel"
-    );
-
-const btnConfiguracoesPainel =
-    document.getElementById(
-        "btnConfiguracoesPainel"
-    );
-
-const btnNotificacoesPainel =
-    document.getElementById(
-        "btnNotificacoesPainel"
-    );
-
-const perfilUsuarioPainel =
-    document.getElementById(
-        "perfilUsuarioPainel"
-    );
-
-const toastPainel =
-    document.getElementById(
-        "toastPainel"
-    );
+const boasVindasPainel = document.getElementById("boasVindasPainel");
+const kpisPainel = document.getElementById("kpisPainel");
+const tituloMapaPainel = document.getElementById("tituloMapaPainel");
+const legendaPainel = document.getElementById("legendaPainel");
+const tituloRecentesPainel = document.getElementById("tituloRecentesPainel");
+const listaOcorrenciasRecentesPainel = document.getElementById("listaOcorrenciasRecentesPainel");
+const avisosPainel = document.getElementById("avisosPainel");
+const acoesRapidasPainel = document.getElementById("acoesRapidasPainel");
+const categoriasPainel = document.getElementById("categoriasPainel");
+const btnVerTodasCategoriasPainel = document.getElementById("btnVerTodasCategoriasPainel");
+const btnVerMapaPainel = document.getElementById("btnVerMapaPainel");
+const btnVerTodasOcorrenciasPainel = document.getElementById("btnVerTodasOcorrenciasPainel");
+const btnVerAvisosPainel = document.getElementById("btnVerAvisosPainel");
+const toastPainel = document.getElementById("toastPainel");
 
 
 /*========================================================================================================
 
-TOKEN
+TOKEN E SESSÃO
 
 =========================================================================================================*/
 
@@ -156,37 +94,17 @@ function obterTokenPainel() {
 }
 
 
-/*========================================================================================================
-
-SESSÃO
-
-=========================================================================================================*/
-
 function limparSessaoPainel() {
-    const chaves = [
-        "cidade360_token",
-        "cidade360_usuario",
-        "cidade360_id"
-    ];
-
-    chaves.forEach((chave) => {
-        localStorage.removeItem(
-            chave
-        );
-
-        sessionStorage.removeItem(
-            chave
-        );
+    ["cidade360_token", "cidade360_usuario", "cidade360_id"].forEach((chave) => {
+        localStorage.removeItem(chave);
+        sessionStorage.removeItem(chave);
     });
 }
 
 
 function redirecionarParaLoginPainel() {
     limparSessaoPainel();
-
-    window.location.replace(
-        PAGINA_LOGIN_PAINEL
-    );
+    window.location.replace(PAGINA_LOGIN_PAINEL);
 }
 
 
@@ -197,26 +115,15 @@ FETCH AUTENTICADO
 =========================================================================================================*/
 
 async function fetchAutenticadoPainel(url, opcoes = {}) {
-    const token =
-        obterTokenPainel();
+    const token = obterTokenPainel();
 
     if (!token) {
         redirecionarParaLoginPainel();
-
-        throw new Error(
-            "Sessão não encontrada."
-        );
+        throw new Error("Sessão não encontrada.");
     }
 
-    const headers =
-        new Headers(
-            opcoes.headers || {}
-        );
-
-    headers.set(
-        "Authorization",
-        `Bearer ${token}`
-    );
+    const headers = new Headers(opcoes.headers || {});
+    headers.set("Authorization", `Bearer ${token}`);
 
     const resposta = await fetch(url, {
         ...opcoes,
@@ -224,15 +131,9 @@ async function fetchAutenticadoPainel(url, opcoes = {}) {
         cache: "no-store"
     });
 
-    if (
-        resposta.status === 401 ||
-        resposta.status === 403
-    ) {
+    if (resposta.status === 401 || resposta.status === 403) {
         redirecionarParaLoginPainel();
-
-        throw new Error(
-            "Sua sessão expirou."
-        );
+        throw new Error("Sua sessão expirou.");
     }
 
     return resposta;
@@ -240,18 +141,14 @@ async function fetchAutenticadoPainel(url, opcoes = {}) {
 
 
 async function lerRespostaPainel(resposta) {
-    const corpo =
-        await resposta.text();
+    const corpo = await resposta.text();
 
     if (!corpo) {
         return null;
     }
 
     try {
-        return JSON.parse(
-            corpo
-        );
-
+        return JSON.parse(corpo);
     } catch (error) {
         return {
             sucesso: false,
@@ -273,32 +170,21 @@ function numeroPainel(valor) {
 
 
 function formatarNumeroPainel(valor) {
-    return numeroPainel(valor)
-        .toLocaleString(
-            "pt-BR"
-        );
+    return numeroPainel(valor).toLocaleString("pt-BR");
 }
 
 
-function formatarDataPainel(valor) {
-    if (!valor) {
-        return "--/--/----";
+function formatarPercentualCategoriaPainel(valor) {
+    const percentual = Number(valor);
+
+    if (!Number.isFinite(percentual)) {
+        return "0%";
     }
 
-    const data =
-        new Date(valor);
-
-    if (
-        Number.isNaN(
-            data.getTime()
-        )
-    ) {
-        return "--/--/----";
-    }
-
-    return data.toLocaleDateString(
-        "pt-BR"
-    );
+    return `${percentual.toLocaleString("pt-BR", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 1
+    })}%`;
 }
 
 
@@ -312,185 +198,107 @@ function escaparHtmlPainel(valor) {
 }
 
 
-function obterNivelPainel(pontos) {
-    const total =
-        numeroPainel(
-            pontos
-        );
-
-    if (total >= 2000) {
-        return "Cidadão Destaque";
-    }
-
-    if (total >= 500) {
-        return "Cidadão Ativo";
-    }
-
-    if (total >= 100) {
-        return "Cidadão Participativo";
-    }
-
-    return "Cidadão Iniciante";
+function plural(quantidade, singular, varios) {
+    return `${formatarNumeroPainel(quantidade)} ${quantidade === 1 ? singular : varios}`;
 }
 
 
-function obterEnderecoOcorrenciaPainel(ocorrencia) {
-    const partes = [
-        ocorrencia?.endereco,
-        ocorrencia?.bairro,
-        ocorrencia?.cidade
-    ]
-        .map((item) =>
-            String(item || "").trim()
-        )
-        .filter(Boolean);
+function saudacaoPainel() {
+    const hora = new Date().getHours();
 
-    if (partes.length > 0) {
-        return partes.join(", ");
-    }
-
-    return "Localização registrada";
+    if (hora < 12) return "Bom dia";
+    if (hora < 18) return "Boa tarde";
+    return "Boa noite";
 }
 
 
-function obterConfiguracaoStatusPainel(status) {
-    if (
-        ehAdministradorPainel() &&
-        String(status || "").trim().toLowerCase() === "cancelado"
-    ) {
-        return {
-            classeStatus: "status-cancelado",
-            classeIcone: "ocorrencia-azul",
-            corMapa: "#6b7280"
-        };
-    }
-
-    const valor =
-        String(status || "")
-            .trim()
-            .toLowerCase();
-
-    if (valor === "recebido") {
-        return {
-            classeStatus: "status-recebido",
-            classeIcone: "ocorrencia-azul",
-            corMapa: "#1a73e8"
-        };
-    }
-
-    if (valor === "em análise") {
-        return {
-            classeStatus: "status-analise",
-            classeIcone: "ocorrencia-laranja",
-            corMapa: "#fbbc04"
-        };
-    }
-
-    if (
-        valor === "em atendimento" ||
-        valor === "em andamento"
-    ) {
-        return {
-            classeStatus: "status-atendimento",
-            classeIcone: "ocorrencia-verde",
-            corMapa: "#34a853"
-        };
-    }
-
-    if (valor === "resolvido") {
-        return {
-            classeStatus: "status-resolvido",
-            classeIcone: "ocorrencia-verde",
-            corMapa: "#9333ea"
-        };
-    }
-
-    return {
-        classeStatus: "status-recebido",
-        classeIcone: "ocorrencia-azul",
-        corMapa: "#1a73e8"
-    };
+function primeiroNomePainel() {
+    return String(estadoPainel.usuario?.nome || "").trim().split(/\s+/)[0] || "";
 }
 
 
-function obterIconeCategoriaPainel(categoria) {
-    const valor =
-        String(categoria || "")
-            .trim()
-            .toLowerCase();
+// Mesmo formato usado na página de Ocorrências: OC-2026-0007
+function codigoOcorrenciaPainel(ocorrencia) {
+    const data = new Date(ocorrencia?.data_criacao || ocorrencia?.data_ocorrencia || Date.now());
+    const ano = Number.isNaN(data.getTime()) ? new Date().getFullYear() : data.getFullYear();
 
-    if (
-        valor.includes("buraco") ||
-        valor.includes("via")
-    ) {
-        return "/assets/icons/painel/ocorrencia/estrada.png";
-    }
+    return `OC-${ano}-${String(Number(ocorrencia?.id) || 0).padStart(4, "0")}`;
+}
 
-    if (
-        valor.includes("iluminação") ||
-        valor.includes("iluminacao") ||
-        valor.includes("poste")
-    ) {
-        return "/assets/icons/painel/ocorrencia/iluminacao-publica.png";
-    }
 
-    if (
-        valor.includes("lixo") ||
-        valor.includes("coleta")
-    ) {
-        return "/assets/icons/painel/ocorrencia/lixeira-de-reciclagem.png";
-    }
+function chaveStatusPainel(status) {
+    return chaveStatus(status) || "recebido";
+}
 
-    if (valor.includes("praga")) {
-        return "/assets/icons/painel/ocorrencia/controle-de-pragas.png";
-    }
 
-    if (
-        valor.includes("manutenção") ||
-        valor.includes("manutencao")
-    ) {
-        return "/assets/icons/painel/ocorrencia/manutencao.png";
-    }
-
-    if (valor.includes("Árvore Caída") ||
-        valor.includes("caída")){
-        return "/assets/icons/painel/ocorrencia/arvore-caida.png";
-        }
-
-    return "/assets/icons/painel/ocorrencia/3-pontos.png";
+function linkOcorrenciasPainel(parametros = {}) {
+    const busca = new URLSearchParams(parametros).toString();
+    return busca ? `${PAGINA_OCORRENCIAS_PAINEL}?${busca}` : PAGINA_OCORRENCIAS_PAINEL;
 }
 
 
 /*========================================================================================================
 
-MENSAGENS
+NÍVEL DO CIDADÃO
 
 =========================================================================================================*/
 
-let timeoutToastPainel = null;
+const NIVEIS_PAINEL = [
+    { minimo: 0, nome: "Cidadão Iniciante" },
+    { minimo: 100, nome: "Cidadão Participativo" },
+    { minimo: 500, nome: "Cidadão Ativo" },
+    { minimo: 2000, nome: "Cidadão Destaque" }
+];
 
+
+function obterNivelPainel(pontos) {
+    const total = numeroPainel(pontos);
+
+    let indice = NIVEIS_PAINEL.length - 1;
+
+    while (indice > 0 && total < NIVEIS_PAINEL[indice].minimo) {
+        indice--;
+    }
+
+    const atual = NIVEIS_PAINEL[indice];
+    const proximo = NIVEIS_PAINEL[indice + 1] || null;
+
+    return {
+        nome: atual.nome,
+        proximo,
+        faltam: proximo ? proximo.minimo - total : 0,
+        percentual: proximo
+            ? Math.min(100, ((total - atual.minimo) / (proximo.minimo - atual.minimo)) * 100)
+            : 100
+    };
+}
+
+
+/*========================================================================================================
+
+MENSAGENS (toast)
+
+=========================================================================================================*/
 
 function mostrarMensagemPainel(mensagem, tipo = "info") {
     if (!toastPainel) {
         return;
     }
 
-    if (timeoutToastPainel) {
-        clearTimeout(
-            timeoutToastPainel
-        );
-    }
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.setAttribute("role", "status");
+    toast.innerHTML = `
+        <span class="ok${tipo === "sucesso" ? "" : " info"}">${iconePainel(tipo === "sucesso" ? "check" : "alerta", 14)}</span>
+        <span>${escaparHtmlPainel(mensagem)}</span>
+    `;
 
-    toastPainel.textContent =
-        mensagem;
+    toastPainel.appendChild(toast);
 
-    toastPainel.className =
-        `toast-painel ativo ${tipo}`;
-
-    timeoutToastPainel = setTimeout(() => {
-        toastPainel.className =
-            "toast-painel";
-    }, 3500);
+    setTimeout(() => {
+        toast.classList.add("saindo");
+        toast.addEventListener("animationend", () => toast.remove(), { once: true });
+    }, 3800);
 }
 
 
@@ -502,191 +310,60 @@ USUÁRIO
 
 async function carregarUsuarioPainel() {
     if (window.usuarioLogado) {
-        estadoPainel.usuario =
-            window.usuarioLogado;
-
-        renderizarUsuarioPainel();
-
+        estadoPainel.usuario = window.usuarioLogado;
         return window.usuarioLogado;
     }
 
-    const resposta =
-        await fetchAutenticadoPainel(
-            `${API_URL_PAINEL}/me`,
-            {
-                method: "GET"
-            }
-        );
+    const resposta = await fetchAutenticadoPainel(`${API_URL_PAINEL}/me`, { method: "GET" });
+    const dados = await lerRespostaPainel(resposta);
 
-    const dados =
-        await lerRespostaPainel(
-            resposta
-        );
-
-    if (
-        !resposta.ok ||
-        !dados?.sucesso ||
-        !dados?.usuario
-    ) {
-        throw new Error(
-            dados?.mensagem ||
-            "Não foi possível carregar o usuário."
-        );
+    if (!resposta.ok || !dados?.sucesso || !dados?.usuario) {
+        throw new Error(dados?.mensagem || "Não foi possível carregar o usuário.");
     }
 
-    estadoPainel.usuario =
-        dados.usuario;
-
-    window.usuarioLogado =
-        dados.usuario;
-
-    renderizarUsuarioPainel();
+    estadoPainel.usuario = dados.usuario;
+    window.usuarioLogado = dados.usuario;
 
     return dados.usuario;
 }
 
 
-function renderizarUsuarioPainel() {
-    const usuario =
-        estadoPainel.usuario || {};
-
-    if (ehAdministradorPainel()) {
-        return;
-    }
-
-    if (numeroPontosPainel) {
-        numeroPontosPainel.textContent =
-            formatarNumeroPainel(
-                usuario.pontos
-            );
-    }
-
-    if (nivelPainel) {
-        nivelPainel.textContent =
-            `Nível: ${obterNivelPainel(usuario.pontos)}`;
-    }
-}
-
-
-/*========================================================================================================
-
-PAINEL ADMINISTRATIVO
-
-O perfil é confirmado pelo backend antes de escolher as consultas.
-O painel do cidadão mantém os textos, pontos e consultas originais.
-
-=========================================================================================================*/
-
+/*
+ * O perfil é confirmado pelo backend antes de escolher as consultas.
+ */
 function ehAdministradorPainel() {
-    return String(
-        estadoPainel.usuario?.tipo_usuario || ""
-    )
-        .trim()
-        .toUpperCase() === "ADMIN";
+    return String(estadoPainel.usuario?.tipo_usuario || "").trim().toUpperCase() === "ADMIN";
 }
 
 
-function ajustarPainelAdministrador() {
-    if (!ehAdministradorPainel()) {
-        return;
+/*
+ * Textos fixos da página que mudam para a prefeitura.
+ */
+function ajustarTextosPainel() {
+    const admin = ehAdministradorPainel();
+
+    if (tituloMapaPainel) {
+        tituloMapaPainel.textContent = admin
+            ? "Mapa de ocorrências do município"
+            : "Ocorrências perto de você";
     }
 
-    const cardTotal =
-        numeroTotalPainel?.closest(
-            ".card-resumo"
-        );
-
-    const cardPendentes =
-        numeroPontosPainel?.closest(
-            ".card-resumo"
-        );
-
-    const tituloTotal =
-        cardTotal?.querySelector(
-            ".card-textos p"
-        );
-
-    const descricaoTotal =
-        cardTotal?.querySelector(
-            ".card-textos span"
-        );
-
-    const tituloPendentes =
-        cardPendentes?.querySelector(
-            ".card-textos p"
-        );
-
-    const iconePendentes =
-        cardPendentes?.querySelector(
-            ".circulo-resumo img"
-        );
-
-    if (tituloTotal) {
-        tituloTotal.textContent =
-            "Total de ocorrências";
+    if (tituloRecentesPainel) {
+        tituloRecentesPainel.textContent = admin
+            ? "Ocorrências recentes"
+            : "Minhas ocorrências recentes";
     }
 
-    if (descricaoTotal) {
-        descricaoTotal.textContent =
-            "Todas as ocorrências registradas";
+    // Ícones dos links e do botão de tela cheia
+    [btnVerTodasOcorrenciasPainel, btnVerAvisosPainel, btnVerTodasCategoriasPainel].forEach((link) => {
+        link?.insertAdjacentHTML("beforeend", ` ${iconePainel("direita", 15)}`);
+    });
+
+    if (btnVerMapaPainel) {
+        btnVerMapaPainel.innerHTML = iconePainel("expandir", 18);
     }
 
-    if (tituloPendentes) {
-        tituloPendentes.textContent =
-            "Aguardando análise";
-    }
-
-    if (nivelPainel) {
-        nivelPainel.textContent =
-            "Recebidas e em análise";
-    }
-
-    if (iconePendentes) {
-        iconePendentes.src =
-            "/assets/icons/painel/resumo/prancheta-analise.png";
-    }
-
-    if (btnNivelPainel) {
-        btnNivelPainel.textContent =
-            "Ver ocorrências →";
-
-        btnNivelPainel.href =
-            PAGINA_OCORRENCIAS_PAINEL;
-    }
-
-    const tituloMapa =
-        btnVerMapaPainel?.closest(
-            ".titulo-analises"
-        )?.querySelector(
-            "h1"
-        );
-
-    const tituloRecentes =
-        btnVerTodasOcorrenciasPainel?.closest(
-            ".titulo-analises"
-        )?.querySelector(
-            "h1"
-        );
-
-    const tituloAcaoOcorrencias =
-        acaoMinhasOcorrenciasPainel?.querySelector(
-            "h2"
-        );
-
-    if (tituloMapa) {
-        tituloMapa.textContent =
-            "Mapa de ocorrências do município";
-    }
-
-    if (tituloRecentes) {
-        tituloRecentes.textContent =
-            "Ocorrências recentes";
-    }
-
-    if (tituloAcaoOcorrencias) {
-        tituloAcaoOcorrencias.innerHTML =
-            "Todas as<br>Ocorrências";
-    }
+    renderizarLegendaPainel();
 }
 
 
@@ -697,81 +374,178 @@ RESUMO
 =========================================================================================================*/
 
 async function carregarResumoPainel() {
-    const resposta =
-        await fetchAutenticadoPainel(
-            ehAdministradorPainel()
-                ? `${API_URL_PAINEL}/ocorrencias/admin/resumo`
-                : `${API_URL_PAINEL}/ocorrencias/resumo`,
-            {
-                method: "GET"
-            }
-        );
+    const resposta = await fetchAutenticadoPainel(
+        ehAdministradorPainel()
+            ? `${API_URL_PAINEL}/ocorrencias/admin/resumo`
+            : `${API_URL_PAINEL}/ocorrencias/resumo`,
+        { method: "GET" }
+    );
 
-    const dados =
-        await lerRespostaPainel(
-            resposta
-        );
+    const dados = await lerRespostaPainel(resposta);
 
-    if (
-        !resposta.ok ||
-        !dados?.sucesso ||
-        !dados?.resumo
-    ) {
-        throw new Error(
-            dados?.mensagem ||
-            "Não foi possível carregar o resumo."
-        );
+    if (!resposta.ok || !dados?.sucesso || !dados?.resumo) {
+        throw new Error(dados?.mensagem || "Não foi possível carregar o resumo.");
     }
 
-    estadoPainel.resumo =
-        dados.resumo;
+    estadoPainel.resumo = dados.resumo;
 
-    renderizarResumoPainel();
+    renderizarBoasVindasPainel();
+    renderizarKpisPainel();
+    renderizarAcoesRapidasPainel();
 
     return dados.resumo;
 }
 
 
-function renderizarResumoPainel() {
-    const resumo =
-        estadoPainel.resumo || {};
+/*========================================================================================================
 
-    if (
-        ehAdministradorPainel() &&
-        numeroPontosPainel
-    ) {
-        numeroPontosPainel.textContent =
-            formatarNumeroPainel(
-                resumo.pendentes
-            );
+BOAS-VINDAS
+
+=========================================================================================================*/
+
+function renderizarBoasVindasPainel() {
+    if (!boasVindasPainel) {
+        return;
     }
 
-    if (numeroTotalPainel) {
-        numeroTotalPainel.textContent =
-            formatarNumeroPainel(
-                resumo.total
-            );
+    const resumo = estadoPainel.resumo || {};
+    const hoje = new Date().toLocaleDateString("pt-BR", {
+        weekday: "long",
+        day: "numeric",
+        month: "long"
+    });
+
+    if (ehAdministradorPainel()) {
+        const pendentes = numeroPainel(resumo.pendentes);
+        const andamento = numeroPainel(resumo.em_andamento);
+        const validas = numeroPainel(resumo.total) - numeroPainel(resumo.canceladas);
+        const resolvidas = numeroPainel(resumo.resolvidas);
+        const taxa = validas > 0 ? Math.round((resolvidas / validas) * 100) : 0;
+
+        const texto = pendentes
+            ? `${plural(pendentes, "ocorrência aguarda", "ocorrências aguardam")} análise e ${formatarNumeroPainel(andamento)} ${andamento === 1 ? "está" : "estão"} em atendimento.`
+            : "Nenhuma ocorrência aguardando análise. Bom trabalho!";
+
+        boasVindasPainel.innerHTML = `
+            <div class="textos">
+                <small>${escaparHtmlPainel(hoje)}</small>
+                <h2>${saudacaoPainel()}, ${escaparHtmlPainel(primeiroNomePainel())}</h2>
+                <p>${escaparHtmlPainel(texto)}</p>
+                <div class="acoes-hero">
+                    <a class="btn-claro" href="${linkOcorrenciasPainel({ status: "recebido" })}">${iconePainel("lupa", 18)}Analisar recebidas</a>
+                    <a class="btn-vidro" href="${PAGINA_AVISOS_PAINEL}">${iconePainel("megafone", 18)}Publicar aviso</a>
+                </div>
+            </div>
+
+            <div class="nivel nivel-admin">
+                <div class="nivel-topo">
+                    <span class="nivel-medalha">${iconePainel("grafico", 22)}</span>
+                    <div><strong>Taxa de resolução</strong><span>Ocorrências válidas</span></div>
+                </div>
+                <div class="hero-numero"><b>${taxa}%</b><span>resolvidas</span></div>
+                <div class="barra-nivel"><i style="width:${taxa}%"></i></div>
+                <span>${plural(resolvidas, "resolvida", "resolvidas")} de ${plural(validas, "ocorrência válida", "ocorrências válidas")}</span>
+            </div>
+        `;
+
+        return;
     }
 
-    if (numeroAndamentoPainel) {
-        numeroAndamentoPainel.textContent =
-            formatarNumeroPainel(
-                resumo.em_andamento
-            );
-    }
+    const pontos = numeroPainel(estadoPainel.usuario?.pontos);
+    const nivel = obterNivelPainel(pontos);
+    const emAberto = estadoPainel.ocorrencias.filter((ocorrencia) => {
+        const chave = chaveStatusPainel(ocorrencia.status);
+        return chave !== "resolvido" && chave !== "cancelado";
+    }).length;
 
-    if (numeroResolvidasPainel) {
-        numeroResolvidasPainel.textContent =
-            formatarNumeroPainel(
-                resumo.resolvidas
-            );
-    }
+    const texto = emAberto
+        ? `Você tem ${plural(emAberto, "ocorrência em aberto", "ocorrências em aberto")}. Obrigado por ajudar a cuidar da cidade.`
+        : "Nenhuma ocorrência em aberto agora. Obrigado por ajudar a cuidar da cidade.";
+
+    boasVindasPainel.innerHTML = `
+        <div class="textos">
+            <small>${escaparHtmlPainel(hoje)}</small>
+            <h2>${saudacaoPainel()}, ${escaparHtmlPainel(primeiroNomePainel())} 👋</h2>
+            <p>${escaparHtmlPainel(texto)}</p>
+            <div class="acoes-hero">
+                <a class="btn-claro" href="${linkOcorrenciasPainel({ nova: 1 })}">${iconePainel("mais", 18)}Nova ocorrência</a>
+                <a class="btn-vidro" href="${PAGINA_OCORRENCIAS_PAINEL}">${iconePainel("lista", 18)}Minhas ocorrências</a>
+            </div>
+        </div>
+
+        <div class="nivel">
+            <div class="nivel-topo">
+                <span class="nivel-medalha">${iconePainel("medalha", 22)}</span>
+                <div><strong>${escaparHtmlPainel(nivel.nome)}</strong><span>Seu nível no Cidade360</span></div>
+            </div>
+            <div class="hero-numero"><b>${formatarNumeroPainel(pontos)}</b><span>pontos</span></div>
+            <div class="barra-nivel"><i style="width:${nivel.percentual}%"></i></div>
+            <span>${nivel.proximo
+                ? `Faltam ${formatarNumeroPainel(nivel.faltam)} pts para ${escaparHtmlPainel(nivel.proximo.nome)}`
+                : "Você chegou ao nível máximo!"}</span>
+        </div>
+    `;
 }
 
 
 /*========================================================================================================
 
-MINHAS OCORRÊNCIAS
+NÚMEROS (KPIs)
+
+=========================================================================================================*/
+
+function htmlKpiPainel({ cor, icone, valor, titulo, sub, status }) {
+    const link = status !== undefined;
+    const tag = link ? "a" : "div";
+    const href = link ? ` href="${linkOcorrenciasPainel(status ? { status } : {})}"` : "";
+
+    return `
+        <${tag} class="kpi" data-k="${cor}"${href}>
+            <div class="kpi-topo">
+                <span class="kpi-icone">${iconePainel(icone, 22)}</span>
+                ${link ? `<span class="kpi-tendencia">${iconePainel("direita", 16)}</span>` : ""}
+            </div>
+            <b>${valor}</b>
+            <p>${titulo}</p>
+            <span class="sub">${sub}</span>
+        </${tag}>
+    `;
+}
+
+
+function renderizarKpisPainel(falhou = false) {
+    if (!kpisPainel) {
+        return;
+    }
+
+    const resumo = estadoPainel.resumo || {};
+    const valor = (campo) => (falhou ? "—" : formatarNumeroPainel(resumo[campo]));
+
+    if (ehAdministradorPainel()) {
+        kpisPainel.innerHTML = [
+            { cor: "azul", icone: "lista", valor: valor("total"), titulo: "Total de ocorrências", sub: "Registradas no município", status: "" },
+            { cor: "laranja", icone: "entrada", valor: valor("pendentes"), titulo: "Aguardando análise", sub: "Recebidas e em análise", status: "recebido" },
+            { cor: "verde", icone: "andamento", valor: valor("em_andamento"), titulo: "Em andamento", sub: "Equipes em atendimento", status: "em_andamento" },
+            { cor: "roxo", icone: "checkCirculo", valor: valor("resolvidas"), titulo: "Resolvidas", sub: "Concluídas pela prefeitura", status: "resolvido" }
+        ].map(htmlKpiPainel).join("");
+
+        return;
+    }
+
+    const pontos = numeroPainel(estadoPainel.usuario?.pontos);
+
+    kpisPainel.innerHTML = [
+        { cor: "azul", icone: "lista", valor: valor("total"), titulo: "Minhas ocorrências", sub: "Total registradas", status: "" },
+        { cor: "verde", icone: "andamento", valor: valor("em_andamento"), titulo: "Em andamento", sub: "Sendo atendidas agora", status: "em_andamento" },
+        { cor: "roxo", icone: "checkCirculo", valor: valor("resolvidas"), titulo: "Resolvidas", sub: "Ocorrências concluídas", status: "resolvido" },
+        { cor: "laranja", icone: "estrela", valor: formatarNumeroPainel(pontos), titulo: "Pontos acumulados", sub: escaparHtmlPainel(obterNivelPainel(pontos).nome) }
+    ].map(htmlKpiPainel).join("");
+}
+
+
+/*========================================================================================================
+
+OCORRÊNCIAS (todas as páginas da API)
 
 =========================================================================================================*/
 
@@ -782,61 +556,41 @@ async function carregarTodasOcorrenciasPainel() {
     let totalPaginas = 1;
 
     do {
-        const parametros =
-            new URLSearchParams({
-                pagina: String(pagina),
-                limite: String(LIMITE_OCORRENCIAS_PAINEL)
-            });
+        const parametros = new URLSearchParams({
+            pagina: String(pagina),
+            limite: String(LIMITE_OCORRENCIAS_PAINEL)
+        });
 
-        const resposta =
-            await fetchAutenticadoPainel(
-                ehAdministradorPainel()
-                    ? `${API_URL_PAINEL}/ocorrencias/admin?${parametros.toString()}`
-                    : `${API_URL_PAINEL}/ocorrencias?${parametros.toString()}`,
-                {
-                    method: "GET"
-                }
-            );
-
-        const dados =
-            await lerRespostaPainel(
-                resposta
-            );
-
-        if (
-            !resposta.ok ||
-            !dados?.sucesso ||
-            !Array.isArray(dados.ocorrencias)
-        ) {
-            throw new Error(
-                dados?.mensagem ||
-                "Não foi possível carregar as ocorrências."
-            );
-        }
-
-        ocorrencias.push(
-            ...dados.ocorrencias
+        const resposta = await fetchAutenticadoPainel(
+            ehAdministradorPainel()
+                ? `${API_URL_PAINEL}/ocorrencias/admin?${parametros.toString()}`
+                : `${API_URL_PAINEL}/ocorrencias?${parametros.toString()}`,
+            { method: "GET" }
         );
 
-        totalPaginas =
-            Math.max(
-                1,
-                Number(
-                    dados?.paginacao?.total_paginas || 1
-                )
-            );
+        const dados = await lerRespostaPainel(resposta);
 
+        if (!resposta.ok || !dados?.sucesso || !Array.isArray(dados.ocorrencias)) {
+            throw new Error(dados?.mensagem || "Não foi possível carregar as ocorrências.");
+        }
+
+        ocorrencias.push(...dados.ocorrencias);
+
+        totalPaginas = Math.max(1, Number(dados?.paginacao?.total_paginas || 1));
         pagina++;
 
-    } while (
-        pagina <= totalPaginas
-    );
+    } while (pagina <= totalPaginas);
 
-    estadoPainel.ocorrencias =
-        ocorrencias;
+    estadoPainel.ocorrencias = ocorrencias;
 
     renderizarOcorrenciasRecentesPainel();
     renderizarMarcadoresMapaPainel();
+    renderizarAcoesRapidasPainel();
+
+    // A frase "você tem X em aberto" depende da lista
+    if (estadoPainel.resumo) {
+        renderizarBoasVindasPainel();
+    }
 
     return ocorrencias;
 }
@@ -853,100 +607,176 @@ function renderizarOcorrenciasRecentesPainel() {
         return;
     }
 
-    const recentes =
-        estadoPainel.ocorrencias.slice(
-            0,
-            LIMITE_RECENTES_PAINEL
-        );
+    const recentes = estadoPainel.ocorrencias.slice(0, LIMITE_RECENTES_PAINEL);
 
     if (recentes.length === 0) {
         listaOcorrenciasRecentesPainel.innerHTML = `
-            <div class="painel-vazio">
-                <strong>Nenhuma ocorrência registrada.</strong>
-                <span>${ehAdministradorPainel()
-                    ? "As ocorrências registradas no município aparecerão aqui."
-                    : "Quando você registrar uma ocorrência, ela aparecerá aqui."}</span>
-            </div>
+            <li class="vazio-mini">${ehAdministradorPainel()
+                ? "As ocorrências registradas no município aparecerão aqui."
+                : "Você ainda não registrou ocorrências."}</li>
         `;
 
         return;
     }
 
-    listaOcorrenciasRecentesPainel.innerHTML =
-        recentes
-            .map((ocorrencia) => {
-                const configuracaoStatus =
-                    obterConfiguracaoStatusPainel(
-                        ocorrencia.status
-                    );
+    listaOcorrenciasRecentesPainel.innerHTML = recentes
+        .map((ocorrencia) => {
+            const chave = chaveStatusPainel(ocorrencia.status);
+            const titulo = ocorrencia.titulo || `Ocorrência #${ocorrencia.id}`;
+            const autor = ehAdministradorPainel() && ocorrencia.usuario_nome
+                ? `${ocorrencia.usuario_nome} · `
+                : "";
 
-                const titulo =
-                    escaparHtmlPainel(
-                        ocorrencia.titulo ||
-                        `Ocorrência #${ocorrencia.id}`
-                    );
+            return `
+                <li>
+                    <a class="item-compacto st" data-st="${chave}" href="${linkOcorrenciasPainel({ ocorrencia: Number(ocorrencia.id) || 0 })}" title="${escaparHtmlPainel(titulo)}">
+                        <span class="ico">${iconeCategoria(ocorrencia.categoria, 20)}</span>
+                        <span class="textos">
+                            <strong>${escaparHtmlPainel(titulo)}</strong>
+                            <span class="sub">${codigoOcorrenciaPainel(ocorrencia)} · ${escaparHtmlPainel(autor)}${tempoRelativo(ocorrencia.data_criacao || ocorrencia.data_ocorrencia)}</span>
+                        </span>
+                        ${pilula(chave)}
+                    </a>
+                </li>
+            `;
+        })
+        .join("");
+}
 
-                const endereco =
-                    escaparHtmlPainel(
-                        obterEnderecoOcorrenciaPainel(
-                            ocorrencia
-                        )
-                    );
 
-                const status =
-                    escaparHtmlPainel(
-                        ocorrencia.status ||
-                        "Recebido"
-                    );
+function renderizarErroOcorrenciasPainel() {
+    if (listaOcorrenciasRecentesPainel) {
+        listaOcorrenciasRecentesPainel.innerHTML = `
+            <li class="vazio-mini">Não foi possível carregar as ocorrências. Atualize a página para tentar novamente.</li>
+        `;
+    }
+}
 
-                const icone =
-                    obterIconeCategoriaPainel(
-                        ocorrencia.categoria
-                    );
 
-                return `
-                    <div class="item-ocorrencia item-ocorrencia-painel" data-ocorrencia-id="${Number(ocorrencia.id) || 0}">
-                        <div class="icone-ocorrencia ${configuracaoStatus.classeIcone}">
-                            <img src="${icone}" alt="">
-                        </div>
+/*========================================================================================================
 
-                        <div class="info-ocorrencia">
-                            <h3>${titulo}</h3>
-                            <p>${endereco}</p>
-                        </div>
+AVISOS (prévia dos 3 mais importantes)
 
-                        <div class="status ${configuracaoStatus.classeStatus}">
-                            ${status}
-                        </div>
+=========================================================================================================*/
 
-                        <div class="data-ocorrencia">
-                            <span>${formatarDataPainel(ocorrencia.data_criacao || ocorrencia.data_ocorrencia)}</span>
-                            <img src="/assets/icons/painel/ocorrencia/proximo.png" alt="">
-                        </div>
-                    </div>
-                `;
-            })
-            .join("");
+const CATEGORIAS_AVISO_PAINEL = {
+    evento: { nome: "Evento", icone: "calendario" },
+    inauguracao: { nome: "Inauguração", icone: "fita" },
+    obras: { nome: "Obras e trânsito", icone: "cone" },
+    saude: { nome: "Saúde", icone: "saude" },
+    servicos: { nome: "Serviços", icone: "predio" }
+};
 
-    listaOcorrenciasRecentesPainel
-        .querySelectorAll(
-            ".item-ocorrencia-painel"
-        )
-        .forEach((item) => {
-            item.addEventListener(
-                "click",
-                () => {
-                    const id =
-                        Number(
-                            item.dataset.ocorrenciaId
-                        );
 
-                    abrirMinhaOcorrenciaPainel(
-                        id
-                    );
-                }
-            );
-        });
+async function carregarAvisosPainel() {
+    const resposta = await fetchAutenticadoPainel(API_AVISOS_PAINEL, { method: "GET" });
+    const dados = await lerRespostaPainel(resposta);
+
+    if (!resposta.ok || !dados?.sucesso || !Array.isArray(dados.avisos)) {
+        throw new Error(dados?.mensagem || "Não foi possível carregar os avisos.");
+    }
+
+    // Fixados primeiro, depois os mais novos
+    estadoPainel.avisos = [...dados.avisos].sort((a, b) =>
+        (Number(Boolean(b.fixado)) - Number(Boolean(a.fixado))) ||
+        (new Date(b.data_criacao) - new Date(a.data_criacao))
+    );
+
+    renderizarAvisosPainel();
+    renderizarAcoesRapidasPainel();
+
+    return estadoPainel.avisos;
+}
+
+
+function renderizarAvisosPainel(falhou = false) {
+    if (!avisosPainel) {
+        return;
+    }
+
+    if (falhou) {
+        avisosPainel.innerHTML = `<p class="vazio-mini">Não foi possível carregar os avisos agora.</p>`;
+        return;
+    }
+
+    const avisos = estadoPainel.avisos.slice(0, LIMITE_AVISOS_PAINEL);
+
+    if (avisos.length === 0) {
+        avisosPainel.innerHTML = `<p class="vazio-mini">Nenhum aviso publicado ainda.</p>`;
+        return;
+    }
+
+    avisosPainel.innerHTML = avisos
+        .map((aviso) => {
+            const categoria = CATEGORIAS_AVISO_PAINEL[aviso.categoria] || CATEGORIAS_AVISO_PAINEL.servicos;
+            const chave = CATEGORIAS_AVISO_PAINEL[aviso.categoria] ? aviso.categoria : "servicos";
+
+            return `
+                <a class="mini-aviso" data-cat="${chave}" href="${PAGINA_AVISOS_PAINEL}">
+                    <span class="thumb">${aviso.foto_url
+                        ? `<img src="${escaparHtmlPainel(aviso.foto_url)}" alt="" loading="lazy">`
+                        : iconePainel(categoria.icone, 24)}</span>
+                    <span class="textos">
+                        <strong>${escaparHtmlPainel(aviso.titulo)}</strong>
+                        <span>${categoria.nome} · ${tempoRelativo(aviso.data_criacao)}${aviso.fixado ? " · Fixado" : ""}</span>
+                    </span>
+                </a>
+            `;
+        })
+        .join("");
+
+    // Foto que não carregou volta para o ícone da categoria
+    avisosPainel.querySelectorAll(".thumb img").forEach((imagem) => {
+        imagem.addEventListener("error", () => {
+            const item = imagem.closest(".mini-aviso");
+            const categoria = CATEGORIAS_AVISO_PAINEL[item?.dataset.cat] || CATEGORIAS_AVISO_PAINEL.servicos;
+            imagem.parentElement.innerHTML = iconePainel(categoria.icone, 24);
+        }, { once: true });
+    });
+}
+
+
+/*========================================================================================================
+
+AÇÕES RÁPIDAS
+
+=========================================================================================================*/
+
+function renderizarAcoesRapidasPainel() {
+    if (!acoesRapidasPainel || !estadoPainel.usuario) {
+        return;
+    }
+
+    const resumo = estadoPainel.resumo || {};
+    const total = estadoPainel.resumo ? numeroPainel(resumo.total) : estadoPainel.ocorrencias.length;
+
+    const acoes = ehAdministradorPainel()
+        ? [
+            { cor: "laranja", icone: "lupa", titulo: "Analisar recebidas", sub: `${formatarNumeroPainel(resumo.pendentes)} aguardando`, href: linkOcorrenciasPainel({ status: "recebido" }) },
+            { cor: "", icone: "megafone", titulo: "Publicar aviso", sub: "Comunicar a população", href: PAGINA_AVISOS_PAINEL },
+            { cor: "verde", icone: "lista", titulo: "Todas as ocorrências", sub: `${formatarNumeroPainel(total)} no total`, href: PAGINA_OCORRENCIAS_PAINEL },
+            { cor: "roxo", icone: "calendario", titulo: "Ver eventos", sub: "Em breve", breve: "Eventos" }
+        ]
+        : [
+            { cor: "", icone: "mais", titulo: "Nova ocorrência", sub: "Registrar um problema", href: linkOcorrenciasPainel({ nova: 1 }) },
+            { cor: "laranja", icone: "megafone", titulo: "Ver avisos", sub: plural(estadoPainel.avisos.length, "aviso", "avisos"), href: PAGINA_AVISOS_PAINEL },
+            { cor: "verde", icone: "lista", titulo: "Minhas ocorrências", sub: `${formatarNumeroPainel(total)} ${total === 1 ? "registrada" : "registradas"}`, href: PAGINA_OCORRENCIAS_PAINEL },
+            { cor: "roxo", icone: "calendario", titulo: "Ver eventos", sub: "Em breve", breve: "Eventos" }
+        ];
+
+    acoesRapidasPainel.innerHTML = acoes
+        .map((acao) => {
+            const cor = acao.cor ? ` data-k="${acao.cor}"` : "";
+            const conteudo = `
+                <span class="ico">${iconePainel(acao.icone, 20)}</span>
+                <span>${acao.titulo}<br><small>${acao.sub}</small></span>
+            `;
+
+            return acao.breve
+                ? `<button class="acao-rapida" type="button"${cor} data-em-breve-painel="${acao.breve}">${conteudo}</button>`
+                : `<a class="acao-rapida"${cor} href="${acao.href}">${conteudo}</a>`;
+        })
+        .join("");
 }
 
 
@@ -954,409 +784,149 @@ function renderizarOcorrenciasRecentesPainel() {
 
 CATEGORIAS MAIS REGISTRADAS NA CIDADE
 
-Os dados desta seção não são calculados apenas com as ocorrências
-do usuário logado.
-
 O ranking vem do backend e considera todas as ocorrências
-registradas no Cidade360.
+registradas no Cidade360 (não só as do usuário logado).
 
 =========================================================================================================*/
 
 async function carregarCategoriasGeraisPainel() {
-    const resposta =
-        await fetchAutenticadoPainel(
-            `${API_ESTATISTICAS_PAINEL}/categorias?limite=50`,
-            {
-                method: "GET"
-            }
-        );
+    const resposta = await fetchAutenticadoPainel(
+        `${API_ESTATISTICAS_PAINEL}/categorias?limite=50`,
+        { method: "GET" }
+    );
 
+    const dados = await lerRespostaPainel(resposta);
 
-    const dados =
-        await lerRespostaPainel(
-            resposta
-        );
-
-
-    if (
-        !resposta.ok ||
-        !dados?.sucesso ||
-        !Array.isArray(
-            dados.categorias
-        )
-    ) {
-        throw new Error(
-            dados?.mensagem ||
-            "Não foi possível carregar as categorias mais registradas."
-        );
+    if (!resposta.ok || !dados?.sucesso || !Array.isArray(dados.categorias)) {
+        throw new Error(dados?.mensagem || "Não foi possível carregar as categorias mais registradas.");
     }
 
-
-    estadoPainel.categoriasGerais =
-        dados.categorias;
-
+    estadoPainel.categoriasGerais = dados.categorias;
 
     renderizarCategoriasPainel();
-
 
     return dados.categorias;
 }
 
 
-/*========================================================================================================
+function htmlItemRankingPainel(categoria, indice, maior, comPosicao = false) {
+    const total = numeroPainel(categoria.total);
+    const largura = maior > 0 ? Math.max(4, (total / maior) * 100) : 0;
 
-RENDERIZA CATEGORIAS NO PAINEL
+    return `
+        <li style="--i:${indice}" title="${formatarPercentualCategoriaPainel(categoria.percentual)} das ocorrências registradas">
+            ${comPosicao
+                ? `<span class="posicao">${indice + 1}</span>`
+                : `<span class="ico">${iconeCategoria(categoria.nome, 18)}</span>`}
+            <div style="min-width:0">
+                <div class="nome">
+                    <span>${escaparHtmlPainel(categoria.nome)}</span>
+                    ${comPosicao ? `<small>${formatarPercentualCategoriaPainel(categoria.percentual)}</small>` : ""}
+                </div>
+                <div class="trilho"><i style="width:${largura}%"></i></div>
+            </div>
+            <b>${formatarNumeroPainel(total)}</b>
+        </li>
+    `;
+}
 
-No painel principal são exibidas apenas as 5 categorias
-mais registradas em todo o Cidade360.
-
-O botão "Ver todas" abre um card separado com o ranking completo.
-
-=========================================================================================================*/
 
 function renderizarCategoriasPainel() {
     if (!categoriasPainel) {
         return;
     }
 
+    const categorias = Array.isArray(estadoPainel.categoriasGerais) ? estadoPainel.categoriasGerais : [];
 
-    const categoriasDisponiveis =
-        Array.isArray(
-            estadoPainel.categoriasGerais
-        )
-            ? estadoPainel.categoriasGerais
-            : [];
-
-
-    if (categoriasDisponiveis.length === 0) {
+    if (categorias.length === 0) {
         categoriasPainel.innerHTML = `
-            <div class="painel-vazio painel-vazio-categorias">
-                <strong>Nenhuma categoria registrada na cidade.</strong>
-                <span>O ranking aparecerá assim que houver ocorrências registradas.</span>
-            </div>
+            <li class="vazio-mini">O ranking aparecerá assim que houver ocorrências registradas.</li>
         `;
 
-
         if (btnVerTodasCategoriasPainel) {
-            btnVerTodasCategoriasPainel.style.display =
-                "none";
+            btnVerTodasCategoriasPainel.hidden = true;
         }
-
 
         return;
     }
 
+    const maior = Math.max(...categorias.map((categoria) => numeroPainel(categoria.total)));
 
-    const categorias =
-        categoriasDisponiveis.slice(
-            0,
-            5
-        );
-
-
-    categoriasPainel.innerHTML =
-        categorias
-            .map((categoria) => `
-                <div
-                    class="card-categoria card-categoria-ranking"
-                    title="${escaparHtmlPainel(categoria.percentual)}% das ocorrências registradas"
-                >
-                    <img src="${obterIconeCategoriaPainel(categoria.nome)}" alt="">
-
-                    <p>
-                        ${escaparHtmlPainel(categoria.nome)}
-                    </p>
-
-                    <span>
-                        ${formatarNumeroPainel(categoria.total)}
-                    </span>
-                </div>
-            `)
-            .join("");
-
+    categoriasPainel.innerHTML = categorias
+        .slice(0, LIMITE_CATEGORIAS_PAINEL)
+        .map((categoria, indice) => htmlItemRankingPainel(categoria, indice, maior))
+        .join("");
 
     if (btnVerTodasCategoriasPainel) {
-        btnVerTodasCategoriasPainel.style.display =
-            "inline-flex";
+        btnVerTodasCategoriasPainel.hidden = categorias.length <= LIMITE_CATEGORIAS_PAINEL;
+    }
+}
 
-        btnVerTodasCategoriasPainel.textContent =
-            "Ver todas";
+
+function renderizarErroCategoriasPainel() {
+    if (categoriasPainel) {
+        categoriasPainel.innerHTML = `
+            <li class="vazio-mini">Não foi possível carregar o ranking de categorias. Tente atualizar a página em alguns instantes.</li>
+        `;
     }
 }
 
 
 /*========================================================================================================
 
-ABRE CARD COM TODAS AS CATEGORIAS
-
-Exibe o ranking completo das categorias registradas
-por todos os cidadãos do Cidade360.
+DIÁLOGO COM TODAS AS CATEGORIAS
 
 =========================================================================================================*/
 
 function abrirTodasCategoriasPainel() {
-    const categorias =
-        Array.isArray(
-            estadoPainel.categoriasGerais
-        )
-            ? estadoPainel.categoriasGerais
-            : [];
-
+    const categorias = Array.isArray(estadoPainel.categoriasGerais) ? estadoPainel.categoriasGerais : [];
 
     if (categorias.length === 0) {
-        mostrarMensagemPainel(
-            "Ainda não existem categorias registradas.",
-            "info"
-        );
-
+        mostrarMensagemPainel("Ainda não existem categorias registradas.");
         return;
     }
-
 
     fecharTodasCategoriasPainel();
 
+    const maior = Math.max(...categorias.map((categoria) => numeroPainel(categoria.total)));
+    const soma = categorias.reduce((total, categoria) => total + numeroPainel(categoria.total), 0);
 
-    const modal =
-        document.createElement(
-            "div"
-        );
-
-
-    modal.id =
-        "modalTodasCategoriasPainel";
-
-
-    modal.className =
-        "modal-categorias-painel";
-
-
+    const modal = document.createElement("div");
+    modal.id = "modalTodasCategoriasPainel";
     modal.innerHTML = `
-        <div class="fundo-modal-categorias-painel"></div>
+        <div class="fundo" data-fechar-categorias-painel></div>
 
-        <div class="card-todas-categorias-painel">
+        <div class="dialogo largo" role="dialog" aria-modal="true" aria-labelledby="tituloTodasCategoriasPainel">
+            <button class="btn-icone fechar-dialogo" type="button" aria-label="Fechar" data-fechar-categorias-painel>${iconePainel("x", 18)}</button>
 
-            <div class="cabecalho-todas-categorias-painel">
+            <h3 id="tituloTodasCategoriasPainel">Categorias mais registradas na cidade</h3>
+            <p>Ranking considerando todas as ocorrências registradas no Cidade360.</p>
 
-                <div>
-                    <h2>Categorias mais registradas na cidade</h2>
-
-                    <p>
-                        Ranking considerando todas as ocorrências registradas no Cidade360.
-                    </p>
-                </div>
-
-
-                <button
-                    class="btn-fechar-categorias-painel"
-                    id="btnFecharCategoriasPainel"
-                    type="button"
-                    aria-label="Fechar"
-                >
-                    ×
-                </button>
-
+            <div class="resumo-categorias">
+                <span>${plural(categorias.length, "categoria", "categorias")}</span>
+                <span>${plural(soma, "ocorrência contabilizada", "ocorrências contabilizadas")}</span>
             </div>
 
-
-            <div class="resumo-categorias-painel">
-
-                <span>
-                    ${categorias.length}
-                    ${categorias.length === 1 ? "categoria" : "categorias"}
-                </span>
-
-                <span>
-                    ${formatarNumeroPainel(
-                        categorias.reduce(
-                            (total, categoria) => {
-                                return (
-                                    total +
-                                    Number(
-                                        categoria.total || 0
-                                    )
-                                );
-                            },
-                            0
-                        )
-                    )}
-                    ocorrências contabilizadas
-                </span>
-
-            </div>
-
-
-            <div class="lista-todas-categorias-painel">
-
-                ${categorias
-                    .map((categoria, indice) => `
-                        <div class="item-ranking-categoria-painel">
-
-                            <div class="posicao-ranking-categoria-painel">
-                                ${indice + 1}
-                            </div>
-
-
-                            <div class="icone-ranking-categoria-painel">
-
-                                <img
-                                    src="${obterIconeCategoriaPainel(categoria.nome)}"
-                                    alt=""
-                                >
-
-                            </div>
-
-
-                            <div class="dados-ranking-categoria-painel">
-
-                                <div class="linha-ranking-categoria-painel">
-
-                                    <strong>
-                                        ${escaparHtmlPainel(categoria.nome)}
-                                    </strong>
-
-                                    <span>
-                                        ${formatarNumeroPainel(categoria.total)}
-                                        ${Number(categoria.total) === 1 ? "ocorrência" : "ocorrências"}
-                                    </span>
-
-                                </div>
-
-
-                                <div class="barra-ranking-categoria-painel">
-
-                                    <div
-                                        class="preenchimento-ranking-categoria-painel"
-                                        style="width: ${Math.min(
-                                            Number(categoria.percentual) || 0,
-                                            100
-                                        )}%"
-                                    ></div>
-
-                                </div>
-
-
-                                <div class="percentual-ranking-categoria-painel">
-
-                                    ${formatarPercentualCategoriaPainel(
-                                        categoria.percentual
-                                    )}
-                                    do total de ocorrências
-
-                                </div>
-
-                            </div>
-
-                        </div>
-                    `)
-                    .join("")}
-
-            </div>
-
+            <ul class="ranking">
+                ${categorias.map((categoria, indice) => htmlItemRankingPainel(categoria, indice, maior, true)).join("")}
+            </ul>
         </div>
     `;
 
+    document.body.appendChild(modal);
+    document.body.classList.add("dialogo-aberto");
 
-    document.body.appendChild(
-        modal
-    );
+    modal.querySelectorAll("[data-fechar-categorias-painel]").forEach((elemento) => {
+        elemento.addEventListener("click", fecharTodasCategoriasPainel);
+    });
 
-
-    document.body.classList.add(
-        "modal-aberto-painel"
-    );
-
-
-    document
-        .getElementById(
-            "btnFecharCategoriasPainel"
-        )
-        ?.addEventListener(
-            "click",
-            fecharTodasCategoriasPainel
-        );
-
-
-    modal
-        .querySelector(
-            ".fundo-modal-categorias-painel"
-        )
-        ?.addEventListener(
-            "click",
-            fecharTodasCategoriasPainel
-        );
+    modal.querySelector(".fechar-dialogo")?.focus();
 }
 
-
-/*========================================================================================================
-
-FORMATA PERCENTUAL DAS CATEGORIAS
-
-=========================================================================================================*/
-
-function formatarPercentualCategoriaPainel(valor) {
-    const percentual =
-        Number(
-            valor
-        );
-
-
-    if (
-        !Number.isFinite(
-            percentual
-        )
-    ) {
-        return "0%";
-    }
-
-
-    return `${percentual.toLocaleString(
-        "pt-BR",
-        {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 1
-        }
-    )}%`;
-}
-
-
-/*========================================================================================================
-
-FECHA CARD DE TODAS AS CATEGORIAS
-
-=========================================================================================================*/
 
 function fecharTodasCategoriasPainel() {
-    document
-        .getElementById(
-            "modalTodasCategoriasPainel"
-        )
-        ?.remove();
-
-
-    document.body.classList.remove(
-        "modal-aberto-painel"
-    );
-}
-
-
-/*========================================================================================================
-
-ERRO DAS CATEGORIAS
-
-=========================================================================================================*/
-
-function renderizarErroCategoriasPainel() {
-    if (!categoriasPainel) {
-        return;
-    }
-
-
-    categoriasPainel.innerHTML = `
-        <div class="painel-vazio painel-vazio-categorias painel-erro">
-            <strong>Não foi possível carregar o ranking de categorias.</strong>
-            <span>Tente atualizar a página em alguns instantes.</span>
-        </div>
-    `;
+    document.getElementById("modalTodasCategoriasPainel")?.remove();
+    document.body.classList.remove("dialogo-aberto");
 }
 
 
@@ -1367,86 +937,54 @@ MAPA
 =========================================================================================================*/
 
 function inicializarMapaPainel() {
-    const elementoMapa =
-        document.getElementById(
-            "mapaPainel"
-        );
+    const elementoMapa = document.getElementById("mapaPainel");
 
-    if (
-        !elementoMapa ||
-        typeof L === "undefined" ||
-        estadoPainel.mapa
-    ) {
+    if (!elementoMapa || typeof L === "undefined" || estadoPainel.mapa) {
         return;
     }
 
-    estadoPainel.mapa =
-        L.map(
-            "mapaPainel",
-            {
-                zoomControl: true
-            }
-        )
-            .setView([
-                -20.6884,
-                -48.4112
-            ], 14);
+    estadoPainel.mapa = L.map("mapaPainel", { zoomControl: true })
+        .setView([-20.6884, -48.4112], 14);
 
-    L.tileLayer(
-        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        {
-            maxZoom: 19,
-            attribution: "&copy; OpenStreetMap"
-        }
-    )
-        .addTo(
-            estadoPainel.mapa
-        );
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap"
+    }).addTo(estadoPainel.mapa);
 
-    estadoPainel.camadaMinhas =
-        L.layerGroup()
-            .addTo(
-                estadoPainel.mapa
-            );
+    estadoPainel.camadaMinhas = L.layerGroup().addTo(estadoPainel.mapa);
+    estadoPainel.camadaProximas = L.layerGroup().addTo(estadoPainel.mapa);
+    estadoPainel.camadaLocalizacao = L.layerGroup().addTo(estadoPainel.mapa);
 
-    estadoPainel.camadaProximas =
-        L.layerGroup()
-            .addTo(
-                estadoPainel.mapa
-            );
-
-    estadoPainel.camadaLocalizacao =
-        L.layerGroup()
-            .addTo(
-                estadoPainel.mapa
-            );
-
-    estadoPainel.controleCamadas =
-        L.control.layers(
-            null,
-            {
-                ...(ehAdministradorPainel()
-                    ? {
-                        "Ocorrências do município": estadoPainel.camadaMinhas
-                    }
-                    : {
-                        "Minhas ocorrências": estadoPainel.camadaMinhas,
-                        "Ocorrências próximas": estadoPainel.camadaProximas,
-                        "Minha localização": estadoPainel.camadaLocalizacao
-                    })
+    estadoPainel.controleCamadas = L.control.layers(
+        null,
+        ehAdministradorPainel()
+            ? { "Ocorrências do município": estadoPainel.camadaMinhas }
+            : {
+                "Minhas ocorrências": estadoPainel.camadaMinhas,
+                "Ocorrências próximas": estadoPainel.camadaProximas,
+                "Minha localização": estadoPainel.camadaLocalizacao
             },
-            {
-                collapsed: true
-            }
-        )
-            .addTo(
-                estadoPainel.mapa
-            );
+        { collapsed: true }
+    ).addTo(estadoPainel.mapa);
 
-    setTimeout(() => {
-        estadoPainel.mapa
-            ?.invalidateSize();
-    }, 200);
+    setTimeout(() => estadoPainel.mapa?.invalidateSize(), 200);
+}
+
+
+function renderizarLegendaPainel() {
+    if (!legendaPainel) {
+        return;
+    }
+
+    const chaves = ["recebido", "em_analise", "em_andamento", "resolvido"];
+
+    if (ehAdministradorPainel()) {
+        chaves.push("cancelado");
+    }
+
+    legendaPainel.innerHTML =
+        chaves.map((chave) => `<span class="st" data-st="${chave}"><i></i>${STATUS[chave].nome}</span>`).join("") +
+        (ehAdministradorPainel() ? "" : `<span><i class="legenda-voce"></i>Você</span>`);
 }
 
 
@@ -1458,9 +996,7 @@ LOCALIZAÇÃO DO USUÁRIO
 
 function obterLocalizacaoUsuarioPainel() {
     return new Promise((resolve) => {
-        if (
-            !navigator.geolocation
-        ) {
+        if (!navigator.geolocation) {
             resolve(null);
             return;
         }
@@ -1468,17 +1004,12 @@ function obterLocalizacaoUsuarioPainel() {
         navigator.geolocation.getCurrentPosition(
             (posicao) => {
                 resolve({
-                    latitude:
-                        posicao.coords.latitude,
-                    longitude:
-                        posicao.coords.longitude,
-                    precisao:
-                        posicao.coords.accuracy
+                    latitude: posicao.coords.latitude,
+                    longitude: posicao.coords.longitude,
+                    precisao: posicao.coords.accuracy
                 });
             },
-            () => {
-                resolve(null);
-            },
+            () => resolve(null),
             {
                 enableHighAccuracy: true,
                 timeout: 10000,
@@ -1490,57 +1021,36 @@ function obterLocalizacaoUsuarioPainel() {
 
 
 async function carregarOcorrenciasProximasPainel() {
-    const localizacao =
-        await obterLocalizacaoUsuarioPainel();
+    const localizacao = await obterLocalizacaoUsuarioPainel();
 
     if (!localizacao) {
-        mostrarMensagemPainel(
-            "Ative a localização do navegador para visualizar ocorrências perto de você.",
-            "info"
-        );
-
+        mostrarMensagemPainel("Ative a localização do navegador para ver ocorrências perto de você.");
         return [];
     }
 
-    estadoPainel.localizacaoUsuario =
-        localizacao;
+    estadoPainel.localizacaoUsuario = localizacao;
 
     renderizarLocalizacaoUsuarioPainel();
 
-    const parametros =
-        new URLSearchParams({
-            latitude: String(localizacao.latitude),
-            longitude: String(localizacao.longitude),
-            raio: String(RAIO_OCORRENCIAS_PROXIMAS_KM),
-            limite: "100"
-        });
+    const parametros = new URLSearchParams({
+        latitude: String(localizacao.latitude),
+        longitude: String(localizacao.longitude),
+        raio: String(RAIO_OCORRENCIAS_PROXIMAS_KM),
+        limite: "100"
+    });
 
-    const resposta =
-        await fetchAutenticadoPainel(
-            `${API_OCORRENCIAS_PROXIMAS}?${parametros.toString()}`,
-            {
-                method: "GET"
-            }
-        );
+    const resposta = await fetchAutenticadoPainel(
+        `${API_OCORRENCIAS_PROXIMAS}?${parametros.toString()}`,
+        { method: "GET" }
+    );
 
-    const dados =
-        await lerRespostaPainel(
-            resposta
-        );
+    const dados = await lerRespostaPainel(resposta);
 
-    if (
-        !resposta.ok ||
-        !dados?.sucesso ||
-        !Array.isArray(dados.ocorrencias)
-    ) {
-        throw new Error(
-            dados?.mensagem ||
-            "Não foi possível carregar as ocorrências próximas."
-        );
+    if (!resposta.ok || !dados?.sucesso || !Array.isArray(dados.ocorrencias)) {
+        throw new Error(dados?.mensagem || "Não foi possível carregar as ocorrências próximas.");
     }
 
-    estadoPainel.ocorrenciasProximas =
-        dados.ocorrencias;
+    estadoPainel.ocorrenciasProximas = dados.ocorrencias;
 
     renderizarMarcadoresMapaPainel();
 
@@ -1549,202 +1059,167 @@ async function carregarOcorrenciasProximasPainel() {
 
 
 function renderizarLocalizacaoUsuarioPainel() {
-    if (
-        !estadoPainel.camadaLocalizacao ||
-        !estadoPainel.localizacaoUsuario
-    ) {
+    if (!estadoPainel.camadaLocalizacao || !estadoPainel.localizacaoUsuario) {
         return;
     }
 
-    estadoPainel.camadaLocalizacao
-        .clearLayers();
+    estadoPainel.camadaLocalizacao.clearLayers();
 
-    const {
-        latitude,
-        longitude
-    } =
-        estadoPainel.localizacaoUsuario;
+    const { latitude, longitude } = estadoPainel.localizacaoUsuario;
 
-    const marcador =
-        L.circleMarker([
-            latitude,
-            longitude
-        ], {
-            radius: 8,
-            color: "#111827",
-            fillColor: "#ffffff",
-            fillOpacity: 1,
-            weight: 3
-        });
-
-    marcador.bindTooltip(
-        "Você está aqui",
-        {
-            direction: "top"
-        }
-    );
-
-    marcador.addTo(
-        estadoPainel.camadaLocalizacao
-    );
+    L.marker([latitude, longitude], {
+        icon: L.divIcon({
+            className: "pino-mapa",
+            html: '<span class="voce"></span>',
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+        }),
+        keyboard: false,
+        zIndexOffset: -100
+    })
+        .bindTooltip("Você está aqui", { direction: "top", offset: [0, -8] })
+        .addTo(estadoPainel.camadaLocalizacao);
 }
 
 
 /*========================================================================================================
 
-MARCADORES
+MARCADORES (pino com a cor do status)
 
 =========================================================================================================*/
 
-function adicionarMarcadorOcorrenciaPainel(ocorrencia, tipo) {
+function adicionarMarcadorOcorrenciaPainel(ocorrencia, tipo, indice = 0) {
     if (
-        ehAdministradorPainel() &&
-        (
-            ocorrencia.latitude == null ||
-            ocorrencia.longitude == null ||
-            String(ocorrencia.latitude).trim() === "" ||
-            String(ocorrencia.longitude).trim() === "" ||
-            Math.abs(Number(ocorrencia.latitude)) > 90 ||
-            Math.abs(Number(ocorrencia.longitude)) > 180
-        )
+        ocorrencia.latitude == null ||
+        ocorrencia.longitude == null ||
+        String(ocorrencia.latitude).trim() === "" ||
+        String(ocorrencia.longitude).trim() === ""
     ) {
         return null;
     }
 
-    const latitude =
-        Number(
-            ocorrencia.latitude
-        );
-
-    const longitude =
-        Number(
-            ocorrencia.longitude
-        );
+    const latitude = Number(ocorrencia.latitude);
+    const longitude = Number(ocorrencia.longitude);
 
     if (
         !Number.isFinite(latitude) ||
-        !Number.isFinite(longitude)
+        !Number.isFinite(longitude) ||
+        Math.abs(latitude) > 90 ||
+        Math.abs(longitude) > 180
     ) {
         return null;
     }
 
-    const configuracaoStatus =
-        obterConfiguracaoStatusPainel(
-            ocorrencia.status
-        );
+    const ehMinha = tipo === "minha";
+    const chave = chaveStatusPainel(ocorrencia.status);
+    const tamanho = ehMinha ? [30, 38] : [24, 30];
 
-    const ehMinha =
-        tipo === "minha";
+    const marcador = L.marker([latitude, longitude], {
+        icon: L.divIcon({
+            className: "pino-mapa",
+            html: `<span class="pino st${ehMinha ? "" : " outra"}" data-st="${chave}" style="--i:${Math.min(indice, 12)}">${PINO}</span>`,
+            iconSize: tamanho,
+            iconAnchor: [tamanho[0] / 2, tamanho[1]],
+            popupAnchor: [0, -tamanho[1] + 4]
+        }),
+        title: ocorrencia.titulo || "Ocorrência",
+        riseOnHover: true
+    });
 
-    const marcador =
-        L.circleMarker([
-            latitude,
-            longitude
-        ], {
-            radius: ehMinha ? 9 : 7,
-            color: ehMinha
-                ? "#ffffff"
-                : configuracaoStatus.corMapa,
-            fillColor: configuracaoStatus.corMapa,
-            fillOpacity: 0.9,
-            weight: ehMinha ? 3 : 2
-        });
+    marcador.bindPopup(() => htmlBalaoPainel(ocorrencia, tipo), {
+        className: "balao-mapa",
+        maxWidth: 270,
+        autoPanPadding: [24, 24]
+    });
 
-    marcador.bindTooltip(
-        escaparHtmlPainel(
-            ocorrencia.titulo ||
-            "Ocorrência"
-        ),
-        {
-            direction: "top"
-        }
-    );
+    marcador.on("popupopen", () => {
+        marcador.getElement()?.querySelector(".pino")?.classList.add("aberto");
+    });
 
-    marcador.on(
-        "click",
-        () => {
-            abrirConsultaMapaPainel(
-                ocorrencia,
-                tipo
-            );
-        }
-    );
+    marcador.on("popupclose", () => {
+        marcador.getElement()?.querySelector(".pino")?.classList.remove("aberto");
+    });
 
-    marcador.addTo(
-        ehMinha
-            ? estadoPainel.camadaMinhas
-            : estadoPainel.camadaProximas
-    );
+    marcador.addTo(ehMinha ? estadoPainel.camadaMinhas : estadoPainel.camadaProximas);
 
-    return [
-        latitude,
-        longitude
-    ];
+    return [latitude, longitude];
+}
+
+
+/*
+ * Balão do pino. Ocorrências de outros cidadãos não mostram
+ * dados pessoais e não abrem o acompanhamento.
+ */
+function htmlBalaoPainel(ocorrencia, tipo) {
+    const admin = ehAdministradorPainel();
+    const ehMinha = tipo === "minha";
+    const chave = chaveStatusPainel(ocorrencia.status);
+    const distancia = Number(ocorrencia.distancia_km);
+
+    const tipoTexto = admin
+        ? "Ocorrência do município"
+        : ehMinha ? "Sua ocorrência" : "Ocorrência próxima";
+
+    const local = [ocorrencia.bairro, ocorrencia.cidade].filter(Boolean).join(" - ") || "Localização registrada";
+
+    const detalhes = [
+        codigoOcorrenciaPainel(ocorrencia),
+        tempoRelativo(ocorrencia.data_criacao || ocorrencia.data_ocorrencia),
+        !admin && Number.isFinite(distancia) ? `${distancia.toFixed(1).replace(".", ",")} km de você` : ""
+    ].filter(Boolean).join(" · ");
+
+    return `
+        <div class="balao">
+            <span class="tipo-balao">${tipoTexto}</span>
+            ${pilula(chave)}
+            <strong>${escaparHtmlPainel(ocorrencia.titulo || "Ocorrência")}</strong>
+            <span class="sub">${escaparHtmlPainel(ocorrencia.categoria || "Categoria não informada")} · ${escaparHtmlPainel(local)}</span>
+            <div class="linha-balao">
+                <span class="sub">${escaparHtmlPainel(detalhes)}</span>
+                ${ehMinha
+                    ? `<a class="link-seta" href="${linkOcorrenciasPainel({ ocorrencia: Number(ocorrencia.id) || 0 })}">Ver ${iconePainel("direita", 14)}</a>`
+                    : ""}
+            </div>
+            ${ehMinha ? "" : `<span class="privacidade">${iconePainel("cadeado", 12)} Por privacidade, os dados de quem registrou não são exibidos.</span>`}
+        </div>
+    `;
 }
 
 
 function renderizarMarcadoresMapaPainel() {
-    if (
-        !estadoPainel.mapa ||
-        !estadoPainel.camadaMinhas ||
-        !estadoPainel.camadaProximas
-    ) {
+    if (!estadoPainel.mapa || !estadoPainel.camadaMinhas || !estadoPainel.camadaProximas) {
         return;
     }
 
-    estadoPainel.camadaMinhas
-        .clearLayers();
-
-    estadoPainel.camadaProximas
-        .clearLayers();
+    estadoPainel.camadaMinhas.clearLayers();
+    estadoPainel.camadaProximas.clearLayers();
 
     const limites = [];
-    const idsMinhas =
-        new Set();
+    const idsMinhas = new Set();
 
-    estadoPainel.ocorrencias.forEach((ocorrencia) => {
-        idsMinhas.add(
-            Number(ocorrencia.id)
-        );
+    estadoPainel.ocorrencias.forEach((ocorrencia, indice) => {
+        idsMinhas.add(Number(ocorrencia.id));
 
-        const ponto =
-            adicionarMarcadorOcorrenciaPainel(
-                ocorrencia,
-                "minha"
-            );
+        const ponto = adicionarMarcadorOcorrenciaPainel(ocorrencia, "minha", indice);
 
         if (ponto) {
-            limites.push(
-                ponto
-            );
+            limites.push(ponto);
         }
     });
 
-    estadoPainel.ocorrenciasProximas.forEach((ocorrencia) => {
-        if (
-            idsMinhas.has(
-                Number(ocorrencia.id)
-            )
-        ) {
+    estadoPainel.ocorrenciasProximas.forEach((ocorrencia, indice) => {
+        if (idsMinhas.has(Number(ocorrencia.id))) {
             return;
         }
 
-        const ponto =
-            adicionarMarcadorOcorrenciaPainel(
-                ocorrencia,
-                "proxima"
-            );
+        const ponto = adicionarMarcadorOcorrenciaPainel(ocorrencia, "proxima", indice);
 
         if (ponto) {
-            limites.push(
-                ponto
-            );
+            limites.push(ponto);
         }
     });
 
-    if (
-        estadoPainel.localizacaoUsuario
-    ) {
+    if (estadoPainel.localizacaoUsuario) {
         limites.push([
             estadoPainel.localizacaoUsuario.latitude,
             estadoPainel.localizacaoUsuario.longitude
@@ -1752,419 +1227,94 @@ function renderizarMarcadoresMapaPainel() {
     }
 
     if (limites.length === 1) {
-        estadoPainel.mapa.setView(
-            limites[0],
-            16
-        );
-
+        estadoPainel.mapa.setView(limites[0], 16);
     } else if (limites.length > 1) {
-        estadoPainel.mapa.fitBounds(
-            limites,
-            {
-                padding: [
-                    35,
-                    35
-                ],
-                maxZoom: 16
-            }
-        );
-    }
-
-    setTimeout(() => {
-        estadoPainel.mapa
-            ?.invalidateSize();
-    }, 100);
-}
-
-
-/*========================================================================================================
-
-CONSULTA DO MARCADOR
-
-=========================================================================================================*/
-
-function abrirConsultaMapaPainel(ocorrencia, tipo) {
-    fecharConsultaMapaPainel();
-
-    const distancia =
-        Number(
-            ocorrencia.distancia_km
-        );
-
-    const distanciaTexto =
-        !ehAdministradorPainel() &&
-        Number.isFinite(distancia)
-            ? `${distancia.toFixed(2).replace(".", ",")} km de você`
-            : "";
-
-    const local =
-        [
-            ocorrencia.bairro,
-            ocorrencia.cidade
-        ]
-            .filter(Boolean)
-            .join(" - ") ||
-            "Localização registrada";
-
-    const modal =
-        document.createElement(
-            "div"
-        );
-
-    modal.className =
-        "modal-consulta-mapa-painel";
-
-    modal.id =
-        "modalConsultaMapaPainel";
-
-    modal.innerHTML = `
-        <div class="fundo-modal-consulta-painel" data-fechar-consulta-painel></div>
-
-        <div class="conteudo-modal-consulta-painel">
-            <button class="fechar-modal-consulta-painel" type="button" data-fechar-consulta-painel>&times;</button>
-
-            <span class="tipo-ocorrencia-mapa-painel">
-                ${ehAdministradorPainel()
-                    ? "Ocorrência do município"
-                    : tipo === "minha" ? "Sua ocorrência" : "Ocorrência próxima"}
-            </span>
-
-            <h2>${escaparHtmlPainel(ocorrencia.titulo || "Ocorrência")}</h2>
-
-            <div class="dados-consulta-mapa-painel">
-                <div>
-                    <strong>Categoria</strong>
-                    <span>${escaparHtmlPainel(ocorrencia.categoria || "Não informada")}</span>
-                </div>
-
-                <div>
-                    <strong>Status</strong>
-                    <span>${escaparHtmlPainel(ocorrencia.status || "Recebido")}</span>
-                </div>
-
-                <div>
-                    <strong>Registrada em</strong>
-                    <span>${formatarDataPainel(ocorrencia.data_criacao || ocorrencia.data_ocorrencia)}</span>
-                </div>
-
-                <div>
-                    <strong>Localização</strong>
-                    <span>${escaparHtmlPainel(local)}</span>
-                </div>
-
-                ${distanciaTexto
-                    ? `
-                        <div>
-                            <strong>Distância</strong>
-                            <span>${distanciaTexto}</span>
-                        </div>
-                    `
-                    : ""}
-            </div>
-
-            ${tipo === "minha"
-                ? `
-                    <button class="btn-consultar-ocorrencia-painel" id="btnAbrirOcorrenciaCompletaPainel" type="button">
-                        ${ehAdministradorPainel()
-                            ? "Ver detalhes da ocorrência"
-                            : "Ver acompanhamento completo"}
-                    </button>
-                `
-                : `
-                    <p class="privacidade-consulta-painel">
-                        Por privacidade, os dados pessoais do cidadão que registrou esta ocorrência não são exibidos.
-                    </p>
-                `}
-        </div>
-    `;
-
-    document.body.appendChild(
-        modal
-    );
-
-    modal
-        .querySelectorAll(
-            "[data-fechar-consulta-painel]"
-        )
-        .forEach((elemento) => {
-            elemento.addEventListener(
-                "click",
-                fecharConsultaMapaPainel
-            );
+        estadoPainel.mapa.fitBounds(limites, {
+            padding: [35, 35],
+            maxZoom: 16
         });
-
-    document
-        .getElementById(
-            "btnAbrirOcorrenciaCompletaPainel"
-        )
-        ?.addEventListener(
-            "click",
-            () => {
-                abrirMinhaOcorrenciaPainel(
-                    Number(ocorrencia.id)
-                );
-            }
-        );
-}
-
-
-function fecharConsultaMapaPainel() {
-    document
-        .getElementById(
-            "modalConsultaMapaPainel"
-        )
-        ?.remove();
-}
-
-
-
-
-
-/*========================================================================================================
-
-NAVEGAÇÃO
-
-=========================================================================================================*/
-
-function irParaOcorrenciasPainel() {
-    window.location.href =
-        PAGINA_OCORRENCIAS_PAINEL;
-}
-
-
-function abrirMinhaOcorrenciaPainel(id) {
-    if (
-        Number.isInteger(id) &&
-        id > 0
-    ) {
-        window.location.href =
-            `${PAGINA_OCORRENCIAS_PAINEL}?ocorrencia=${id}`;
-
-        return;
     }
 
-    irParaOcorrenciasPainel();
+    setTimeout(() => estadoPainel.mapa?.invalidateSize(), 100);
 }
 
 
 /*========================================================================================================
 
-MAPA COMPLETO
+MAPA EM TELA CHEIA
 
 =========================================================================================================*/
 
 async function abrirMapaCompletoPainel() {
-    const mapa =
-        document.getElementById(
-            "mapaPainel"
-        );
+    const mapa = document.getElementById("mapaPainel");
 
     if (!mapa) {
         return;
     }
 
     try {
-        if (
-            document.fullscreenEnabled &&
-            typeof mapa.requestFullscreen === "function"
-        ) {
+        if (document.fullscreenElement) {
+            await document.exitFullscreen();
+        } else if (document.fullscreenEnabled && typeof mapa.requestFullscreen === "function") {
             await mapa.requestFullscreen();
-
         } else {
-            mapa.scrollIntoView({
-                behavior: "smooth",
-                block: "center"
-            });
+            mapa.scrollIntoView({ behavior: "smooth", block: "center" });
         }
-
     } catch (error) {
-        mapa.scrollIntoView({
-            behavior: "smooth",
-            block: "center"
-        });
+        mapa.scrollIntoView({ behavior: "smooth", block: "center" });
     }
 
-    setTimeout(() => {
-        estadoPainel.mapa
-            ?.invalidateSize();
-    }, 300);
+    setTimeout(() => estadoPainel.mapa?.invalidateSize(), 300);
 }
+
+
+document.addEventListener("fullscreenchange", () => {
+    setTimeout(() => estadoPainel.mapa?.invalidateSize(), 150);
+});
 
 
 /*========================================================================================================
 
 EVENTOS
 
+Configurações, notificações e perfil do topo são controlados pelo global.js.
+
 =========================================================================================================*/
 
 function registrarEventosPainel() {
+    btnVerMapaPainel?.addEventListener("click", abrirMapaCompletoPainel);
 
-    btnVerMapaPainel
-        ?.addEventListener(
-            "click",
-            abrirMapaCompletoPainel
-        );
+    btnVerTodasCategoriasPainel?.addEventListener("click", (event) => {
+        event.preventDefault();
+        abrirTodasCategoriasPainel();
+    });
 
-    btnVerTodasOcorrenciasPainel
-        ?.addEventListener(
-            "click",
-            irParaOcorrenciasPainel
-        );
+    // Itens que ainda não existem (Campanhas, Eventos)
+    document.addEventListener("click", (event) => {
+        const alvo = event.target.closest("[data-em-breve-painel], .menu-lista .item-breve");
 
+        if (!alvo) {
+            return;
+        }
 
-    /*
-     * O botão "Ver todas" das categorias possui uma ação própria.
-     *
-     * Mesmo que uma versão antiga do index.html ainda possua
-     * data-ir-ocorrencias nesse botão, removemos o atributo antes
-     * de registrar os eventos genéricos de navegação.
-     */
-    if (btnVerTodasCategoriasPainel) {
-        btnVerTodasCategoriasPainel.setAttribute(
-            "href",
-            "#"
-        );
+        event.preventDefault();
 
-        btnVerTodasCategoriasPainel.removeAttribute(
-            "data-ir-ocorrencias"
-        );
+        const nome = alvo.dataset.emBrevePainel || alvo.querySelector("span")?.textContent || "Este módulo";
 
-        btnVerTodasCategoriasPainel.addEventListener(
-            "click",
-            (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                event.stopImmediatePropagation();
+        mostrarMensagemPainel(`${nome.trim()}: em breve no Cidade360.`);
+    });
 
-                abrirTodasCategoriasPainel();
-            }
-        );
-    }
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && document.getElementById("modalTodasCategoriasPainel")) {
+            fecharTodasCategoriasPainel();
+        }
+    });
 
-
-    document
-        .querySelectorAll(
-            "[data-ir-ocorrencias]:not(#btnVerTodasCategoriasPainel)"
-        )
-        .forEach((elemento) => {
-            elemento.addEventListener(
-                "click",
-                (event) => {
-                    event.preventDefault();
-
-                    irParaOcorrenciasPainel();
-                }
-            );
-        });
-
-    btnNivelPainel
-        ?.addEventListener(
-            "click",
-            (event) => {
-                event.preventDefault();
-
-                if (ehAdministradorPainel()) {
-                    irParaOcorrenciasPainel();
-
-                    return;
-                }
-
-                const pontos =
-                    numeroPainel(
-                        estadoPainel.usuario?.pontos
-                    );
-
-                mostrarMensagemPainel(
-                    `${obterNivelPainel(pontos)}: ${formatarNumeroPainel(pontos)} pontos acumulados.`,
-                    "sucesso"
-                );
-            }
-        );
-
-    acaoNovaOcorrenciaPainel
-        ?.addEventListener(
-            "click",
-            irParaOcorrenciasPainel
-        );
-
-    acaoMinhasOcorrenciasPainel
-        ?.addEventListener(
-            "click",
-            irParaOcorrenciasPainel
-        );
-
-    document
-        .querySelectorAll(
-            "[data-comunicacao-painel]"
-        )
-        .forEach((elemento) => {
-            elemento.addEventListener(
-                "click",
-                (event) => {
-                    event.preventDefault();
-
-                    const nome =
-                        elemento.dataset.comunicacaoPainel ||
-                        "Comunicação";
-
-                    mostrarMensagemPainel(
-                        `${nome}: este módulo será conectado na próxima etapa.`,
-                        "info"
-                    );
-                }
-            );
-        });
-
-    btnConfiguracoesPainel
-        ?.addEventListener(
-            "click",
-            () => {
-                mostrarMensagemPainel(
-                    "Configurações do perfil serão conectadas na próxima etapa.",
-                    "info"
-                );
-            }
-        );
-
-    btnNotificacoesPainel
-        ?.addEventListener(
-            "click",
-            () => {
-                mostrarMensagemPainel(
-                    "Notificações serão conectadas na próxima etapa.",
-                    "info"
-                );
-            }
-        );
-
-    perfilUsuarioPainel
-        ?.addEventListener(
-            "click",
-            () => {
-                if (
-                    !estadoPainel.usuario
-                ) {
-                    return;
-                }
-
-                mostrarMensagemPainel(
-                    `${estadoPainel.usuario.nome} • ${estadoPainel.usuario.email}`,
-                    "info"
-                );
-            }
-        );
+    // O mapa claro/escuro muda só via CSS; aqui só recalculamos o tamanho.
+    window.addEventListener("cidade360:tema", () => {
+        setTimeout(() => estadoPainel.mapa?.invalidateSize(), 100);
+    });
 }
-
-
-document.addEventListener(
-    "fullscreenchange",
-    () => {
-        setTimeout(() => {
-            estadoPainel.mapa
-                ?.invalidateSize();
-        }, 150);
-    }
-);
 
 
 /*========================================================================================================
@@ -2178,139 +1328,73 @@ async function inicializarPainel() {
         return;
     }
 
-    estadoPainel.carregando =
-        true;
+    estadoPainel.carregando = true;
 
     try {
         await carregarUsuarioPainel();
 
-        ajustarPainelAdministrador();
+        ajustarTextosPainel();
         registrarEventosPainel();
         inicializarMapaPainel();
+        renderizarAcoesRapidasPainel();
 
-        const resultados =
-            await Promise.allSettled([
-                carregarResumoPainel(),
-                carregarTodasOcorrenciasPainel(),
-                carregarCategoriasGeraisPainel()
-            ]);
+        const resultados = await Promise.allSettled([
+            carregarResumoPainel(),
+            carregarTodasOcorrenciasPainel(),
+            carregarCategoriasGeraisPainel(),
+            carregarAvisosPainel()
+        ]);
 
         resultados.forEach((resultado) => {
-            if (
-                resultado.status === "rejected"
-            ) {
-                console.error(
-                    "Erro ao carregar painel:",
-                    resultado.reason
-                );
+            if (resultado.status === "rejected") {
+                console.error("Erro ao carregar painel:", resultado.reason);
             }
         });
 
-        if (
-            resultados[2]?.status === "rejected"
-        ) {
+        if (resultados[0].status === "rejected") {
+            renderizarBoasVindasPainel();
+            renderizarKpisPainel(true);
+
+            mostrarMensagemPainel("Não foi possível carregar o resumo. Atualize a página para tentar novamente.");
+        }
+
+        if (resultados[1].status === "rejected") {
+            renderizarErroOcorrenciasPainel();
+
+            mostrarMensagemPainel("Não foi possível carregar as ocorrências no mapa e na lista.");
+        }
+
+        if (resultados[2].status === "rejected") {
             renderizarErroCategoriasPainel();
         }
 
+        if (resultados[3].status === "rejected") {
+            renderizarAvisosPainel(true);
+        }
+
         if (ehAdministradorPainel()) {
-            if (
-                resultados[0]?.status === "rejected"
-            ) {
-                [
-                    numeroTotalPainel,
-                    numeroAndamentoPainel,
-                    numeroResolvidasPainel,
-                    numeroPontosPainel
-                ].forEach((elemento) => {
-                    if (elemento) {
-                        elemento.textContent =
-                            "—";
-                    }
-                });
-
-                mostrarMensagemPainel(
-                    "Não foi possível carregar o resumo administrativo. Atualize a página para tentar novamente.",
-                    "info"
-                );
-            }
-
-            if (
-                resultados[1]?.status === "rejected" &&
-                listaOcorrenciasRecentesPainel
-            ) {
-                listaOcorrenciasRecentesPainel.innerHTML = `
-                    <div class="painel-vazio">
-                        <strong>Não foi possível carregar as ocorrências.</strong>
-                        <span>Atualize a página para tentar novamente.</span>
-                    </div>
-                `;
-
-                mostrarMensagemPainel(
-                    "Não foi possível carregar as ocorrências do município no mapa e na lista.",
-                    "info"
-                );
-            }
-
             return;
         }
 
         try {
             await carregarOcorrenciasProximasPainel();
-
         } catch (error) {
-            console.error(
-                "Erro ao carregar ocorrências próximas:",
-                error
-            );
+            console.error("Erro ao carregar ocorrências próximas:", error);
 
-            mostrarMensagemPainel(
-                "Suas ocorrências foram carregadas, mas não foi possível consultar as ocorrências próximas.",
-                "info"
-            );
+            mostrarMensagemPainel("Suas ocorrências foram carregadas, mas não foi possível consultar as ocorrências próximas.");
         }
 
     } catch (error) {
-        console.error(
-            "Erro ao iniciar painel:",
-            error
-        );
+        console.error("Erro ao iniciar painel:", error);
 
     } finally {
-        estadoPainel.carregando =
-            false;
+        estadoPainel.carregando = false;
     }
 }
 
 
-/*========================================================================================================
-
-FECHA O CARD DE CATEGORIAS COM ESC
-
-=========================================================================================================*/
-
-document.addEventListener(
-    "keydown",
-    (event) => {
-        if (
-            event.key === "Escape" &&
-            document.getElementById(
-                "modalTodasCategoriasPainel"
-            )
-        ) {
-            fecharTodasCategoriasPainel();
-        }
-    }
-);
-
-
-if (
-    document.readyState === "loading"
-) {
-    document.addEventListener(
-        "DOMContentLoaded",
-        inicializarPainel
-    );
-
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", inicializarPainel);
 } else {
     inicializarPainel();
 }
