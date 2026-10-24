@@ -774,6 +774,10 @@ if (
     const PAGINA_OCORRENCIAS_TOPO = "/FrontEnd/pages/ocorrencia/ocorrencia.html";
     const LOGIN_PAGE_TOPO = "/FrontEnd/pages/login/login.html";
     const PAGINA_AVISOS_TOPO = "/FrontEnd/pages/avisos/avisos.html";
+    const PAGINA_PONTOS_TOPO = "/FrontEnd/pages/pontos/pontos.html";
+
+    // Saldo e título do cartão do perfil: busca de novo depois de 1 minuto.
+    const VALIDADE_RESUMO_PONTOS = 60 * 1000;
 
     // Também não começa com "cidade360_" para sobreviver ao logout.
     const CHAVE_LIDAS = "notificacoes_lidas_cidade360";
@@ -833,7 +837,9 @@ if (
         ferramenta: svg('<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-.5-.5-2.5z"/>'),
         confirmado: svg('<circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/>'),
         cancelado: svg('<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>'),
+        lixeira: svg('<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/>', 15),
         marcarLidas: svg('<path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/>', 16),
+        medalha: svg('<circle cx="12" cy="9" r="6"/><path d="m8.5 13.5-1.5 8.5 5-3 5 3-1.5-8.5"/>'),
         prancheta: svg('<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h4"/>'),
         usuario: svg('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'),
         ajustes: svg('<path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/>'),
@@ -853,7 +859,8 @@ if (
         em_andamento: { classe: "tom-verde", icone: ICONES.ferramenta },
         resolvido: { classe: "tom-roxo", icone: ICONES.confirmado },
         cancelado: { classe: "tom-vermelho", icone: ICONES.cancelado },
-        geral: { classe: "tom-indigo", icone: ICONES.megafone }
+        geral: { classe: "tom-indigo", icone: ICONES.megafone },
+        titulo: { classe: "tom-amarelo", icone: ICONES.medalha }
     };
 
 
@@ -876,7 +883,11 @@ if (
         painelAberto: null,
         gatilhos: {},
         paineis: {},
-        timerAtualizacao: null
+        timerAtualizacao: null,
+        // Cidadão: { saldo, titulo } vindo de /api/pontos/resumo
+        resumoPontos: null,
+        resumoPontosEm: 0,
+        carregandoResumoPontos: false
     };
 
 
@@ -1057,6 +1068,10 @@ if (
     ---------------------------------------------------------------*/
 
     function linkDaNotificacao(notificacao) {
+        if (notificacao.tipo === "titulo_novo") {
+            return PAGINA_PONTOS_TOPO;
+        }
+
         if (notificacao.aviso_id) {
             return `${PAGINA_AVISOS_TOPO}?aviso=${Number(notificacao.aviso_id) || 0}`;
         }
@@ -1068,13 +1083,50 @@ if (
         return null;
     }
 
+    function visualDoServidor(notificacao) {
+        if (notificacao.tipo === "titulo_novo") return "titulo";
+        if (notificacao.tipo === "aviso_novo") return "geral";
+
+        return VISUAL_NOTIFICACAO[notificacao.status] ? notificacao.status : "recebido";
+    }
+
+    // Lixeirinha: some da tela na hora e o servidor apaga do banco em segundo plano.
+    async function excluirNotificacao(id) {
+        const token = obterToken();
+        const idServidor = String(id).replace("srv-", "");
+
+        if (!token || estado.fonte !== "servidor") {
+            return;
+        }
+
+        estado.doServidor = estado.doServidor.filter((n) => String(n.id) !== idServidor);
+        estado.notificacoes = estado.notificacoes.filter((n) => n.id !== id);
+
+        renderizarNotificacoes();
+        atualizarContador();
+
+        try {
+            const resposta = await fetch(`${API_TOPO}/notificacoes/${encodeURIComponent(idServidor)}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            // 404 = já não existia: para o usuário dá no mesmo.
+            if (!resposta.ok && resposta.status !== 404) {
+                throw new Error(`HTTP ${resposta.status}`);
+            }
+        } catch (error) {
+            // Não apagou no banco: recarrega para a notificação voltar a aparecer.
+            console.warn("Não foi possível excluir a notificação.", error);
+            carregarNotificacoes({ silencioso: true });
+        }
+    }
+
     function montarNotificacoesDoServidor() {
         estado.notificacoes = estado.doServidor.map((notificacao) => ({
             id: `srv-${notificacao.id}`,
-            tipo: notificacao.tipo === "aviso_novo" ? "geral" : "ocorrencia",
-            visual: notificacao.tipo === "aviso_novo"
-                ? "geral"
-                : (VISUAL_NOTIFICACAO[notificacao.status] ? notificacao.status : "recebido"),
+            tipo: notificacao.tipo === "aviso_novo" || notificacao.tipo === "titulo_novo" ? "geral" : "ocorrencia",
+            visual: visualDoServidor(notificacao),
             titulo: notificacao.titulo,
             texto: notificacao.texto,
             pontos: Number(notificacao.pontos) || 0,
@@ -1355,8 +1407,11 @@ if (
                     ${visiveis.map((notificacao) => {
                         const visual = VISUAL_NOTIFICACAO[notificacao.visual] || VISUAL_NOTIFICACAO.geral;
 
+                        // Só dá para excluir as que estão salvas no banco.
+                        const podeExcluir = estado.fonte === "servidor";
+
                         return `
-                            <li>
+                            <li class="linha-notificacao">
                                 <button type="button" class="item-notificacao ${notificacao.lida ? "" : "nao-lida"}"
                                     data-notificacao="${escaparHtml(notificacao.id)}">
                                     <span class="item-notificacao-icone ${visual.classe}">${visual.icone}</span>
@@ -1370,6 +1425,11 @@ if (
                                     </span>
                                     ${notificacao.lida ? "" : '<span class="ponto-nao-lida" aria-label="Não lida"></span>'}
                                 </button>
+                                ${podeExcluir ? `
+                                <button type="button" class="excluir-notificacao" data-acao="excluir" data-id="${escaparHtml(notificacao.id)}"
+                                    aria-label="Excluir notificação: ${escaparHtml(notificacao.titulo)}" title="Excluir notificação">
+                                    ${ICONES.lixeira}
+                                </button>` : ""}
                             </li>
                         `;
                     }).join("")}
@@ -1424,6 +1484,23 @@ if (
             return;
         }
 
+        if (acao === "excluir") {
+            const botao = event.target.closest("[data-acao]");
+            const linha = botao.closest(".linha-notificacao");
+            const vizinha = linha?.nextElementSibling || linha?.previousElementSibling;
+            const focoDepois = vizinha?.querySelector(".item-notificacao")?.dataset.notificacao;
+
+            excluirNotificacao(botao.dataset.id);
+
+            // O painel é redesenhado: o foco vai para a notificação ao lado (teclado/leitor de tela).
+            const proxima = focoDepois
+                ? estado.paineis.notificacoes?.querySelector(`[data-notificacao="${CSS.escape(focoDepois)}"]`)
+                : null;
+
+            (proxima || estado.paineis.notificacoes)?.focus?.();
+            return;
+        }
+
         const item = event.target.closest("[data-notificacao]");
 
         if (item) {
@@ -1464,7 +1541,10 @@ if (
                 <div class="perfil-topo-dados">
                     <strong title="${escaparHtml(nome)}">${escaparHtml(nome)}</strong>
                     ${usuario.email ? `<span title="${escaparHtml(usuario.email)}">${escaparHtml(usuario.email)}</span>` : ""}
-                    <em class="selo-tipo-usuario ${admin ? "admin" : ""}">${nomeTipoUsuario()}</em>
+                    <div class="selos-perfil-topo">
+                        <em class="selo-tipo-usuario ${admin ? "admin" : ""}">${nomeTipoUsuario()}</em>
+                        ${admin ? "" : seloTituloPerfil()}
+                    </div>
                 </div>
             </div>
 
@@ -1475,10 +1555,16 @@ if (
                     <small class="em-breve">Em breve</small>
                 </div>
 
+                ${admin ? `
                 <a class="opcao-topo" role="menuitem" href="${PAGINA_OCORRENCIAS_TOPO}">
                     ${ICONES.prancheta}
-                    <span>${admin ? "Todas as ocorrências" : "Minhas ocorrências"}</span>
-                </a>
+                    <span>Todas as ocorrências</span>
+                </a>` : `
+                <a class="opcao-topo" role="menuitem" href="${PAGINA_PONTOS_TOPO}">
+                    ${ICONES.medalha}
+                    <span>Meus pontos</span>
+                    ${estado.resumoPontos ? `<small class="contagem-pontos-topo">${formatarPontos(estado.resumoPontos.saldo)}</small>` : ""}
+                </a>`}
 
                 <button type="button" class="opcao-topo" role="menuitem" data-acao="abrir-configuracoes">
                     ${ICONES.ajustes}
@@ -1499,6 +1585,61 @@ if (
                 </button>
             </div>
         `;
+    }
+
+    // Cartão do perfil do cidadão: título atual (a partir de 100 pontos).
+    function seloTituloPerfil() {
+        const titulo = estado.resumoPontos?.titulo;
+
+        if (!titulo) {
+            return "";
+        }
+
+        return `<em class="selo-titulo-usuario" title="Seu título no Cidade360">${ICONES.medalha}${escaparHtml(titulo.nome)}</em>`;
+    }
+
+    function formatarPontos(valor) {
+        const pontos = Number(valor) || 0;
+        return `${pontos.toLocaleString("pt-BR")} ${pontos === 1 ? "pt" : "pts"}`;
+    }
+
+    async function carregarResumoPontos() {
+        const token = obterToken();
+        const recente = Date.now() - estado.resumoPontosEm < VALIDADE_RESUMO_PONTOS;
+
+        if (!token || ehAdministrador() || estado.carregandoResumoPontos || recente) {
+            return;
+        }
+
+        estado.carregandoResumoPontos = true;
+
+        try {
+            const resposta = await fetch(`${API_TOPO}/pontos/resumo`, {
+                headers: { Authorization: `Bearer ${token}` },
+                cache: "no-store"
+            });
+
+            // 503 = banco ainda sem a migração 007: o menu fica sem o título.
+            if (!resposta.ok) {
+                return;
+            }
+
+            const dados = await resposta.json();
+
+            estado.resumoPontos = {
+                saldo: Number(dados.saldo) || 0,
+                titulo: dados.titulo || null
+            };
+
+            if (estado.painelAberto === "perfil") {
+                renderizarPerfil();
+            }
+        } catch (error) {
+            // Sem rede: o menu continua funcionando sem o título.
+        } finally {
+            estado.resumoPontosEm = Date.now();
+            estado.carregandoResumoPontos = false;
+        }
     }
 
     function tratarCliquePerfil(event) {
@@ -1714,6 +1855,7 @@ if (
 
         if (nome === "perfil") {
             renderizarPerfil();
+            carregarResumoPontos();
         }
 
         if (nome === "configuracoes") {
@@ -1839,7 +1981,11 @@ if (
         }
 
         if (mudouDeUsuario) {
+            estado.resumoPontos = null;
+            estado.resumoPontosEm = 0;
+
             carregarNotificacoes({ silencioso: true });
+            carregarResumoPontos();
         }
     }
 

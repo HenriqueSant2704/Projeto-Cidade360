@@ -1058,6 +1058,52 @@ button {
     background-color: var(--accent);
 }
 
+/* Lixeirinha: aparece ao passar o mouse ou focar a notificação (no celular fica sempre visível) */
+.linha-notificacao {
+    position: relative;
+}
+
+.excluir-notificacao {
+    position: absolute;
+    right: 4px;
+    bottom: 6px;
+
+    width: 28px;
+    height: 28px;
+
+    display: grid;
+    place-items: center;
+
+    padding: 0;
+    border: none;
+    border-radius: 9px;
+
+    background: transparent;
+    color: var(--muted);
+
+    opacity: 0;
+    cursor: pointer;
+
+    transition: opacity .15s ease, background-color .15s ease, color .15s ease;
+}
+
+.linha-notificacao:hover .excluir-notificacao,
+.linha-notificacao:focus-within .excluir-notificacao {
+    opacity: 1;
+}
+
+.excluir-notificacao:hover,
+.excluir-notificacao:focus-visible {
+    background-color: var(--danger-soft);
+    color: var(--danger);
+}
+
+@media (hover: none) {
+    .excluir-notificacao {
+        opacity: .7;
+    }
+}
+
 .notificacoes-estado {
     min-height: 220px;
 
@@ -1210,6 +1256,58 @@ button {
 
 .selo-tipo-usuario.admin {
     color: var(--s-andamento);
+}
+
+/* Selos do cartão do perfil: tipo de usuário + título do cidadão */
+.selos-perfil-topo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+
+    margin-top: 6px;
+}
+
+.selos-perfil-topo .selo-tipo-usuario {
+    margin-top: 0;
+}
+
+.selo-titulo-usuario {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+
+    max-width: 100%;
+    padding: 3px 10px 3px 8px;
+
+    border-radius: 999px;
+
+    background-color: var(--s-analise-soft);
+    color: var(--s-analise);
+
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.selo-titulo-usuario svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+}
+
+.contagem-pontos-topo {
+    margin-left: auto;
+    padding: 2px 8px;
+
+    border-radius: 999px;
+
+    background-color: var(--accent-soft);
+    color: var(--accent);
+
+    font-size: 11px;
+    font-weight: 600;
 }
 
 .lista-opcoes-topo {

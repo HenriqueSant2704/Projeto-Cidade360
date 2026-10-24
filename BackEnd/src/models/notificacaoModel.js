@@ -152,6 +152,28 @@ const NotificacaoModel = {
     },
 
 
+    // Lixeirinha do sininho: apaga de vez do banco.
+    // O usuario_id no WHERE impede apagar a notificação de outra pessoa.
+    // Os pontos não mudam: o saldo vem de pontos_historico, não das notificações.
+    async excluir({
+        id,
+        usuarioId
+    }) {
+        const [resultado] =
+            await db.query(
+                `DELETE FROM notificacoes
+                 WHERE id = ?
+                   AND usuario_id = ?`,
+                [
+                    id,
+                    usuarioId
+                ]
+            );
+
+        return resultado.affectedRows > 0;
+    },
+
+
     /*----------------------------------------------------------------------------------------------------
       AVISOS NOVOS
       Um aviso é "Novo" para o usuário enquanto a notificação dele não foi lida.

@@ -24,6 +24,8 @@ const API_AVISOS_PAINEL = "/api/avisos";
 const PAGINA_LOGIN_PAINEL = "/FrontEnd/pages/login/login.html";
 const PAGINA_OCORRENCIAS_PAINEL = "/FrontEnd/pages/ocorrencia/ocorrencia.html";
 const PAGINA_AVISOS_PAINEL = "/FrontEnd/pages/avisos/avisos.html";
+const PAGINA_PONTOS_PAINEL = "/FrontEnd/pages/pontos/pontos.html";
+const API_PONTOS_PAINEL = "/api/pontos/resumo";
 
 const LIMITE_OCORRENCIAS_PAINEL = 50;
 const LIMITE_RECENTES_PAINEL = 5;
@@ -44,6 +46,8 @@ ESTADO
 const estadoPainel = {
     usuario: null,
     resumo: null,
+    // Cidadão: { saldo, titulo, proximo_titulo } de /api/pontos/resumo
+    pontos: null,
     ocorrencias: [],
     ocorrenciasProximas: [],
     categoriasGerais: [],
@@ -240,37 +244,57 @@ function linkOcorrenciasPainel(parametros = {}) {
 
 /*========================================================================================================
 
-NÍVEL DO CIDADÃO
+TÍTULO DO CIDADÃO
+
+Os títulos (um a cada 100 pontos, até 800) vêm do servidor: /api/pontos/resumo.
+São os mesmos da página "Meus pontos" (BackEnd/src/utils/titulosCidadao.js).
 
 =========================================================================================================*/
 
-const NIVEIS_PAINEL = [
-    { minimo: 0, nome: "Cidadão Iniciante" },
-    { minimo: 100, nome: "Cidadão Participativo" },
-    { minimo: 500, nome: "Cidadão Ativo" },
-    { minimo: 2000, nome: "Cidadão Destaque" }
-];
-
-
-function obterNivelPainel(pontos) {
-    const total = numeroPainel(pontos);
-
-    let indice = NIVEIS_PAINEL.length - 1;
-
-    while (indice > 0 && total < NIVEIS_PAINEL[indice].minimo) {
-        indice--;
+async function carregarPontosPainel() {
+    if (ehAdministradorPainel()) {
+        return;
     }
 
-    const atual = NIVEIS_PAINEL[indice];
-    const proximo = NIVEIS_PAINEL[indice + 1] || null;
+    try {
+        const resposta = await fetchAutenticadoPainel(API_PONTOS_PAINEL, { method: "GET" });
+        const dados = await lerRespostaPainel(resposta);
+
+        // 503 = banco ainda sem a migração 007: o cartão mostra só os pontos.
+        if (!resposta.ok || !dados?.sucesso) {
+            return;
+        }
+
+        estadoPainel.pontos = dados;
+
+        renderizarBoasVindasPainel();
+        renderizarKpisPainel();
+
+    } catch (error) {
+        console.warn("Não foi possível carregar o título do cidadão.", error);
+    }
+}
+
+
+function obterTituloPainel(pontos) {
+    const dados = estadoPainel.pontos;
+
+    if (!dados) {
+        return { nome: "Meus pontos", proximo: null, faltam: 0, percentual: 0, carregado: false };
+    }
+
+    const total = numeroPainel(dados.saldo ?? pontos);
+    const inicio = dados.titulo ? dados.titulo.pontos : 0;
+    const proximo = dados.proximo_titulo || null;
 
     return {
-        nome: atual.nome,
+        nome: dados.titulo ? dados.titulo.nome : "Rumo ao primeiro título",
         proximo,
-        faltam: proximo ? proximo.minimo - total : 0,
+        faltam: proximo ? proximo.pontos - total : 0,
         percentual: proximo
-            ? Math.min(100, ((total - atual.minimo) / (proximo.minimo - atual.minimo)) * 100)
-            : 100
+            ? Math.min(100, ((total - inicio) / (proximo.pontos - inicio)) * 100)
+            : 100,
+        carregado: true
     };
 }
 
@@ -452,8 +476,8 @@ function renderizarBoasVindasPainel() {
         return;
     }
 
-    const pontos = numeroPainel(estadoPainel.usuario?.pontos);
-    const nivel = obterNivelPainel(pontos);
+    const pontos = numeroPainel(estadoPainel.pontos?.saldo ?? estadoPainel.usuario?.pontos);
+    const nivel = obterTituloPainel(pontos);
     const emAberto = estadoPainel.ocorrencias.filter((ocorrencia) => {
         const chave = chaveStatusPainel(ocorrencia.status);
         return chave !== "resolvido" && chave !== "cancelado";
@@ -474,17 +498,19 @@ function renderizarBoasVindasPainel() {
             </div>
         </div>
 
-        <div class="nivel">
+        <a class="nivel" href="${PAGINA_PONTOS_PAINEL}" title="Ver meus pontos e títulos">
             <div class="nivel-topo">
                 <span class="nivel-medalha">${iconePainel("medalha", 22)}</span>
-                <div><strong>${escaparHtmlPainel(nivel.nome)}</strong><span>Seu nível no Cidade360</span></div>
+                <div><strong>${escaparHtmlPainel(nivel.nome)}</strong><span>Seu título no Cidade360</span></div>
             </div>
             <div class="hero-numero"><b>${formatarNumeroPainel(pontos)}</b><span>pontos</span></div>
             <div class="barra-nivel"><i style="width:${nivel.percentual}%"></i></div>
-            <span>${nivel.proximo
-                ? `Faltam ${formatarNumeroPainel(nivel.faltam)} pts para ${escaparHtmlPainel(nivel.proximo.nome)}`
-                : "Você chegou ao nível máximo!"}</span>
-        </div>
+            <span>${!nivel.carregado
+                ? "Veja seu histórico de pontos"
+                : nivel.proximo
+                    ? `Faltam ${formatarNumeroPainel(nivel.faltam)} pts para ${escaparHtmlPainel(nivel.proximo.nome)}`
+                    : "Você conquistou todos os títulos!"}</span>
+        </a>
     `;
 }
 
@@ -495,10 +521,12 @@ NÚMEROS (KPIs)
 
 =========================================================================================================*/
 
-function htmlKpiPainel({ cor, icone, valor, titulo, sub, status }) {
-    const link = status !== undefined;
+function htmlKpiPainel({ cor, icone, valor, titulo, sub, status, destino }) {
+    const link = status !== undefined || Boolean(destino);
     const tag = link ? "a" : "div";
-    const href = link ? ` href="${linkOcorrenciasPainel(status ? { status } : {})}"` : "";
+    const href = destino
+        ? ` href="${destino}"`
+        : link ? ` href="${linkOcorrenciasPainel(status ? { status } : {})}"` : "";
 
     return `
         <${tag} class="kpi" data-k="${cor}"${href}>
@@ -533,13 +561,13 @@ function renderizarKpisPainel(falhou = false) {
         return;
     }
 
-    const pontos = numeroPainel(estadoPainel.usuario?.pontos);
+    const pontos = numeroPainel(estadoPainel.pontos?.saldo ?? estadoPainel.usuario?.pontos);
 
     kpisPainel.innerHTML = [
         { cor: "azul", icone: "lista", valor: valor("total"), titulo: "Minhas ocorrências", sub: "Total registradas", status: "" },
         { cor: "verde", icone: "andamento", valor: valor("em_andamento"), titulo: "Em andamento", sub: "Sendo atendidas agora", status: "em_andamento" },
         { cor: "roxo", icone: "checkCirculo", valor: valor("resolvidas"), titulo: "Resolvidas", sub: "Ocorrências concluídas", status: "resolvido" },
-        { cor: "laranja", icone: "estrela", valor: formatarNumeroPainel(pontos), titulo: "Pontos acumulados", sub: escaparHtmlPainel(obterNivelPainel(pontos).nome) }
+        { cor: "laranja", icone: "estrela", valor: formatarNumeroPainel(pontos), titulo: "Pontos acumulados", sub: escaparHtmlPainel(obterTituloPainel(pontos).nome), destino: PAGINA_PONTOS_PAINEL }
     ].map(htmlKpiPainel).join("");
 }
 
@@ -1424,7 +1452,8 @@ async function inicializarPainel() {
             carregarResumoPainel(),
             carregarTodasOcorrenciasPainel(),
             carregarCategoriasGeraisPainel(),
-            carregarAvisosPainel()
+            carregarAvisosPainel(),
+            carregarPontosPainel()
         ]);
 
         resultados.forEach((resultado) => {

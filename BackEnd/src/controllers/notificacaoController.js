@@ -127,6 +127,55 @@ const NotificacaoController = {
     },
 
 
+    async excluir(
+        req,
+        res
+    ) {
+        try {
+            const id =
+                Number(req.params.id);
+
+            if (!Number.isInteger(id) || id <= 0) {
+                return res
+                    .status(400)
+                    .json({
+                        sucesso: false,
+                        mensagem: "Notificação inválida."
+                    });
+            }
+
+            const encontrada =
+                await NotificacaoModel.excluir({
+                    id,
+                    usuarioId:
+                        req.usuario.id
+                });
+
+            if (!encontrada) {
+                return res
+                    .status(404)
+                    .json({
+                        sucesso: false,
+                        mensagem: "Notificação não encontrada."
+                    });
+            }
+
+            return res
+                .status(200)
+                .json({
+                    sucesso: true
+                });
+
+        } catch (error) {
+            return responderErro(
+                res,
+                error,
+                "Não foi possível excluir a notificação."
+            );
+        }
+    },
+
+
     // Chamado ao abrir a página de Avisos: os avisos deixam de ser "Novo".
     async marcarAvisosComoLidos(
         req,

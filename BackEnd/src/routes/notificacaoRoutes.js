@@ -41,5 +41,11 @@ router.patch(
     NotificacaoController.marcarComoLida
 );
 
+// Excluir uma (lixeirinha do sininho)
+router.delete(
+    "/:id",
+    NotificacaoController.excluir
+);
+
 module.exports =
     router;

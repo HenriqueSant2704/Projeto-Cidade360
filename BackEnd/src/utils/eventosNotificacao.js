@@ -6,6 +6,11 @@ const NotificacaoModel =
 const PontosModel =
     require("../models/pontosModel");
 
+const {
+    tituloDoSaldo
+} =
+    require("./titulosCidadao");
+
 
 /*========================================================================================================
 
@@ -14,6 +19,7 @@ EVENTOS QUE GERAM NOTIFICAÇÃO (E PONTOS)
 - Cidadão registra ocorrência  → todos os admins são avisados; o cidadão ganha pontos.
 - Admin muda o status          → o dono da ocorrência é avisado; ganha (ou perde) pontos.
 - Admin publica aviso          → todos os usuários ativos são avisados (menos quem publicou).
+- Cidadão passa de 100, 200... → ganha um título novo e é avisado (abre "Meus pontos").
 
 Tudo aqui é "melhor esforço": se der erro, a ação principal (registrar, mudar status,
 publicar) já foi salva e continua valendo. O erro só vai para o log.
@@ -181,6 +187,46 @@ function textoDoStatus({
 }
 
 
+/*
+  Depois de ganhar pontos: se o saldo passou de um título para o próximo, avisa no sininho.
+  Fica separado da notificação da ocorrência para um erro aqui não apagar aquela.
+  Se o título for perdido (cancelamento) e reconquistado, o aviso aparece de novo.
+*/
+async function avisarTituloNovo({
+    usuarioId,
+    pontos
+}) {
+    if (pontos <= 0) {
+        return;
+    }
+
+    try {
+        const saldo =
+            await PontosModel.saldoDoUsuario(usuarioId);
+
+        const tituloAtual =
+            tituloDoSaldo(saldo);
+
+        const tituloAnterior =
+            tituloDoSaldo(saldo - pontos);
+
+        if (!tituloAtual || tituloAtual.nivel === tituloAnterior?.nivel) {
+            return;
+        }
+
+        await NotificacaoModel.criarParaUsuario({
+            usuarioId,
+            tipo: "titulo_novo",
+            titulo: `Título novo: ${tituloAtual.nome}`,
+            texto: `Você chegou a ${tituloAtual.pontos} pontos e conquistou o título "${tituloAtual.nome}". Veja os próximos em Meus pontos.`
+        });
+
+    } catch (error) {
+        registrarFalha("título novo", error);
+    }
+}
+
+
 /*========================================================================================================
 
 EVENTOS
@@ -227,6 +273,11 @@ async function aoRegistrarOcorrencia({
             ocorrenciaId
         });
 
+        await avisarTituloNovo({
+            usuarioId: ocorrencia.usuario_id,
+            pontos
+        });
+
     } catch (error) {
         registrarFalha("ocorrência registrada", error);
     }
@@ -271,6 +322,11 @@ async function aoMudarStatusOcorrencia({
             titulo,
             texto: `${texto}${textoPontos(pontos, anterior === "cancelado")}${textoMensagemAdmin(observacao)}`,
             ocorrenciaId,
+            pontos
+        });
+
+        await avisarTituloNovo({
+            usuarioId: ocorrencia.usuario_id,
             pontos
         });
 

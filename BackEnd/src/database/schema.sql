@@ -552,7 +552,9 @@ CREATE TABLE IF NOT EXISTS notificacoes (
         'ocorrencia_registrada',
         'ocorrencia_nova',
         'ocorrencia_status',
-        'aviso_novo'
+        'aviso_novo',
+        -- Cidadão conquistou um título (migração 009)
+        'titulo_novo'
     ) NOT NULL,
 
     -- Chave do status da ocorrência (recebido, em_analise, em_andamento,

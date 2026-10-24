@@ -1,0 +1,849 @@
+/*========================================================================================================
+
+MEUS PONTOS
+
+Saldo, título atual, trilha dos títulos e histórico de pontos por ocorrência.
+O menu lateral, o topo, as cores (claro/escuro) e a .pilula de status vêm do global.css.
+
+=========================================================================================================*/
+
+.pagina-pontos {
+    width: 100%;
+    max-width: var(--largura-pagina, 1240px);
+    margin: 0 auto;
+    padding: 28px var(--respiro-pagina, 24px) 64px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+
+    color: var(--ink);
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+}
+
+.pagina-pontos *,
+.pagina-pontos *::before,
+.pagina-pontos *::after {
+    box-sizing: border-box;
+}
+
+.pagina-pontos button {
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.pagina-pontos :focus-visible {
+    outline: 3px solid var(--accent-ring);
+    outline-offset: 2px;
+    border-radius: 10px;
+}
+
+.pagina-pontos h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.pagina-pontos .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.pagina-pontos .esqueleto {
+    height: 120px;
+    border-radius: 22px;
+    border: 1px solid var(--line);
+    background: linear-gradient(90deg, var(--surface) 0%, var(--surface-2) 50%, var(--surface) 100%);
+    background-size: 200% 100%;
+    animation: brilho-pontos 1.4s ease-in-out infinite;
+}
+
+.pagina-pontos .esqueleto.alto {
+    height: 180px;
+    width: 100%;
+    grid-column: 1 / -1;
+    border: 0;
+    background: rgba(255, 255, 255, .12);
+}
+
+@keyframes brilho-pontos {
+    to { background-position: -200% 0; }
+}
+
+
+/*========================================================================================================
+RESUMO (faixa colorida no topo)
+=========================================================================================================*/
+
+.pontos-resumo {
+    position: relative;
+    overflow: hidden;
+
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 22px 40px;
+    align-items: center;
+
+    padding: 28px 32px;
+
+    border-radius: 28px;
+
+    background: linear-gradient(120deg, var(--hero-a) 0%, var(--hero-b) 100%);
+    color: #ffffff;
+    box-shadow: var(--shadow);
+}
+
+.pontos-resumo::after {
+    content: "";
+    position: absolute;
+    right: -70px;
+    top: -90px;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, .18) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.pontos-resumo .rotulo {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: .3px;
+    opacity: .85;
+}
+
+.resumo-saldo {
+    display: flex;
+    flex-direction: column;
+    padding-right: 40px;
+    border-right: 1px solid rgba(255, 255, 255, .25);
+}
+
+.numero-saldo {
+    font-size: 54px;
+    line-height: 1.05;
+    font-weight: 700;
+    letter-spacing: -1px;
+    font-variant-numeric: tabular-nums;
+}
+
+.resumo-saldo .unidade {
+    font-size: 13px;
+    opacity: .85;
+}
+
+.resumo-titulo {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+}
+
+.medalha-atual {
+    position: relative;
+    flex-shrink: 0;
+
+    width: 64px;
+    height: 64px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 20px;
+
+    background: linear-gradient(135deg, #fde68a, #f59e0b);
+    color: #78350f;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, .18);
+}
+
+.medalha-atual span {
+    position: absolute;
+    right: -6px;
+    bottom: -6px;
+
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+
+    display: grid;
+    place-items: center;
+
+    border: 2px solid #ffffff;
+    border-radius: 999px;
+
+    background: #78350f;
+    color: #ffffff;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.medalha-atual.vazia {
+    background: rgba(255, 255, 255, .16);
+    color: rgba(255, 255, 255, .85);
+    box-shadow: none;
+}
+
+.dados-titulo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.dados-titulo strong {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.dados-titulo small {
+    font-size: 13px;
+    opacity: .85;
+}
+
+.resumo-progresso {
+    grid-column: 1 / -1;
+    position: relative;
+    z-index: 1;
+}
+
+.linha-progresso {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin-bottom: 10px;
+    font-size: 13.5px;
+}
+
+.linha-progresso b {
+    font-weight: 700;
+}
+
+.contagem-titulos {
+    opacity: .85;
+}
+
+.barra-progresso {
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .22);
+    overflow: hidden;
+}
+
+.barra-progresso span {
+    display: block;
+    height: 100%;
+    min-width: 6px;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #fde68a, #fbbf24);
+    transition: width .8s var(--ease);
+}
+
+
+/*========================================================================================================
+GRADE: histórico + lateral
+=========================================================================================================*/
+
+.pontos-grade {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 22px;
+    align-items: start;
+}
+
+.pontos-historico,
+.cartao-pontos {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+}
+
+.pontos-historico {
+    padding: 24px;
+}
+
+.pontos-lateral {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    position: sticky;
+    top: 92px;
+}
+
+.cartao-pontos {
+    padding: 22px;
+}
+
+.cartao-pontos .legenda {
+    margin: 4px 0 16px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.cabecalho-secao {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.cabecalho-secao p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+
+/*========================================================================================================
+FILTROS
+=========================================================================================================*/
+
+.filtros-pontos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.filtro-pontos {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 7px 14px;
+
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+
+    background: var(--surface);
+    color: var(--ink-soft);
+
+    font-size: 13px;
+    font-weight: 500;
+
+    transition: background-color .2s, color .2s, border-color .2s;
+}
+
+.filtro-pontos span {
+    min-width: 22px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.filtro-pontos:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.filtro-pontos[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #ffffff;
+}
+
+.filtro-pontos[aria-pressed="true"] span {
+    background: rgba(255, 255, 255, .22);
+    color: #ffffff;
+}
+
+
+/*========================================================================================================
+HISTÓRICO POR OCORRÊNCIA
+=========================================================================================================*/
+
+.lista-historico {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.cartao-ocorrencia-pontos {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: start;
+
+    padding: 16px 18px;
+
+    border: 1px solid var(--line);
+    border-radius: 18px;
+
+    background: var(--surface);
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.cartao-ocorrencia-pontos:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow);
+}
+
+.icone-categoria {
+    width: 42px;
+    height: 42px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 14px;
+
+    background: var(--st-soft);
+    color: var(--st);
+}
+
+.corpo-ocorrencia {
+    min-width: 0;
+}
+
+.linha-titulo {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+}
+
+.linha-titulo a {
+    min-width: 0;
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+
+.linha-titulo a:hover {
+    color: var(--accent);
+    text-decoration: underline;
+}
+
+.detalhes {
+    margin: 4px 0 10px;
+    font-size: 12.5px;
+    color: var(--muted);
+}
+
+.chips-etapas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.chip-etapa {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    padding: 4px 10px;
+
+    border-radius: 10px;
+
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+
+    font-size: 12px;
+}
+
+.chip-etapa b {
+    color: var(--s-andamento);
+    font-weight: 700;
+}
+
+.sem-movimento {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--muted);
+}
+
+.total-ocorrencia {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: 64px;
+    text-align: right;
+}
+
+.total-ocorrencia strong {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.total-ocorrencia.positivo strong {
+    color: var(--s-andamento);
+}
+
+.total-ocorrencia small {
+    font-size: 11.5px;
+    color: var(--muted);
+}
+
+.total-ocorrencia s {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+/* Canceladas: tudo mais apagado, total zerado em vermelho */
+.cartao-ocorrencia-pontos.eh-cancelada {
+    background: color-mix(in srgb, var(--s-cancelado-soft) 45%, var(--surface));
+    border-style: dashed;
+}
+
+.eh-cancelada .chip-etapa {
+    text-decoration: line-through;
+    opacity: .7;
+}
+
+.eh-cancelada .chip-etapa b {
+    color: var(--muted);
+}
+
+.total-ocorrencia.cancelada strong {
+    color: var(--s-cancelado);
+}
+
+.aviso-cancelada {
+    margin: 10px 0 0;
+    font-size: 12.5px;
+    color: var(--s-cancelado);
+}
+
+
+/*========================================================================================================
+TRILHA DOS TÍTULOS
+=========================================================================================================*/
+
+.trilha-titulos {
+    position: relative;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Linha vertical ligando as medalhas */
+.trilha-titulos::before {
+    content: "";
+    position: absolute;
+    left: 19px;
+    top: 20px;
+    bottom: 20px;
+    width: 2px;
+    background: var(--line-strong);
+}
+
+.titulo-trilha {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 6px 10px 6px 0;
+    border-radius: 14px;
+}
+
+.icone-trilha {
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+
+    width: 40px;
+    height: 40px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 50%;
+    border: 2px solid var(--surface);
+}
+
+.titulo-trilha.conquistado .icone-trilha {
+    background: linear-gradient(135deg, #fde68a, #f59e0b);
+    color: #78350f;
+}
+
+.titulo-trilha.bloqueado .icone-trilha {
+    background: var(--surface-2);
+    color: var(--muted);
+    box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.texto-trilha {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.texto-trilha strong {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.texto-trilha small {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.titulo-trilha.bloqueado .texto-trilha strong {
+    color: var(--muted);
+}
+
+.titulo-trilha.atual {
+    background: var(--s-analise-soft);
+}
+
+.titulo-trilha.atual .icone-trilha {
+    box-shadow: 0 0 0 4px color-mix(in srgb, #f59e0b 30%, transparent);
+}
+
+.selo-atual {
+    margin-left: auto;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--s-analise);
+    color: #ffffff;
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+html[data-tema="escuro"] .selo-atual {
+    color: #1f1300;
+}
+
+
+/*========================================================================================================
+COMO GANHAR PONTOS
+=========================================================================================================*/
+
+.regras-pontos {
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.regras-pontos li {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+
+    font-size: 13.5px;
+    color: var(--ink-soft);
+}
+
+.icone-regra {
+    width: 30px;
+    height: 30px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 10px;
+
+    background: var(--st-soft);
+    color: var(--st);
+}
+
+.regras-pontos b {
+    color: var(--s-andamento);
+    font-weight: 700;
+}
+
+.regras-pontos .regra-cancelada {
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+}
+
+.regras-pontos .regra-cancelada b {
+    color: var(--s-cancelado);
+}
+
+
+/*========================================================================================================
+ESTADOS (vazio, erro, indisponível)
+=========================================================================================================*/
+
+.estado-vazio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+
+    padding: 40px 20px;
+
+    text-align: center;
+    color: var(--muted);
+}
+
+.estado-vazio strong {
+    font-size: 16px;
+    color: var(--ink);
+}
+
+.estado-vazio p {
+    margin: 0;
+    max-width: 380px;
+    font-size: 13.5px;
+}
+
+.estado-vazio.pequeno {
+    padding: 28px 16px;
+}
+
+.estado-vazio.no-resumo {
+    grid-column: 1 / -1;
+    padding: 12px 0;
+    color: rgba(255, 255, 255, .9);
+}
+
+.estado-vazio.no-resumo strong {
+    color: #ffffff;
+}
+
+.estado-vazio.no-resumo a,
+.link-tentar {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #ffffff;
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.botao-primario {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    margin-top: 8px;
+    padding: 10px 18px;
+
+    border-radius: 12px;
+
+    background: var(--accent);
+    color: #ffffff;
+
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+
+    transition: background-color .2s;
+}
+
+.botao-primario:hover {
+    background: var(--accent-strong);
+}
+
+
+/*========================================================================================================
+TELAS MENORES
+=========================================================================================================*/
+
+@media (max-width: 1080px) {
+    .pontos-grade {
+        grid-template-columns: 1fr;
+    }
+
+    /* Telas menores: títulos antes do histórico, regras depois */
+    .pontos-lateral {
+        display: contents;
+    }
+
+    .pontos-lateral .cartao-pontos:first-child {
+        order: -1;
+    }
+}
+
+@media (max-width: 640px) {
+    .pagina-pontos {
+        padding-top: 18px;
+        gap: 16px;
+    }
+
+    .pontos-resumo {
+        grid-template-columns: 1fr;
+        gap: 18px;
+        padding: 22px 20px;
+        border-radius: 22px;
+    }
+
+    .resumo-saldo {
+        padding-right: 0;
+        padding-bottom: 16px;
+        border-right: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, .25);
+    }
+
+    .numero-saldo {
+        font-size: 44px;
+    }
+
+    .dados-titulo strong {
+        font-size: 20px;
+    }
+
+    .pontos-historico,
+    .cartao-pontos {
+        padding: 18px 16px;
+        border-radius: 20px;
+    }
+
+    .cartao-ocorrencia-pontos {
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 12px;
+        padding: 14px;
+    }
+
+    .total-ocorrencia {
+        grid-column: 2;
+        flex-direction: row;
+        align-items: baseline;
+        justify-content: flex-start;
+        gap: 6px;
+        text-align: left;
+    }
+
+    .total-ocorrencia strong {
+        font-size: 18px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .barra-progresso span,
+    .pagina-pontos .esqueleto {
+        transition: none;
+        animation: none;
+    }
+}

@@ -164,6 +164,97 @@ const PontosModel = {
         } finally {
             conexao.release();
         }
+    },
+
+
+    async saldoDoUsuario(usuarioId) {
+        const [[usuario]] =
+            await db.query(
+                "SELECT pontos FROM usuarios WHERE id = ?",
+                [usuarioId]
+            );
+
+        return Number(usuario?.pontos || 0);
+    },
+
+
+    /*
+      Tela "Meus pontos": todas as ocorrências do cidadão, cada uma com os
+      movimentos de pontos dela (ganhos por etapa, cancelamento, reabertura).
+      Ocorrências sem nenhum movimento também vêm, com total 0.
+    */
+    async historicoDoUsuario(usuarioId) {
+        const [ocorrencias] =
+            await db.query(
+                `SELECT
+                    o.id,
+                    o.titulo,
+                    o.bairro,
+                    o.data_criacao,
+                    s.nome AS status,
+                    c.nome AS categoria
+                 FROM ocorrencias o
+                 INNER JOIN status_ocorrencia s ON s.id = o.status_id
+                 INNER JOIN categorias_ocorrencia c ON c.id = o.categoria_id
+                 WHERE o.usuario_id = ?
+                 ORDER BY o.data_criacao DESC, o.id DESC`,
+                [usuarioId]
+            );
+
+        const [movimentos] =
+            await db.query(
+                `SELECT
+                    ocorrencia_id,
+                    motivo,
+                    pontos,
+                    data_criacao
+                 FROM pontos_historico
+                 WHERE usuario_id = ?
+                 ORDER BY data_criacao ASC, id ASC`,
+                [usuarioId]
+            );
+
+        const movimentosPorOcorrencia =
+            new Map();
+
+        for (const movimento of movimentos) {
+            const id =
+                Number(movimento.ocorrencia_id);
+
+            if (!movimentosPorOcorrencia.has(id)) {
+                movimentosPorOcorrencia.set(id, []);
+            }
+
+            movimentosPorOcorrencia.get(id).push({
+                motivo: movimento.motivo,
+                pontos: Number(movimento.pontos),
+                data: movimento.data_criacao
+            });
+        }
+
+        return ocorrencias.map((ocorrencia) => {
+            const lista =
+                movimentosPorOcorrencia.get(Number(ocorrencia.id)) || [];
+
+            return {
+                id: Number(ocorrencia.id),
+                titulo: ocorrencia.titulo,
+                bairro: ocorrencia.bairro,
+                categoria: ocorrencia.categoria,
+                status: ocorrencia.status,
+                data_criacao: ocorrencia.data_criacao,
+
+                // Soma de tudo: cancelada fica 0.
+                total: lista.reduce((soma, item) => soma + item.pontos, 0),
+
+                // Só o que as etapas pagaram (mostra o que a cancelada perdeu).
+                ganhos: lista
+                    .filter((item) => item.pontos > 0 && item.motivo !== "reabertura")
+                    .reduce((soma, item) => soma + item.pontos, 0),
+
+                movimentos: lista
+            };
+        });
     }
 };
 

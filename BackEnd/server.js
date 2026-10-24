@@ -44,6 +44,9 @@ const notificacaoRoutes =
 const preferenciasRoutes =
     require("./src/routes/preferenciasRoutes");
 
+const pontosRoutes =
+    require("./src/routes/pontosRoutes");
+
 
 const app =
     express();
@@ -386,6 +389,12 @@ app.use(
 app.use(
     "/api/preferencias",
     preferenciasRoutes
+);
+
+
+app.use(
+    "/api/pontos",
+    pontosRoutes
 );
 
 
