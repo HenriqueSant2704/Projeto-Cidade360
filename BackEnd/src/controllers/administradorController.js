@@ -329,20 +329,17 @@ const AdministradorController = {
             }
 
             const trocou =
-                await AdministradorModel.trocarTipo(usuarioId, "CIDADAO", "ADMIN");
+                await AdministradorModel.trocarTipoComHistorico({
+                    usuarioId,
+                    tipoAtual: "CIDADAO",
+                    tipoNovo: "ADMIN",
+                    usuario,
+                    feitoPor: req.usuario
+                });
 
             if (!trocou) {
                 return responder(res, 409, "Essa conta mudou agora há pouco. Atualize a página e tente de novo.");
             }
-
-            await AdministradorModel.registrarHistorico({
-                acao: "PROMOVIDO",
-                usuarioId,
-                nomeUsuario: usuario.nome,
-                emailUsuario: usuario.email,
-                feitoPor: req.usuario.id,
-                nomeFeitoPor: req.usuario.nome
-            });
 
             avisarPorEmail(
                 enviarAvisoPromovido({
@@ -356,6 +353,9 @@ const AdministradorController = {
             return responder(res, 200, `${usuario.nome} agora é administrador.`);
 
         } catch (error) {
+            if (error.codigoAplicacao === "ADMIN_NAO_AUTORIZADO") {
+                return responder(res, 403, "Seu acesso de administrador mudou. Entre novamente.");
+            }
             console.error("Erro ao promover administrador:", error);
             return responder(res, 500, "Não foi possível promover essa conta.");
         }
@@ -392,20 +392,17 @@ const AdministradorController = {
             }
 
             const trocou =
-                await AdministradorModel.trocarTipo(usuarioId, "ADMIN", "CIDADAO");
+                await AdministradorModel.trocarTipoComHistorico({
+                    usuarioId,
+                    tipoAtual: "ADMIN",
+                    tipoNovo: "CIDADAO",
+                    usuario,
+                    feitoPor: req.usuario
+                });
 
             if (!trocou) {
                 return responder(res, 409, "Essa conta mudou agora há pouco. Atualize a página e tente de novo.");
             }
-
-            await AdministradorModel.registrarHistorico({
-                acao: "REMOVIDO",
-                usuarioId,
-                nomeUsuario: usuario.nome,
-                emailUsuario: usuario.email,
-                feitoPor: req.usuario.id,
-                nomeFeitoPor: req.usuario.nome
-            });
 
             avisarPorEmail(
                 enviarAvisoRemovido({
@@ -419,6 +416,12 @@ const AdministradorController = {
             return responder(res, 200, `${usuario.nome} voltou a ser cidadão.`);
 
         } catch (error) {
+            if (error.codigoAplicacao === "ADMIN_NAO_AUTORIZADO") {
+                return responder(res, 403, "Seu acesso de administrador mudou. Entre novamente.");
+            }
+            if (error.codigoAplicacao === "ULTIMO_ADMIN") {
+                return responder(res, 409, "O último administrador não pode ser removido.");
+            }
             console.error("Erro ao remover administrador:", error);
             return responder(res, 500, "Não foi possível remover esse acesso.");
         }

@@ -260,25 +260,67 @@ const AdministradorModel = {
     },
 
 
-    // Só troca se o tipo atual for o esperado: evita promover duas vezes ao mesmo tempo.
-    async trocarTipo(id, tipoAtual, tipoNovo) {
-        const [resultado] =
-            await db.execute(
-                `
-                UPDATE usuarios
-                SET tipo_usuario = ?
-                WHERE id = ?
-                  AND tipo_usuario = ?
-                  AND ativo = 1
-                `,
-                [
-                    tipoNovo,
-                    id,
-                    tipoAtual
-                ]
+    // A mudança de papel e seu histórico são confirmados juntos.
+    async trocarTipoComHistorico({
+        usuarioId,
+        tipoAtual,
+        tipoNovo,
+        usuario,
+        feitoPor
+    }) {
+        const conexao = await db.getConnection();
+
+        try {
+            await conexao.beginTransaction();
+
+            // Serializa mudanças de papel e confirma que o responsável ainda é admin.
+            const [administradores] = await conexao.execute(
+                `SELECT id FROM usuarios
+                 WHERE tipo_usuario = 'ADMIN' AND ativo = 1
+                 ORDER BY id FOR UPDATE`
             );
 
-        return resultado.affectedRows === 1;
+            if (!administradores.some((admin) => Number(admin.id) === Number(feitoPor.id))) {
+                const error = new Error("O acesso de administrador foi removido.");
+                error.codigoAplicacao = "ADMIN_NAO_AUTORIZADO";
+                throw error;
+            }
+
+            if (tipoNovo === "CIDADAO" && administradores.length <= 1) {
+                const error = new Error("O último administrador não pode ser removido.");
+                error.codigoAplicacao = "ULTIMO_ADMIN";
+                throw error;
+            }
+
+            const [resultado] = await conexao.execute(
+                `UPDATE usuarios SET tipo_usuario = ?
+                 WHERE id = ? AND tipo_usuario = ? AND ativo = 1`,
+                [tipoNovo, usuarioId, tipoAtual]
+            );
+
+            if (resultado.affectedRows !== 1) {
+                await conexao.rollback();
+                return false;
+            }
+
+            await this.registrarHistorico({
+                acao: tipoNovo === "ADMIN" ? "PROMOVIDO" : "REMOVIDO",
+                usuarioId,
+                nomeUsuario: usuario.nome,
+                emailUsuario: usuario.email,
+                feitoPor: feitoPor.id,
+                nomeFeitoPor: feitoPor.nome
+            }, conexao);
+
+            await conexao.commit();
+            return true;
+
+        } catch (error) {
+            await conexao.rollback();
+            throw error;
+        } finally {
+            conexao.release();
+        }
     },
 
 
@@ -323,7 +365,8 @@ const AdministradorModel = {
             );
 
         } catch (error) {
-            if (!tabelaFaltando(error)) {
+            // Em uma transação a ausência da tabela precisa desfazer a ação.
+            if (!tabelaFaltando(error) || conexao !== db) {
                 throw error;
             }
 

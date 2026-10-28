@@ -10,6 +10,9 @@ const authMiddleware =
 const adminMiddleware =
     require("../middlewares/adminMiddleware");
 
+const limiteTentativas =
+    require("../middlewares/limiteTentativas");
+
 const AdministradorController =
     require("../controllers/administradorController");
 
@@ -20,6 +23,13 @@ router.use(
     authMiddleware,
     adminMiddleware
 );
+
+router.use((req, res, next) => {
+    if (req.method === "POST") {
+        return limiteTentativas.acaoAdmin(req, res, next);
+    }
+    next();
+});
 
 // Equipe, convites pendentes e histórico
 router.get(

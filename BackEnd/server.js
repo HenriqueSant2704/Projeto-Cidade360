@@ -110,7 +110,7 @@ const caminhoLogin =
         "pages/login/login.html"
     );
 
- 
+
 // ============================================================
 // CORS
 // ============================================================
@@ -131,6 +131,9 @@ const origensPermitidas =
 app.disable(
     "x-powered-by"
 );
+
+// O Render encaminha o IP do visitante por um proxy.
+app.set("trust proxy", 1);
 
 
 app.use(
@@ -205,13 +208,6 @@ app.use(
 // ============================================================
 // ARQUIVOS ESTÁTICOS
 // ============================================================
-
-app.use(
-    express.static(
-        caminhoProjeto
-    )
-);
-
 
 app.use(
     "/FrontEnd",
@@ -454,30 +450,9 @@ app.use(
 // FRONTEND
 // ============================================================
 
-app.get(
-    "*",
-
-    (req, res) => {
-
-        if (
-            fs.existsSync(
-                caminhoHome
-            )
-        ) {
-
-            return res.sendFile(
-                caminhoHome
-            );
-        }
-
-
-        return res
-            .status(404)
-            .send(
-                "Página não encontrada."
-            );
-    }
-);
+app.use((req, res) => {
+    return res.status(404).send("Página não encontrada.");
+});
 
 
 // ============================================================

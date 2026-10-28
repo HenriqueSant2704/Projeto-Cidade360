@@ -76,8 +76,6 @@ const REACAO = Object.fromEntries(REACOES.map((r) => [r.chave, r]));
 const API_AVISOS = "/api/avisos";
 
 // "Novo" vem do servidor (notificação do aviso ainda não lida, salva no banco).
-// Só o modo demonstração guarda os vistos neste navegador.
-const CHAVE_VISTOS = "avisos_vistos_cidade360";
 
 // Servidor sem a tabela de notificações: "Novo" = publicado nos últimos 7 dias.
 const DIAS_AVISO_NOVO = 7;
@@ -97,7 +95,6 @@ const est = {
     iniciado: false,
     carregando: true,
     erro: null,
-    demo: false,
     perfil: "cidadao",
     filtro: "todos",
     busca: "",
@@ -118,8 +115,7 @@ const camadas = () => $("#avisosCamadas");
 
 /*---------------------------------------------------------------
   API
-  Quando a rota ainda não existe no servidor (404) ou o banco ainda
-  não tem as tabelas (503 AVISOS_INDISPONIVEL), entra no modo demonstração.
+  Os avisos são carregados exclusivamente da API.
 ---------------------------------------------------------------*/
 
 function obterToken() {
@@ -150,8 +146,6 @@ async function requisicao(caminho, { method = "GET", corpo } = {}) {
     return dados;
 }
 
-const apiIndisponivel = (erro) => erro.status === 404 || erro.codigo === "AVISOS_INDISPONIVEL";
-
 function formDataDoRascunho(r) {
     const dados = new FormData();
     dados.append("categoria", r.cat);
@@ -165,59 +159,29 @@ function formDataDoRascunho(r) {
     return dados;
 }
 
-function camposDemoDoRascunho(r) {
-    return {
-        categoria: r.cat,
-        titulo: r.titulo.trim(),
-        texto: r.texto.trim(),
-        fixado: r.fixado,
-        data_evento: r.temEvento && r.data ? `${r.data}T${r.hora || "09:00"}` : "",
-        local_evento: r.temEvento ? r.local.trim() : "",
-        foto: r.arquivo || null,
-        foto_cena: r.foto?.tipo === "cena" ? r.foto.valor : null,
-        remover_foto: r.removerFoto
-    };
-}
-
 const api = {
     async listar() {
-        if (!est.demo) {
-            try {
-                return (await requisicao("")).avisos;
-            } catch (erro) {
-                if (!apiIndisponivel(erro) || !window.AvisosDemo) throw erro;
-                est.demo = true;
-            }
-        }
-        return window.AvisosDemo.listar();
+        return (await requisicao("")).avisos;
     },
 
     async salvar(r) {
-        if (est.demo) {
-            const campos = camposDemoDoRascunho(r);
-            return r.id != null ? window.AvisosDemo.atualizar(r.id, campos) : window.AvisosDemo.criar(campos);
-        }
         const dados = await requisicao(r.id != null ? `/${r.id}` : "", { method: r.id != null ? "PUT" : "POST", corpo: formDataDoRascunho(r) });
         return dados.aviso;
     },
 
     async fixar(id, fixado) {
-        if (est.demo) return window.AvisosDemo.fixar(id, fixado);
         return (await requisicao(`/${id}/fixar`, { method: "PATCH", corpo: { fixado } })).aviso;
     },
 
     async remover(id) {
-        if (est.demo) return window.AvisosDemo.remover(id);
         await requisicao(`/${id}`, { method: "DELETE" });
     },
 
     async restaurar(id) {
-        if (est.demo) return window.AvisosDemo.restaurar(id);
         return (await requisicao(`/${id}/restaurar`, { method: "PATCH" })).aviso;
     },
 
     async reagir(id, reacao) {
-        if (est.demo) return reacao ? window.AvisosDemo.reagir(id, reacao) : window.AvisosDemo.removerReacao(id);
         return reacao
             ? requisicao(`/${id}/reacao`, { method: "PUT", corpo: { reacao } })
             : requisicao(`/${id}/reacao`, { method: "DELETE" });
@@ -229,31 +193,12 @@ const api = {
   CONVERSÃO: formato da API -> formato da tela
 ---------------------------------------------------------------*/
 
-function lerVistos() {
-    try {
-        return new Set(JSON.parse(localStorage.getItem(CHAVE_VISTOS) || "[]"));
-    } catch (error) {
-        return new Set();
-    }
-}
-
-function salvarVistos(ids) {
-    try {
-        localStorage.setItem(CHAVE_VISTOS, JSON.stringify([...ids].slice(-300)));
-    } catch (error) {
-        // Sem armazenamento: o selo "Novo" só não fica lembrado.
-    }
-}
-
-const vistos = lerVistos();
-
 function paraTela(dados) {
     const criado = new Date(dados.data_criacao).getTime() || Date.now();
     const dataEvento = dados.data_evento ? new Date(dados.data_evento) : null;
 
     let foto = null;
     if (dados.foto_url) foto = { tipo: "url", valor: dados.foto_url };
-    else if (dados.foto_cena) foto = { tipo: "cena", valor: dados.foto_cena };
 
     return {
         id: Number(dados.id),
@@ -270,13 +215,12 @@ function paraTela(dados) {
         minha: dados.minha_reacao || null,
         novo: typeof dados.novo === "boolean"
             ? dados.novo
-            : (!est.demo || !vistos.has(Number(dados.id))) && Date.now() - criado < DIAS_AVISO_NOVO * 24 * 3600e3
+            : Date.now() - criado < DIAS_AVISO_NOVO * 24 * 3600e3
     };
 }
 
 function fotoHtml(foto) {
     if (!foto) return "";
-    if (foto.tipo === "cena") return window.AvisosDemo?.CENAS?.[foto.valor] || "";
     return `<img src="${esc(foto.valor)}" alt="" loading="lazy">`;
 }
 
@@ -491,11 +435,6 @@ function renderTopo() {
         ? `<button class="btn-primario btn-novo" type="button" id="btnNovoAviso">${I.mais2(18)}Novo aviso</button>`
         : "";
 
-    const demo = $("#avisoModoDemo");
-    demo.hidden = !est.demo;
-    demo.innerHTML = est.demo
-        ? `<div class="aviso-modo-demo">${I.info(18)}<div><strong>Modo demonstração.</strong> O servidor ainda não tem as tabelas de avisos, então esta página está usando avisos de exemplo salvos só neste navegador. Nada aqui chega aos cidadãos. <button class="link-btn" type="button" data-acao-pagina="reiniciarDemo">Restaurar exemplos</button></div></div>`
-        : "";
 }
 
 function renderTudo() {
@@ -539,10 +478,7 @@ async function carregarAvisos() {
     // Os avisos exibidos agora deixam de ser "Novo" na próxima visita
     // (e somem do sininho, porque a notificação deles fica lida).
     if (!ehAdmin() && !est.erro) {
-        if (est.demo) {
-            avisos.forEach((a) => vistos.add(a.id));
-            salvarVistos(vistos);
-        } else if (avisos.some((a) => a.novo)) {
+        if (avisos.some((a) => a.novo)) {
             fetch("/api/notificacoes/avisos/lidas", {
                 method: "PATCH",
                 headers: { Authorization: `Bearer ${obterToken()}` }
@@ -839,7 +775,6 @@ function renderGaveta() {
                 ${I.imagem(30)}
                 <strong>Arraste uma foto ou clique para escolher</strong>
                 <small>A foto aparece em formato 16:9, acima das reações.</small>
-                ${est.demo ? `<button type="button" class="link-btn" data-g="exemplo">Usar uma imagem de exemplo</button>` : ""}
             </label>
             <input type="file" id="campoFoto" accept="image/jpeg,image/png,image/webp" hidden>`}
         </div>
@@ -967,7 +902,7 @@ async function publicar(botao) {
             card.scrollIntoView({ behavior: "smooth", block: "center" });
         }
 
-        toast(editando ? "Alterações salvas" : est.demo ? "Aviso publicado no modo demonstração" : "Aviso publicado para todos os cidadãos");
+        toast(editando ? "Alterações salvas" : "Aviso publicado para todos os cidadãos");
 
     } catch (erro) {
         r.enviando = false;
@@ -996,7 +931,6 @@ document.addEventListener("click", (e) => {
 
     const acaoPagina = alvo.closest("[data-acao-pagina]")?.dataset.acaoPagina;
     if (acaoPagina === "recarregar") { carregarAvisos(); return; }
-    if (acaoPagina === "reiniciarDemo") { window.AvisosDemo?.reiniciar(); vistos.clear(); carregarAvisos(); return; }
 
     // Filtros
     const filtro = alvo.closest("[data-filtro]");
@@ -1019,11 +953,6 @@ document.addEventListener("click", (e) => {
         if (acao === "removerFoto") {
             if (rascunho.foto?.tipo === "previa") URL.revokeObjectURL(rascunho.foto.valor);
             rascunho.foto = null; rascunho.arquivo = null; rascunho.removerFoto = true; rascunho.sujo = true; renderGaveta();
-        }
-        if (acao === "exemplo") {
-            e.preventDefault();
-            rascunho.foto = { tipo: "cena", valor: { evento: "festival", inauguracao: "parque", obras: "obras", saude: "vacina", servicos: "parque" }[rascunho.cat] };
-            rascunho.arquivo = null; rascunho.sujo = true; renderGaveta();
         }
         return;
     }

@@ -1,315 +1,70 @@
 # Cidade360
 
-Sistema web desenvolvido para o projeto **Cidade360**, com estrutura separada entre **FrontEnd** e **BackEnd**.
-O sistema possui tela de login integrada com API em Node.js, autenticação com JWT e banco de dados MySQL.
+Aplicação web para cidadãos registrarem ocorrências municipais e acompanharem a resposta da prefeitura. Administradores gerenciam as ocorrências, publicam avisos e administram o acesso da equipe.
 
-## Tecnologias utilizadas
+## Estrutura
 
-* HTML5
-* CSS3
-* JavaScript
-* Node.js
-* Express
-* MySQL
-* JWT
-* Bcrypt
-* Dotenv
-* MySQL2
+- `FrontEnd/pages`: páginas em HTML, CSS e JavaScript. A API e as páginas são servidas pelo mesmo Express.
+- `BackEnd/server.js`: entrada da API Node.js.
+- `BackEnd/src/routes`, `controllers` e `models`: rotas HTTP, regras de aplicação e acesso ao MySQL.
+- `BackEnd/src/database/schema.sql`: estrutura para uma instalação nova.
+- `BackEnd/src/database/migrations`: alterações para bancos existentes. A sequência disponível começa na `004` e vai até a `011`.
+- `assets`: imagens, ícones e dados públicos usados pelas páginas.
 
-## Estrutura do projeto
+## Dependências
 
-```txt
-PROJETO-CIDADE360-MASTER
-│
-├── assets
-│   ├── icons
-│   └── img
-│
-├── BackEnd
-│   ├── src
-│   │   └── config
-│   │       └── db.js
-│   │
-│   ├── .env
-│   ├── .gitignore
-│   ├── package.json
-│   └── server.js
-│
-└── FrontEnd
-    ├── pages
-    │   ├── login
-    │   │   ├── login.css
-    │   │   └── login.js
-    │   │
-    │   └── painel
-    │       ├── index.html
-    │       ├── painel.css
-    │       └── painel.js
-    │
-    └── login.html
-```
+Node.js, MySQL, uma conta Brevo para envio de e-mails e Cloudinary para armazenar fotos de ocorrências e avisos. O mapa usa Leaflet e OpenStreetMap.
 
-## Funcionalidades atuais
+## Configuração local
 
-* Tela de login
-* Validação de email e senha
-* Integração do login com API Node.js
-* Conexão com banco de dados MySQL
-* Cadastro de usuários via API
-* Senha criptografada com Bcrypt
-* Geração de token JWT
-* Armazenamento do usuário no `localStorage` ou `sessionStorage`
-* Redirecionamento para o painel após login
-
-## Configuração do ambiente
-
-Antes de rodar o projeto, entre na pasta `BackEnd` e instale as dependências:
-
-```bash
+```powershell
 cd BackEnd
-npm install
+npm ci
+Copy-Item .env.example .env
 ```
 
-## Arquivo `.env`
+Preencha o `.env` com as credenciais locais. Para MySQL local, deixe `DB_SSL_CA` vazio. Para Aiven, defina `DB_SSL_CA=src/certs/ca.pem`; conexões remotas sem certificado são recusadas. Use uma chave aleatória longa em `JWT_SECRET`. O backend usa a API da Brevo, não SMTP. Para fotos, configure as três variáveis `CLOUDINARY_*`.
 
-Crie um arquivo chamado `.env` dentro da pasta `BackEnd` com as seguintes configurações:
+Em um banco novo, aplique `BackEnd/src/database/schema.sql`. Em um banco existente, faça backup e aplique somente as migrações pendentes, em ordem. A migração `009` concede pontos a ocorrências anteriores e recalcula `usuarios.pontos`; confira o resultado antes de executá-la em produção. As migrações não são aplicadas automaticamente pelo servidor.
 
-```env
-PORT=3000
-
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=
-DB_NAME=cidade360
-DB_CONNECTION_LIMIT=10
-
-JWT_SECRET=cidade360_chave_super_secreta_troque_depois
-JWT_EXPIRES_IN=2h
-```
-
-Caso seu MySQL tenha senha, preencha o campo:
-
-```env
-DB_PASSWORD=sua_senha_aqui
-```
-
-## Banco de dados
-
-Crie o banco de dados e a tabela de usuários no MySQL:
-
-```sql
-CREATE DATABASE IF NOT EXISTS cidade360;
-
-USE cidade360;
-
-CREATE TABLE IF NOT EXISTS usuarios (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-
-    nome VARCHAR(150) NOT NULL,
-
-    email VARCHAR(150) NOT NULL UNIQUE,
-
-    telefone VARCHAR(20) NOT NULL,
-
-    senha_hash VARCHAR(255) NOT NULL,
-
-    tipo_usuario ENUM(
-        'CIDADAO',
-        'ADMIN'
-    ) NOT NULL DEFAULT 'CIDADAO',
-
-    pontos INT DEFAULT 0,
-
-    ativo BOOLEAN DEFAULT TRUE,
-
-    data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ON UPDATE CURRENT_TIMESTAMP
-);
-```
-
-## Como rodar o projeto
-
-Dentro da pasta `BackEnd`, execute:
-
-```bash
+```powershell
 npm run dev
 ```
 
-Ou, caso queira rodar sem Nodemon:
+A aplicação abre em `http://localhost:3000`. `GET /api/teste` verifica a conexão com o banco.
 
-```bash
-npm start
-```
+## API principal
 
-Depois acesse no navegador:
+| Área | Rotas | Acesso |
+| --- | --- | --- |
+| Conta | `/api/login`, `/api/cadastrar`, `/api/me`, `/api/cadastro/email/*`, `/api/recuperar-senha/*` | Públicas, exceto `/api/me` |
+| Ocorrências | `/api/ocorrencias/*`, `/api/ocorrencias-proximas` | Login; mudanças de status exigem ADMIN |
+| Cidade | `/api/cidade-atendida` | Pública |
+| Avisos | `/api/avisos/*` | Login; publicação e edição exigem ADMIN |
+| Sininho e pontos | `/api/notificacoes/*`, `/api/pontos/*` | Login |
+| Preferências | `/api/preferencias` | Login |
+| Administração | `/api/administradores/*` | ADMIN |
+| Convites | `/api/convites-admin/:token` | Pública; o token do convite autoriza o acesso |
 
-```txt
-http://localhost:3000
-```
+Rotas privadas recebem `Authorization: Bearer <token>`. O cadastro público sempre cria uma conta `CIDADAO`. O primeiro administrador deve ser criado por um procedimento controlado no banco; depois, a equipe pode promover cidadãos ou convidar novos administradores pela interface.
 
-ou:
+## Regras importantes
 
-```txt
-http://localhost:3000/login
-```
+- A única cidade atendida atualmente é Jaborandi-SP. O servidor valida cidade no cadastro e coordenadas da ocorrência; o limite tem tolerância de 150 metros.
+- Ocorrências recebem de uma a cinco fotos JPG, PNG ou WEBP de até 5 MB cada. Avisos aceitam uma foto. Arquivos são validados antes do envio ao Cloudinary.
+- Cada etapa da ocorrência concede pontos uma vez: registro `+1`, análise `+2`, atendimento `+3`, resolução `+5`. Cancelamento retira os pontos da ocorrência e reabertura os devolve.
+- Notificações e pontos são processados em melhor esforço após a ação principal. Monitore os logs e confira o saldo contra `pontos_historico` após falhas.
+- O servidor publica `FrontEnd`, `assets` e `/uploads` para fotos legadas. Arquivos internos de `BackEnd` não devem ser servidos ao navegador.
 
-## Cadastro de usuário para teste
-
-Com a API rodando, abra o PowerShell e execute:
+## Testes
 
 ```powershell
-$body = @{
-  nome = "Administrador"
-  email = "admin@cidade360.com"
-  telefone = "17999999999"
-  senha = "123456"
-  tipo_usuario = "ADMIN"
-} | ConvertTo-Json
-
-Invoke-RestMethod -Uri "http://localhost:3000/api/cadastrar" -Method Post -ContentType "application/json" -Body $body
+cd BackEnd
+npm test
+npm audit --omit=dev
 ```
 
-Depois acesse o sistema com:
-
-```txt
-Email: admin@cidade360.com
-Senha: 123456
-```
-
-## Rotas da API
-
-### Testar conexão com o banco
-
-```http
-GET /api/teste
-```
-
-Essa rota verifica se a API está conectando corretamente ao banco de dados.
-
-### Login
-
-```http
-POST /api/login
-```
-
-Corpo da requisição:
-
-```json
-{
-  "email": "admin@cidade360.com",
-  "senha": "123456"
-}
-```
-
-Resposta esperada:
-
-```json
-{
-  "sucesso": true,
-  "mensagem": "Login realizado com sucesso.",
-  "token": "TOKEN_JWT",
-  "usuario": {
-    "id": 1,
-    "nome": "Administrador",
-    "email": "admin@cidade360.com",
-    "telefone": "17999999999",
-    "tipo_usuario": "ADMIN",
-    "pontos": 0,
-    "ativo": true
-  }
-}
-```
-
-### Cadastrar usuário
-
-```http
-POST /api/cadastrar
-```
-
-Corpo da requisição:
-
-```json
-{
-  "nome": "Administrador",
-  "email": "admin@cidade360.com",
-  "telefone": "17999999999",
-  "senha": "123456",
-  "tipo_usuario": "ADMIN"
-}
-```
-
-### Buscar usuário logado
-
-```http
-GET /api/me
-```
-
-Essa rota precisa receber o token JWT no cabeçalho:
-
-```http
-Authorization: Bearer SEU_TOKEN_AQUI
-```
-
-## Observações importantes
-
-O arquivo `.env` não deve ser enviado para o GitHub, pois contém informações sensíveis como usuário, senha do banco e chave JWT.
-
-Por isso, o `.gitignore` deve conter:
-
-```gitignore
-node_modules
-.env
-package-lock.json
-```
-
-## Problemas comuns
-
-### Erro de permissão no banco
-
-Caso apareça um erro parecido com:
-
-```txt
-Access denied for user
-```
-
-verifique se o usuário configurado no `.env` tem permissão para acessar o banco `cidade360`.
-
-### Email já cadastrado
-
-Caso apareça:
-
-```txt
-Esse email já está cadastrado.
-```
-
-significa que o usuário já existe na tabela `usuarios`.
-Nesse caso, tente fazer login ou apague o usuário antigo no banco antes de cadastrar novamente.
-
-### Erro interno no servidor
-
-Se aparecer:
-
-```txt
-Erro interno no servidor.
-```
-
-verifique o terminal onde a API está rodando, pois o erro detalhado aparecerá nele.
-
-## Status do projeto
-
-Projeto em desenvolvimento.
-
-Funcionalidades implementadas até o momento:
-
-* Estrutura inicial do FrontEnd
-* Tela de login
-* API Node.js
-* Conexão com MySQL
-* Cadastro de usuários
-* Login com autenticação
-* Geração de token JWT
+Antes de publicar, teste as rotas com contas de ADMIN e CIDADAO e confira o esquema do banco. Evite usar contas reais nos testes que criam ocorrências, avisos ou convites.
 
 ## Autor
 
