@@ -23,6 +23,16 @@ function primeiroNome(nome) {
     return String(nome || "").trim().split(/\s+/)[0] || "";
 }
 
+function resumoPermissoes(permissoes = []) {
+    const nomes = {
+        ocorrencias: "Ocorrências: ver todas e mudar status",
+        avisos: "Avisos: publicar e editar comunicados",
+        equipe: "Equipe: gerenciar administradores"
+    };
+    const itens = permissoes.filter((chave) => nomes[chave]);
+    return `<p>Seu acesso inclui:</p><ul>${itens.map((chave) => `<li>${nomes[chave]}</li>`).join("")}</ul>`;
+}
+
 
 function moldura(titulo, conteudo) {
     return `
@@ -43,7 +53,7 @@ function moldura(titulo, conteudo) {
 }
 
 
-async function enviarConviteAdministrador({ nome, email, link, convidadoPor, diasValidade }) {
+async function enviarConviteAdministrador({ nome, email, link, convidadoPor, diasValidade, permissoes = [] }) {
     const html = moldura(
         "Convite para administrar o Cidade360",
         `
@@ -54,10 +64,7 @@ async function enviarConviteAdministrador({ nome, email, link, convidadoPor, dia
                 <strong>administrador(a)</strong> do Cidade360.
             </p>
 
-            <p>
-                Com esse acesso você acompanha todas as ocorrências da cidade,
-                muda o status, cancela trotes e publica avisos para a população.
-            </p>
+            ${resumoPermissoes(permissoes)}
 
             <p style="margin: 24px 0;">
                 <a href="${escaparHtml(link)}"
@@ -84,7 +91,7 @@ async function enviarConviteAdministrador({ nome, email, link, convidadoPor, dia
 }
 
 
-async function enviarAvisoPromovido({ nome, email, feitoPor }) {
+async function enviarAvisoPromovido({ nome, email, feitoPor, permissoes = [] }) {
     const html = moldura(
         "Você agora é administrador(a)",
         `
@@ -99,6 +106,8 @@ async function enviarAvisoPromovido({ nome, email, feitoPor }) {
                 Entre com o mesmo e-mail e a mesma senha de sempre.
                 As ocorrências que você abriu como cidadão continuam na sua conta.
             </p>
+
+            ${resumoPermissoes(permissoes)}
 
             <p>Se você não reconhece essa mudança, avise a prefeitura.</p>
         `

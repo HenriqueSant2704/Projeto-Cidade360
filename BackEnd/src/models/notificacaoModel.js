@@ -287,6 +287,23 @@ const NotificacaoModel = {
             );
 
         return resultado.affectedRows;
+    },
+
+    async criarParaAdminsComPermissao({ permissao, exceto = [], tipo, titulo, texto, ocorrenciaId = null }) {
+        if (!["ocorrencias", "equipe"].includes(permissao)) {
+            throw new Error("Permissão de notificação inválida.");
+        }
+        const ignorados = (Array.isArray(exceto) ? exceto : [exceto]).filter(Boolean);
+        const [resultado] = await db.query(
+            `INSERT INTO notificacoes (usuario_id, tipo, titulo, texto, ocorrencia_id)
+             SELECT u.id, ?, ?, ?, ? FROM usuarios u
+             INNER JOIN permissoes_admin p ON p.usuario_id = u.id
+             WHERE u.ativo = 1 AND u.tipo_usuario = 'ADMIN'
+               AND (p.principal = 1 OR p.${permissao} = 1)
+               ${ignorados.length ? `AND u.id NOT IN (${ignorados.map(() => "?").join(",")})` : ""}`,
+            [tipo, cortar(titulo, 120), cortar(texto, 500), ocorrenciaId, ...ignorados]
+        );
+        return resultado.affectedRows;
     }
 };
 

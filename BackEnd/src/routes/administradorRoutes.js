@@ -7,8 +7,8 @@ const router =
 const authMiddleware =
     require("../middlewares/authMiddleware");
 
-const adminMiddleware =
-    require("../middlewares/adminMiddleware");
+const permissaoMiddleware =
+    require("../middlewares/permissaoMiddleware");
 
 const limiteTentativas =
     require("../middlewares/limiteTentativas");
@@ -21,11 +21,18 @@ const AdministradorController =
 // A permissão é conferida aqui no servidor; esconder o item do menu não basta.
 router.use(
     authMiddleware,
-    adminMiddleware
+    permissaoMiddleware("equipe")
 );
 
 router.use((req, res, next) => {
     if (req.method === "POST") {
+        if (!req.usuario.permissoes?.configurado) {
+            return res.status(503).json({
+                sucesso: false,
+                codigo: "MIGRACAO_PENDENTE",
+                mensagem: "As permissões da equipe ainda não foram configuradas no banco."
+            });
+        }
         return limiteTentativas.acaoAdmin(req, res, next);
     }
     next();
@@ -51,6 +58,16 @@ router.post(
 router.post(
     "/:id/remover",
     AdministradorController.remover
+);
+
+router.post(
+    "/:id/permissoes",
+    AdministradorController.alterarPermissoes
+);
+
+router.post(
+    "/:id/principal",
+    AdministradorController.transferirPrincipal
 );
 
 router.post(

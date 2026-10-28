@@ -10,8 +10,8 @@ const authMiddleware =
     require("../middlewares/authMiddleware");
 
 
-const adminMiddleware =
-    require("../middlewares/adminMiddleware");
+const permissaoMiddleware =
+    require("../middlewares/permissaoMiddleware");
 
 
 const uploadFotoAviso =
@@ -51,7 +51,7 @@ router.delete(
 // Publicar aviso
 router.post(
     "/",
-    adminMiddleware,
+    permissaoMiddleware("avisos"),
     uploadFotoAviso,
     AvisoController.criar
 );
@@ -60,7 +60,7 @@ router.post(
 // Editar aviso
 router.put(
     "/:id",
-    adminMiddleware,
+    permissaoMiddleware("avisos"),
     uploadFotoAviso,
     AvisoController.atualizar
 );
@@ -69,7 +69,7 @@ router.put(
 // Fixar ou desafixar no topo
 router.patch(
     "/:id/fixar",
-    adminMiddleware,
+    permissaoMiddleware("avisos"),
     AvisoController.fixar
 );
 
@@ -77,7 +77,7 @@ router.patch(
 // Restaurar aviso excluído (botão "Desfazer")
 router.patch(
     "/:id/restaurar",
-    adminMiddleware,
+    permissaoMiddleware("avisos"),
     AvisoController.restaurar
 );
 
@@ -85,7 +85,7 @@ router.patch(
 // Excluir aviso (exclusão lógica)
 router.delete(
     "/:id",
-    adminMiddleware,
+    permissaoMiddleware("avisos"),
     AvisoController.remover
 );
 

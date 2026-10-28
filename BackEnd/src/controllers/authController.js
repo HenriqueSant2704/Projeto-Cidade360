@@ -3,6 +3,7 @@ const crypto = require("crypto");
 
 const db = require("../config/db");
 const UsuarioModel = require("../models/usuarioModel");
+const PermissaoAdminModel = require("../models/permissaoAdminModel");
 const EmailVerificacaoModel = require("../models/emailVerificacaoModel");
 
 const gerarToken = require("../utils/gerarToken");
@@ -686,6 +687,10 @@ const AuthController = {
             const token =
                 gerarToken(usuario);
 
+            const permissoes = usuario.tipo_usuario === "ADMIN"
+                ? await PermissaoAdminModel.buscar(usuario.id)
+                : undefined;
+
 
             return res
                 .status(200)
@@ -717,6 +722,8 @@ const AuthController = {
 
                         tipo_usuario:
                             usuario.tipo_usuario,
+
+                        permissoes,
 
                         pontos:
                             Number(

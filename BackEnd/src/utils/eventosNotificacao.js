@@ -261,17 +261,26 @@ async function aoRegistrarOcorrencia({
             pontos
         });
 
-        await NotificacaoModel.criarParaGrupo({
-            tipoUsuario: "ADMIN",
-            exceto: ocorrencia.usuario_id,
-            tipo: "ocorrencia_nova",
-            status: "recebido",
-            titulo: "Nova ocorrência para analisar",
-            texto: ocorrencia.categoria_nome
-                ? `${ocorrencia.usuario_nome} registrou "${ocorrencia.titulo}" em ${ocorrencia.categoria_nome}.`
-                : `${ocorrencia.usuario_nome} registrou "${ocorrencia.titulo}".`,
-            ocorrenciaId
-        });
+        const textoAdmin = ocorrencia.categoria_nome
+            ? `${ocorrencia.usuario_nome} registrou "${ocorrencia.titulo}" em ${ocorrencia.categoria_nome}.`
+            : `${ocorrencia.usuario_nome} registrou "${ocorrencia.titulo}".`;
+        try {
+            await NotificacaoModel.criarParaAdminsComPermissao({
+                permissao: "ocorrencias",
+                exceto: [ocorrencia.usuario_id],
+                tipo: "ocorrencia_nova",
+                titulo: "Nova ocorrência para analisar",
+                texto: textoAdmin,
+                ocorrenciaId
+            });
+        } catch (error) {
+            if (!tabelaAusente(error)) throw error;
+            await NotificacaoModel.criarParaGrupo({
+                tipoUsuario: "ADMIN", exceto: ocorrencia.usuario_id,
+                tipo: "ocorrencia_nova", status: "recebido",
+                titulo: "Nova ocorrência para analisar", texto: textoAdmin, ocorrenciaId
+            });
+        }
 
         await avisarTituloNovo({
             usuarioId: ocorrencia.usuario_id,
@@ -355,9 +364,40 @@ async function aoPublicarAviso({
     }
 }
 
+async function aoMudarEquipe({ tipo, usuarioId = null, atorId = null, nome, permissoes = [] }) {
+    const lista = permissoes.length ? permissoes.join(", ") : "nenhuma";
+    const modelos = {
+        promovido: ["admin_promovido", "Acesso de administrador concedido", `Você recebeu acesso ao Cidade360. Permissões: ${lista}.`],
+        removido: ["admin_removido", "Acesso de administrador removido", "Seu acesso administrativo foi removido. Sua conta continua ativa como cidadã."],
+        permissoes: ["admin_permissoes", "Permissões atualizadas", `Suas permissões agora são: ${lista}.`],
+        principal: ["admin_principal", "Você é o administrador principal", "O cargo de administrador principal foi transferido para você."],
+        aceito: ["admin_promovido", "Acesso de administrador ativado", `Seu convite foi aceito. Permissões: ${lista}.`]
+    };
+    if (usuarioId && modelos[tipo]) {
+        const [tipoAviso, titulo, texto] = modelos[tipo];
+        try {
+            await NotificacaoModel.criarParaUsuario({ usuarioId, tipo: tipoAviso, titulo, texto });
+        } catch (error) {
+            registrarFalha(`equipe: ${tipo} para usuário`, error);
+        }
+    }
+    try {
+        await NotificacaoModel.criarParaAdminsComPermissao({
+            permissao: "equipe",
+            exceto: [atorId, usuarioId],
+            tipo: "admin_equipe",
+            titulo: "Equipe de administradores atualizada",
+            texto: `${nome || "Um administrador"}: ${tipo}.`
+        });
+    } catch (error) {
+        registrarFalha(`equipe: ${tipo} para gestores`, error);
+    }
+}
+
 
 module.exports = {
     aoRegistrarOcorrencia,
     aoMudarStatusOcorrencia,
-    aoPublicarAviso
+    aoPublicarAviso,
+    aoMudarEquipe
 };

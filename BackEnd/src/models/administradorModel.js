@@ -1,5 +1,6 @@
 const db =
     require("../config/db");
+const { normalizarLinha, temPermissao, podeDar } = require("../utils/permissoesAdmin");
 
 
 /*========================================================================================================
@@ -7,14 +8,35 @@ const db =
 ADMINISTRADORES
 
 Ser administrador continua sendo usuarios.tipo_usuario = 'ADMIN'.
-As tabelas convites_admin e historico_administradores chegam com a migração 011.
-Enquanto ela não roda, a lista e o promover/remover continuam funcionando
-(só sem histórico); os convites ficam indisponíveis.
+As tabelas convites_admin e historico_administradores chegam com a migração 011;
+as permissões por área são acrescentadas pela migração 012.
 
 =========================================================================================================*/
 
 function tabelaFaltando(error) {
     return error?.code === "ER_NO_SUCH_TABLE";
+}
+
+function semPermissao() {
+    const error = new Error("Seu acesso à equipe mudou. Atualize a página.");
+    error.status = 403;
+    error.codigoAplicacao = "SEM_PERMISSAO";
+    return error;
+}
+
+async function conferirAtorConvite(conexao, atorId, selecao = null) {
+    const [[usuario]] = await conexao.execute(
+        "SELECT id, tipo_usuario, ativo FROM usuarios WHERE id = ? FOR UPDATE", [atorId]
+    );
+    const [[linha]] = await conexao.execute(
+        "SELECT principal, ocorrencias, avisos, equipe FROM permissoes_admin WHERE usuario_id = ? FOR UPDATE",
+        [atorId]
+    );
+    const ator = usuario && { ...usuario, permissoes: normalizarLinha(linha) };
+    if (!ator?.ativo || !temPermissao(ator, "equipe") || (selecao && !podeDar(ator, selecao))) {
+        throw semPermissao();
+    }
+    return ator;
 }
 
 
@@ -111,7 +133,10 @@ const AdministradorModel = {
                     c.expira_em,
                     c.data_criacao,
                     (c.expira_em <= NOW()) AS expirado,
-                    u.nome AS convidado_por_nome
+                    u.nome AS convidado_por_nome,
+                    c.perm_ocorrencias,
+                    c.perm_avisos,
+                    c.perm_equipe
                 FROM convites_admin c
                 LEFT JOIN usuarios u
                     ON u.id = c.convidado_por
@@ -137,6 +162,7 @@ const AdministradorModel = {
                     nome_usuario,
                     email_usuario,
                     nome_feito_por,
+                    detalhe,
                     data_acao
                 FROM historico_administradores
                 ORDER BY id DESC
@@ -260,73 +286,9 @@ const AdministradorModel = {
     },
 
 
-    // A mudança de papel e seu histórico são confirmados juntos.
-    async trocarTipoComHistorico({
-        usuarioId,
-        tipoAtual,
-        tipoNovo,
-        usuario,
-        feitoPor
-    }) {
-        const conexao = await db.getConnection();
-
-        try {
-            await conexao.beginTransaction();
-
-            // Serializa mudanças de papel e confirma que o responsável ainda é admin.
-            const [administradores] = await conexao.execute(
-                `SELECT id FROM usuarios
-                 WHERE tipo_usuario = 'ADMIN' AND ativo = 1
-                 ORDER BY id FOR UPDATE`
-            );
-
-            if (!administradores.some((admin) => Number(admin.id) === Number(feitoPor.id))) {
-                const error = new Error("O acesso de administrador foi removido.");
-                error.codigoAplicacao = "ADMIN_NAO_AUTORIZADO";
-                throw error;
-            }
-
-            if (tipoNovo === "CIDADAO" && administradores.length <= 1) {
-                const error = new Error("O último administrador não pode ser removido.");
-                error.codigoAplicacao = "ULTIMO_ADMIN";
-                throw error;
-            }
-
-            const [resultado] = await conexao.execute(
-                `UPDATE usuarios SET tipo_usuario = ?
-                 WHERE id = ? AND tipo_usuario = ? AND ativo = 1`,
-                [tipoNovo, usuarioId, tipoAtual]
-            );
-
-            if (resultado.affectedRows !== 1) {
-                await conexao.rollback();
-                return false;
-            }
-
-            await this.registrarHistorico({
-                acao: tipoNovo === "ADMIN" ? "PROMOVIDO" : "REMOVIDO",
-                usuarioId,
-                nomeUsuario: usuario.nome,
-                emailUsuario: usuario.email,
-                feitoPor: feitoPor.id,
-                nomeFeitoPor: feitoPor.nome
-            }, conexao);
-
-            await conexao.commit();
-            return true;
-
-        } catch (error) {
-            await conexao.rollback();
-            throw error;
-        } finally {
-            conexao.release();
-        }
-    },
-
-
     /*----------------------------------------------------------------------------------------------------
       HISTÓRICO
-      Antes da migração 011 a ação continua valendo; só não fica registrada.
+      Nas mudanças de acesso, o histórico integra a mesma transação.
     ----------------------------------------------------------------------------------------------------*/
 
     async registrarHistorico(
@@ -336,7 +298,8 @@ const AdministradorModel = {
             nomeUsuario,
             emailUsuario,
             feitoPor = null,
-            nomeFeitoPor = null
+            nomeFeitoPor = null,
+            detalhe = null
         },
         conexao = db
     ) {
@@ -350,9 +313,10 @@ const AdministradorModel = {
                     nome_usuario,
                     email_usuario,
                     feito_por,
-                    nome_feito_por
+                    nome_feito_por,
+                    detalhe
                 )
-                VALUES (?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 `,
                 [
                     acao,
@@ -360,7 +324,8 @@ const AdministradorModel = {
                     nomeUsuario,
                     emailUsuario,
                     feitoPor,
-                    nomeFeitoPor
+                    nomeFeitoPor,
+                    detalhe
                 ]
             );
 
@@ -402,7 +367,8 @@ const AdministradorModel = {
         const [linhas] =
             await db.execute(
                 `
-                SELECT id, nome, email, status
+                SELECT id, nome, email, status, token_hash, expira_em,
+                    perm_ocorrencias, perm_avisos, perm_equipe
                 FROM convites_admin
                 WHERE id = ?
                 LIMIT 1
@@ -426,6 +392,9 @@ const AdministradorModel = {
                     c.expira_em,
                     (c.expira_em <= NOW()) AS expirado,
                     c.convidado_por,
+                    c.perm_ocorrencias,
+                    c.perm_avisos,
+                    c.perm_equipe,
                     u.nome AS convidado_por_nome
                 FROM convites_admin c
                 LEFT JOIN usuarios u
@@ -440,9 +409,12 @@ const AdministradorModel = {
     },
 
 
-    async criarConvite({ nome, email, tokenHash, convidadoPor, diasValidade }) {
-        const [resultado] =
-            await db.execute(
+    async criarConvite({ nome, email, tokenHash, convidadoPor, diasValidade, permissoes }) {
+        const conexao = await db.getConnection();
+        try {
+            await conexao.beginTransaction();
+            await conferirAtorConvite(conexao, convidadoPor, permissoes);
+            const [resultado] = await conexao.execute(
                 `
                 INSERT INTO convites_admin
                 (
@@ -450,27 +422,54 @@ const AdministradorModel = {
                     email,
                     token_hash,
                     convidado_por,
+                    perm_ocorrencias,
+                    perm_avisos,
+                    perm_equipe,
                     expira_em
                 )
-                VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL ? DAY))
+                VALUES (?, ?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL ? DAY))
                 `,
                 [
                     nome,
                     email,
                     tokenHash,
                     convidadoPor,
+                    Number(permissoes.ocorrencias),
+                    Number(permissoes.avisos),
+                    Number(permissoes.equipe),
                     diasValidade
                 ]
             );
-
-        return resultado.insertId;
+            await conexao.commit();
+            return resultado.insertId;
+        } catch (error) {
+            await conexao.rollback();
+            throw error;
+        } finally {
+            conexao.release();
+        }
     },
 
 
     // Reenviar troca o link: o anterior para de funcionar.
-    async renovarConvite(id, tokenHash, diasValidade) {
-        const [resultado] =
-            await db.execute(
+    async renovarConvite(id, tokenHash, diasValidade, atorId) {
+        const conexao = await db.getConnection();
+        try {
+            await conexao.beginTransaction();
+            const [[convite]] = await conexao.execute(
+                `SELECT perm_ocorrencias, perm_avisos, perm_equipe
+                 FROM convites_admin WHERE id = ? AND status = 'PENDENTE' FOR UPDATE`, [id]
+            );
+            if (!convite) {
+                await conexao.rollback();
+                return false;
+            }
+            await conferirAtorConvite(conexao, atorId, {
+                ocorrencias: Boolean(convite.perm_ocorrencias),
+                avisos: Boolean(convite.perm_avisos),
+                equipe: Boolean(convite.perm_equipe)
+            });
+            const [resultado] = await conexao.execute(
                 `
                 UPDATE convites_admin
                 SET
@@ -485,14 +484,41 @@ const AdministradorModel = {
                     id
                 ]
             );
+            await conexao.commit();
+            return resultado.affectedRows === 1;
+        } catch (error) {
+            await conexao.rollback();
+            throw error;
+        } finally {
+            conexao.release();
+        }
+    },
 
-        return resultado.affectedRows === 1;
+    async restaurarConviteAposFalhaDeEmail(id, tokenHashNovo, tokenHashAntigo, expiraEmAntigo) {
+        await db.execute(
+            `UPDATE convites_admin SET token_hash = ?, expira_em = ?
+             WHERE id = ? AND token_hash = ? AND status = 'PENDENTE'`,
+            [tokenHashAntigo, expiraEmAntigo, id, tokenHashNovo]
+        );
     },
 
 
-    async cancelarConvite(id) {
-        const [resultado] =
-            await db.execute(
+    async cancelarConvite(id, atorId = null) {
+        const conexao = await db.getConnection();
+        try {
+            await conexao.beginTransaction();
+            if (atorId) {
+                const [[convite]] = await conexao.execute(
+                    "SELECT perm_equipe FROM convites_admin WHERE id = ? AND status = 'PENDENTE' FOR UPDATE", [id]
+                );
+                if (!convite) {
+                    await conexao.rollback();
+                    return false;
+                }
+                const ator = await conferirAtorConvite(conexao, atorId);
+                if (convite.perm_equipe && !ator.permissoes.principal) throw semPermissao();
+            }
+            const [resultado] = await conexao.execute(
                 `
                 UPDATE convites_admin
                 SET
@@ -503,8 +529,14 @@ const AdministradorModel = {
                 `,
                 [id]
             );
-
-        return resultado.affectedRows === 1;
+            await conexao.commit();
+            return resultado.affectedRows === 1;
+        } catch (error) {
+            await conexao.rollback();
+            throw error;
+        } finally {
+            conexao.release();
+        }
     },
 
 
@@ -520,7 +552,8 @@ const AdministradorModel = {
             const [travado] =
                 await conexao.execute(
                     `
-                    SELECT status
+                    SELECT status, (expira_em <= NOW()) AS expirado,
+                        perm_ocorrencias, perm_avisos, perm_equipe
                     FROM convites_admin
                     WHERE id = ?
                     FOR UPDATE
@@ -528,7 +561,7 @@ const AdministradorModel = {
                     [convite.id]
                 );
 
-            if (travado[0]?.status !== "PENDENTE") {
+            if (travado[0]?.status !== "PENDENTE" || Number(travado[0].expirado)) {
                 await conexao.rollback();
                 return null;
             }
@@ -562,6 +595,13 @@ const AdministradorModel = {
 
             const usuarioId =
                 resultado.insertId;
+
+            await conexao.execute(
+                `INSERT INTO permissoes_admin (usuario_id, ocorrencias, avisos, equipe)
+                 VALUES (?, ?, ?, ?)`,
+                [usuarioId, Number(travado[0].perm_ocorrencias),
+                    Number(travado[0].perm_avisos), Number(travado[0].perm_equipe)]
+            );
 
             await conexao.execute(
                 `

@@ -6,6 +6,7 @@ const router =
 
 const AdministradorController =
     require("../controllers/administradorController");
+const limiteTentativas = require("../middlewares/limiteTentativas");
 
 
 // Rotas públicas do convite de administrador.
@@ -17,6 +18,7 @@ router.get(
 
 router.post(
     "/:token/aceitar",
+    limiteTentativas.confirmarCodigo,
     AdministradorController.aceitarConvite
 );
 

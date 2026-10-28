@@ -9,8 +9,8 @@ const authMiddleware =
     require("../middlewares/authMiddleware");
 
 
-const adminMiddleware =
-    require("../middlewares/adminMiddleware");
+const permissaoMiddleware =
+    require("../middlewares/permissaoMiddleware");
 
 
 const uploadFotoOcorrencia =
@@ -51,7 +51,7 @@ router.get(
 // Resumo geral para administrador
 router.get(
     "/admin/resumo",
-    adminMiddleware,
+    permissaoMiddleware("ocorrencias"),
     OcorrenciaController.resumoAdmin
 );
 
@@ -59,7 +59,7 @@ router.get(
 // Todas as ocorrências para administrador
 router.get(
     "/admin",
-    adminMiddleware,
+    permissaoMiddleware("ocorrencias"),
     OcorrenciaController.listarTodasAdmin
 );
 
@@ -74,7 +74,7 @@ router.get(
 // Atualizar status
 router.patch(
     "/:id/status",
-    adminMiddleware,
+    permissaoMiddleware("ocorrencias"),
     OcorrenciaController.atualizarStatus
 );
 

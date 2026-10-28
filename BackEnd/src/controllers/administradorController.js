@@ -7,6 +7,11 @@ const crypto =
 const AdministradorModel =
     require("../models/administradorModel");
 
+const AdminAccessModel = require("../models/adminAccessModel");
+const PermissaoAdminModel = require("../models/permissaoAdminModel");
+const { CHAVES, interpretarSelecao, podeDar, podeGerenciar, lista, legado, normalizarLinha } = require("../utils/permissoesAdmin");
+const { aoMudarEquipe } = require("../utils/eventosNotificacao");
+
 const gerarToken =
     require("../utils/gerarToken");
 
@@ -83,6 +88,26 @@ function responderConvitesIndisponiveis(res) {
         "Os convites por e-mail ainda não foram configurados no banco de dados. Por enquanto, use \"Já tem conta\" para promover um cidadão.",
         { codigo: "CONVITES_INDISPONIVEIS" }
     );
+}
+
+function responderErroAcesso(res, error, mensagem) {
+    if (error.status && error.codigoAplicacao) {
+        return responder(res, error.status, error.message, { codigo: error.codigoAplicacao });
+    }
+    console.error(mensagem, error);
+    return responder(res, 500, "Não foi possível concluir essa mudança.");
+}
+
+function selecaoObrigatoria(res, valor, permitirVazio = false) {
+    const selecao = interpretarSelecao(valor, { permitirVazio });
+    if (!selecao) {
+        responder(res, 400, "Escolha as permissões válidas para o administrador.", { codigo: "PERMISSOES_INVALIDAS" });
+    }
+    return selecao;
+}
+
+function notificarEquipe(dados) {
+    aoMudarEquipe(dados).catch((error) => console.error("Falha ao avisar a equipe:", error));
 }
 
 
@@ -184,7 +209,9 @@ function formatarAdministrador(linha, usuarioLogadoId) {
                 ? "convite"
                 : null,
         adicionado_por: linha.adicionado_por || null,
-        admin_desde: linha.admin_desde || linha.data_cadastro
+        admin_desde: linha.admin_desde || linha.data_cadastro,
+        permissoes: linha.permissoes,
+        pode_gerenciar: Boolean(linha.pode_gerenciar)
     };
 }
 
@@ -209,31 +236,41 @@ const AdministradorController = {
 
             let convites = [];
             let historico = [];
-            let migracaoPendente = false;
+            const configurado = await PermissaoAdminModel.configurado();
+            const permissoesPorId = configurado
+                ? await PermissaoAdminModel.buscarVarios(administradores.map((admin) => Number(admin.id)))
+                : new Map();
+            const admins = administradores.map((admin) => ({
+                ...admin,
+                permissoes: configurado
+                    ? (permissoesPorId.get(Number(admin.id)) || normalizarLinha(null))
+                    : legado()
+            }));
 
-            try {
+            if (configurado) {
                 [convites, historico] =
                     await Promise.all([
                         AdministradorModel.listarConvitesPendentes(),
                         AdministradorModel.listarHistorico(10)
                     ]);
-
-            } catch (error) {
-                if (!AdministradorModel.tabelaFaltando(error)) {
-                    throw error;
-                }
-
-                migracaoPendente = true;
             }
 
             return res
                 .status(200)
                 .json({
                     sucesso: true,
-                    migracao_pendente: migracaoPendente,
+                    migracao_pendente: !configurado,
                     dias_validade_convite: DIAS_VALIDADE_CONVITE,
-                    administradores: administradores.map(
-                        linha => formatarAdministrador(linha, req.usuario.id)
+                    eu: {
+                        id: req.usuario.id,
+                        principal: Boolean(req.usuario.permissoes?.principal),
+                        pode_dar: req.usuario.permissoes?.principal ? [...CHAVES] : lista(req.usuario.permissoes)
+                    },
+                    administradores: admins.map(
+                        linha => formatarAdministrador({
+                            ...linha,
+                            pode_gerenciar: configurado && podeGerenciar(req.usuario, linha)
+                        }, req.usuario.id)
                     ),
                     convites: convites.map(convite => ({
                         id: convite.id,
@@ -242,7 +279,12 @@ const AdministradorController = {
                         expira_em: convite.expira_em,
                         expirado: Boolean(Number(convite.expirado)),
                         enviado_em: convite.data_criacao,
-                        convidado_por: convite.convidado_por_nome || null
+                        convidado_por: convite.convidado_por_nome || null,
+                        permissoes: lista({
+                            ocorrencias: convite.perm_ocorrencias,
+                            avisos: convite.perm_avisos,
+                            equipe: convite.perm_equipe
+                        })
                     })),
                     historico
                 });
@@ -301,7 +343,7 @@ const AdministradorController = {
 
 
     /*----------------------------------------------------------------------------------------------------
-      POST /api/administradores/promover   { usuario_id, senha_confirmacao }
+      POST /api/administradores/promover   { usuario_id, permissoes, senha_confirmacao }
     ----------------------------------------------------------------------------------------------------*/
 
     async promover(req, res) {
@@ -313,51 +355,37 @@ const AdministradorController = {
                 return responder(res, 400, "Escolha o cidadão que vai virar administrador.");
             }
 
+            const selecao = selecaoObrigatoria(res, req.body?.permissoes);
+            if (!selecao) return;
+            if (!podeDar(req.usuario, selecao)) {
+                return responder(res, 403, "Você não pode conceder essas permissões.", { codigo: "PERMISSAO_NAO_PERMITIDA" });
+            }
+
             if (!(await exigirSenha(req, res))) {
                 return;
             }
 
-            const usuario =
-                await AdministradorModel.buscarUsuario(usuarioId);
-
-            if (!usuario || !usuario.ativo) {
-                return responder(res, 404, "Essa conta não foi encontrada.");
-            }
-
-            if (usuario.tipo_usuario === "ADMIN") {
-                return responder(res, 409, `${usuario.nome} já é administrador.`);
-            }
-
-            const trocou =
-                await AdministradorModel.trocarTipoComHistorico({
-                    usuarioId,
-                    tipoAtual: "CIDADAO",
-                    tipoNovo: "ADMIN",
-                    usuario,
-                    feitoPor: req.usuario
-                });
-
-            if (!trocou) {
-                return responder(res, 409, "Essa conta mudou agora há pouco. Atualize a página e tente de novo.");
-            }
+            const usuario = await AdminAccessModel.promover({
+                atorId: req.usuario.id, alvoId: usuarioId, selecao
+            });
 
             avisarPorEmail(
                 enviarAvisoPromovido({
                     nome: usuario.nome,
                     email: usuario.email,
-                    feitoPor: req.usuario.nome
+                    feitoPor: req.usuario.nome,
+                    permissoes: lista(selecao)
                 }),
                 "promovido a administrador"
             );
 
+            notificarEquipe({ tipo: "promovido", usuarioId, atorId: req.usuario.id,
+                nome: usuario.nome, permissoes: lista(selecao) });
+
             return responder(res, 200, `${usuario.nome} agora é administrador.`);
 
         } catch (error) {
-            if (error.codigoAplicacao === "ADMIN_NAO_AUTORIZADO") {
-                return responder(res, 403, "Seu acesso de administrador mudou. Entre novamente.");
-            }
-            console.error("Erro ao promover administrador:", error);
-            return responder(res, 500, "Não foi possível promover essa conta.");
+            return responderErroAcesso(res, error, "Erro ao promover administrador:");
         }
     },
 
@@ -384,25 +412,9 @@ const AdministradorController = {
                 return;
             }
 
-            const usuario =
-                await AdministradorModel.buscarUsuario(usuarioId);
-
-            if (!usuario || usuario.tipo_usuario !== "ADMIN") {
-                return responder(res, 404, "Esse administrador não foi encontrado.");
-            }
-
-            const trocou =
-                await AdministradorModel.trocarTipoComHistorico({
-                    usuarioId,
-                    tipoAtual: "ADMIN",
-                    tipoNovo: "CIDADAO",
-                    usuario,
-                    feitoPor: req.usuario
-                });
-
-            if (!trocou) {
-                return responder(res, 409, "Essa conta mudou agora há pouco. Atualize a página e tente de novo.");
-            }
+            const usuario = await AdminAccessModel.remover({
+                atorId: req.usuario.id, alvoId: usuarioId
+            });
 
             avisarPorEmail(
                 enviarAvisoRemovido({
@@ -413,23 +425,62 @@ const AdministradorController = {
                 "acesso de administrador removido"
             );
 
+            notificarEquipe({ tipo: "removido", usuarioId, atorId: req.usuario.id,
+                nome: usuario.nome });
+
             return responder(res, 200, `${usuario.nome} voltou a ser cidadão.`);
 
         } catch (error) {
-            if (error.codigoAplicacao === "ADMIN_NAO_AUTORIZADO") {
-                return responder(res, 403, "Seu acesso de administrador mudou. Entre novamente.");
+            return responderErroAcesso(res, error, "Erro ao remover administrador:");
+        }
+    },
+
+    async alterarPermissoes(req, res) {
+        try {
+            const usuarioId = idValido(req.params.id);
+            if (!usuarioId) return responder(res, 400, "Administrador inválido.");
+            if (usuarioId === Number(req.usuario.id)) {
+                return responder(res, 400, "Você não pode mudar o próprio acesso.", { codigo: "ACAO_PROPRIA" });
             }
-            if (error.codigoAplicacao === "ULTIMO_ADMIN") {
-                return responder(res, 409, "O último administrador não pode ser removido.");
+            const selecao = selecaoObrigatoria(res, req.body?.permissoes, true);
+            if (!selecao) return;
+            if (!podeDar(req.usuario, selecao)) {
+                return responder(res, 403, "Você não pode conceder essas permissões.", { codigo: "PERMISSAO_NAO_PERMITIDA" });
             }
-            console.error("Erro ao remover administrador:", error);
-            return responder(res, 500, "Não foi possível remover esse acesso.");
+            if (!(await exigirSenha(req, res))) return;
+            const usuario = await AdminAccessModel.alterarPermissoes({
+                atorId: req.usuario.id, alvoId: usuarioId, selecao
+            });
+            notificarEquipe({ tipo: "permissoes", usuarioId, atorId: req.usuario.id,
+                nome: usuario.nome, permissoes: lista(selecao) });
+            return responder(res, 200, "Permissões atualizadas.", { permissoes: lista(selecao) });
+        } catch (error) {
+            return responderErroAcesso(res, error, "Erro ao mudar permissões:");
+        }
+    },
+
+    async transferirPrincipal(req, res) {
+        try {
+            const usuarioId = idValido(req.params.id);
+            if (!usuarioId) return responder(res, 400, "Administrador inválido.");
+            if (!req.usuario.permissoes?.principal) {
+                return responder(res, 403, "Só o administrador principal pode passar o cargo.", { codigo: "SO_PRINCIPAL" });
+            }
+            if (!(await exigirSenha(req, res))) return;
+            const usuario = await AdminAccessModel.transferirPrincipal({
+                atorId: req.usuario.id, alvoId: usuarioId
+            });
+            notificarEquipe({ tipo: "principal", usuarioId, atorId: req.usuario.id,
+                nome: usuario.nome });
+            return responder(res, 200, `${usuario.nome} agora é o administrador principal.`);
+        } catch (error) {
+            return responderErroAcesso(res, error, "Erro ao transferir cargo:");
         }
     },
 
 
     /*----------------------------------------------------------------------------------------------------
-      POST /api/administradores/convites   { nome, email, senha_confirmacao }
+      POST /api/administradores/convites   { nome, email, permissoes, senha_confirmacao }
     ----------------------------------------------------------------------------------------------------*/
 
     async convidar(req, res) {
@@ -446,6 +497,12 @@ const AdministradorController = {
 
             if (!validarEmail(email)) {
                 return responder(res, 400, "Digite um e-mail válido.");
+            }
+
+            const selecao = selecaoObrigatoria(res, req.body?.permissoes);
+            if (!selecao) return;
+            if (!podeDar(req.usuario, selecao)) {
+                return responder(res, 403, "Você não pode conceder essas permissões.", { codigo: "PERMISSAO_NAO_PERMITIDA" });
             }
 
             // E-mail que já tem conta: o caminho certo é promover (ou nada a fazer).
@@ -502,7 +559,8 @@ const AdministradorController = {
                     email,
                     tokenHash: hashTokenConvite(token),
                     convidadoPor: req.usuario.id,
-                    diasValidade: DIAS_VALIDADE_CONVITE
+                    diasValidade: DIAS_VALIDADE_CONVITE,
+                    permissoes: selecao
                 });
 
             try {
@@ -511,7 +569,8 @@ const AdministradorController = {
                     email,
                     link: linkDoConvite(req, token),
                     convidadoPor: req.usuario.nome,
-                    diasValidade: DIAS_VALIDADE_CONVITE
+                    diasValidade: DIAS_VALIDADE_CONVITE,
+                    permissoes: lista(selecao)
                 });
 
             } catch (error) {
@@ -531,6 +590,9 @@ const AdministradorController = {
                 nomeFeitoPor: req.usuario.nome
             });
 
+            notificarEquipe({ tipo: "convite", atorId: req.usuario.id,
+                nome, permissoes: lista(selecao) });
+
             return responder(res, 201, `Convite enviado para ${email}.`, {
                 convite_id: conviteId
             });
@@ -539,9 +601,7 @@ const AdministradorController = {
             if (AdministradorModel.tabelaFaltando(error)) {
                 return responderConvitesIndisponiveis(res);
             }
-
-            console.error("Erro ao convidar administrador:", error);
-            return responder(res, 500, "Não foi possível enviar o convite.");
+            return responderErroAcesso(res, error, "Erro ao convidar administrador:");
         }
     },
 
@@ -563,14 +623,29 @@ const AdministradorController = {
                 return responder(res, 404, "Esse convite não está mais pendente.");
             }
 
+            if (convite.perm_equipe && !req.usuario.permissoes?.principal) {
+                return responder(res, 403, "Só o principal pode reenviar convite com Equipe.", { codigo: "SEM_PERMISSAO_SOBRE_ALVO" });
+            }
+            if (!podeDar(req.usuario, {
+                ocorrencias: Boolean(convite.perm_ocorrencias),
+                avisos: Boolean(convite.perm_avisos),
+                equipe: Boolean(convite.perm_equipe)
+            })) {
+                return responder(res, 403, "Você não pode mais conceder as permissões deste convite.", { codigo: "PERMISSAO_NAO_PERMITIDA" });
+            }
+            if (!(await exigirSenha(req, res))) return;
+
             const token =
                 gerarTokenConvite();
 
-            await AdministradorModel.renovarConvite(
+            const hashNovo = hashTokenConvite(token);
+            const renovou = await AdministradorModel.renovarConvite(
                 conviteId,
-                hashTokenConvite(token),
-                DIAS_VALIDADE_CONVITE
+                hashNovo,
+                DIAS_VALIDADE_CONVITE,
+                req.usuario.id
             );
+            if (!renovou) return responder(res, 404, "Esse convite não está mais pendente.");
 
             try {
                 await enviarConviteAdministrador({
@@ -578,10 +653,18 @@ const AdministradorController = {
                     email: convite.email,
                     link: linkDoConvite(req, token),
                     convidadoPor: req.usuario.nome,
-                    diasValidade: DIAS_VALIDADE_CONVITE
+                    diasValidade: DIAS_VALIDADE_CONVITE,
+                    permissoes: lista({
+                        ocorrencias: convite.perm_ocorrencias,
+                        avisos: convite.perm_avisos,
+                        equipe: convite.perm_equipe
+                    })
                 });
 
             } catch (error) {
+                await AdministradorModel.restaurarConviteAposFalhaDeEmail(
+                    conviteId, hashNovo, convite.token_hash, convite.expira_em
+                ).catch((restauracao) => console.error("Falha ao restaurar link do convite:", restauracao));
                 console.error("Erro ao reenviar convite de administrador:", error.message);
                 return responder(res, 502, "Não foi possível enviar o e-mail agora. Tente de novo em alguns minutos.");
             }
@@ -594,6 +677,9 @@ const AdministradorController = {
                 nomeFeitoPor: req.usuario.nome
             });
 
+            notificarEquipe({ tipo: "convite reenviado", atorId: req.usuario.id,
+                nome: convite.nome });
+
             return responder(res, 200, `Convite reenviado para ${convite.email}. Vale por mais ${DIAS_VALIDADE_CONVITE} dias.`);
 
         } catch (error) {
@@ -601,8 +687,7 @@ const AdministradorController = {
                 return responderConvitesIndisponiveis(res);
             }
 
-            console.error("Erro ao reenviar convite:", error);
-            return responder(res, 500, "Não foi possível reenviar o convite.");
+            return responderErroAcesso(res, error, "Erro ao reenviar convite:");
         }
     },
 
@@ -623,11 +708,16 @@ const AdministradorController = {
                 return responder(res, 404, "Esse convite não está mais pendente.");
             }
 
+            if (convite.perm_equipe && !req.usuario.permissoes?.principal) {
+                return responder(res, 403, "Só o principal pode cancelar convite com Equipe.", { codigo: "SEM_PERMISSAO_SOBRE_ALVO" });
+            }
+
             if (!(await exigirSenha(req, res))) {
                 return;
             }
 
-            await AdministradorModel.cancelarConvite(conviteId);
+            const cancelou = await AdministradorModel.cancelarConvite(conviteId, req.usuario.id);
+            if (!cancelou) return responder(res, 404, "Esse convite não está mais pendente.");
 
             await AdministradorModel.registrarHistorico({
                 acao: "CONVITE_CANCELADO",
@@ -637,6 +727,9 @@ const AdministradorController = {
                 nomeFeitoPor: req.usuario.nome
             });
 
+            notificarEquipe({ tipo: "convite cancelado", atorId: req.usuario.id,
+                nome: convite.nome });
+
             return responder(res, 200, "Convite cancelado. O link do e-mail parou de funcionar.");
 
         } catch (error) {
@@ -644,8 +737,7 @@ const AdministradorController = {
                 return responderConvitesIndisponiveis(res);
             }
 
-            console.error("Erro ao cancelar convite:", error);
-            return responder(res, 500, "Não foi possível cancelar o convite.");
+            return responderErroAcesso(res, error, "Erro ao cancelar convite:");
         }
     },
 
@@ -674,7 +766,12 @@ const AdministradorController = {
                         nome: convite.nome,
                         email: convite.email,
                         convidado_por: convite.convidado_por_nome || null,
-                        expira_em: convite.expira_em
+                        expira_em: convite.expira_em,
+                        permissoes: lista({
+                            ocorrencias: convite.perm_ocorrencias,
+                            avisos: convite.perm_avisos,
+                            equipe: convite.perm_equipe
+                        })
                     }
                 });
 
@@ -755,8 +852,18 @@ const AdministradorController = {
                 id: usuarioId,
                 nome: convite.nome,
                 email: convite.email,
-                tipo_usuario: "ADMIN"
+                tipo_usuario: "ADMIN",
+                permissoes: {
+                    principal: false,
+                    ocorrencias: Boolean(convite.perm_ocorrencias),
+                    avisos: Boolean(convite.perm_avisos),
+                    equipe: Boolean(convite.perm_equipe),
+                    configurado: true
+                }
             };
+
+            notificarEquipe({ tipo: "aceito", usuarioId, atorId: convite.convidado_por,
+                nome: convite.nome, permissoes: lista(usuario.permissoes) });
 
             return res
                 .status(201)
@@ -780,6 +887,9 @@ const AdministradorController = {
 
 
 async function buscarConviteValido(token) {
+    if (!(await PermissaoAdminModel.configurado())) {
+        return { status: 503, erro: "As permissões da equipe ainda estão sendo configuradas.", codigo: "MIGRACAO_PENDENTE" };
+    }
     const texto =
         String(token || "");
 

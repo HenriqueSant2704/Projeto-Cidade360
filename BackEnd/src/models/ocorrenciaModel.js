@@ -1151,7 +1151,8 @@ const OcorrenciaModel = {
         let filtroUsuario = "";
 
         if (
-            usuario.tipo_usuario !== "ADMIN"
+            usuario.tipo_usuario !== "ADMIN" ||
+            !(usuario.permissoes?.principal || usuario.permissoes?.ocorrencias)
         ) {
             filtroUsuario =
                 "AND o.usuario_id = ?";

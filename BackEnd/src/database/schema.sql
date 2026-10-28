@@ -559,7 +559,12 @@ CREATE TABLE IF NOT EXISTS notificacoes (
         'ocorrencia_status',
         'aviso_novo',
         -- Cidadão conquistou um título (migração 009)
-        'titulo_novo'
+        'titulo_novo',
+        'admin_promovido',
+        'admin_removido',
+        'admin_permissoes',
+        'admin_principal',
+        'admin_equipe'
     ) NOT NULL,
 
     -- Chave do status da ocorrência (recebido, em_analise, em_andamento,
@@ -656,6 +661,25 @@ CREATE TABLE IF NOT EXISTS pontos_historico (
 
 
 -- ========================================================================================
+-- PERMISSÕES DE ADMINISTRADOR
+-- Apenas uma linha pode ter principal=1; quem não tem linha não tem permissões.
+-- ========================================================================================
+
+CREATE TABLE IF NOT EXISTS permissoes_admin (
+    usuario_id BIGINT NOT NULL PRIMARY KEY,
+    principal TINYINT(1) NOT NULL DEFAULT 0,
+    ocorrencias TINYINT(1) NOT NULL DEFAULT 0,
+    avisos TINYINT(1) NOT NULL DEFAULT 0,
+    equipe TINYINT(1) NOT NULL DEFAULT 0,
+    principal_unico TINYINT GENERATED ALWAYS AS (IF(principal = 1, 1, NULL)) STORED,
+    data_atualizacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_permissoes_admin_principal (principal_unico),
+    CONSTRAINT fk_permissoes_admin_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuarios(id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+
+-- ========================================================================================
 -- CONVITES DE ADMINISTRADOR
 -- Um administrador convida alguém que ainda não tem conta. A pessoa recebe um link
 -- por e-mail, cria a própria senha e a conta já nasce como ADMIN.
@@ -677,6 +701,10 @@ CREATE TABLE IF NOT EXISTS convites_admin (
     ) NOT NULL DEFAULT 'PENDENTE',
 
     convidado_por BIGINT NULL,
+
+    perm_ocorrencias TINYINT(1) NOT NULL DEFAULT 0,
+    perm_avisos TINYINT(1) NOT NULL DEFAULT 0,
+    perm_equipe TINYINT(1) NOT NULL DEFAULT 0,
 
     -- Conta criada quando a pessoa aceita
     usuario_id BIGINT NULL,
@@ -721,7 +749,9 @@ CREATE TABLE IF NOT EXISTS historico_administradores (
         'CONVITE_ENVIADO',
         'CONVITE_REENVIADO',
         'CONVITE_CANCELADO',
-        'CONVITE_ACEITO'
+        'CONVITE_ACEITO',
+        'PERMISSOES_ALTERADAS',
+        'PRINCIPAL_TRANSFERIDO'
     ) NOT NULL,
 
     usuario_id BIGINT NULL,
@@ -730,6 +760,8 @@ CREATE TABLE IF NOT EXISTS historico_administradores (
 
     feito_por BIGINT NULL,
     nome_feito_por VARCHAR(150) NULL,
+
+    detalhe VARCHAR(255) NULL,
 
     data_acao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
