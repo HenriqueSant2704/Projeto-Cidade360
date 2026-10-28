@@ -50,6 +50,12 @@ const pontosRoutes =
 const cidadeRoutes =
     require("./src/routes/cidadeRoutes");
 
+const administradorRoutes =
+    require("./src/routes/administradorRoutes");
+
+const conviteAdminRoutes =
+    require("./src/routes/conviteAdminRoutes");
+
 
 const app =
     express();
@@ -405,6 +411,20 @@ app.use(
 app.use(
     "/api/cidade-atendida",
     cidadeRoutes
+);
+
+
+// Administradores: promover cidadão, convidar por e-mail, remover acesso (só admin)
+app.use(
+    "/api/administradores",
+    administradorRoutes
+);
+
+
+// Convite de administrador (público: a pessoa ainda não tem login)
+app.use(
+    "/api/convites-admin",
+    conviteAdminRoutes
 );
 
 

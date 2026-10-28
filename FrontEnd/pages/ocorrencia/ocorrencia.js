@@ -392,6 +392,13 @@ function inicializarMapaOcorrencia() {
     // O mapa fica preso em Jaborandi-SP (global/mapaCidade.js)
     window.MapaCidade360?.travar(mapaOcorrencia);
 
+    // Em tela larga o mapa estica junto com a coluna (ex.: ao adicionar fotos
+    // ou aumentar a descrição). O Leaflet só percebe isso se avisarmos.
+    if ("ResizeObserver" in window) {
+        new ResizeObserver(() => mapaOcorrencia.invalidateSize())
+            .observe(mapaPreviewOcorrencia);
+    }
+
     mapaOcorrencia.on("click", (event) => {
         if (!localDentroDaCidadeOcorrencia(event.latlng.lat, event.latlng.lng)) {
             recusarLocalForaOcorrencia(event.latlng.lat, event.latlng.lng, "toque");

@@ -32,6 +32,10 @@ const LIMITE_RECENTES_PAINEL = 5;
 const LIMITE_AVISOS_PAINEL = 5;
 const LIMITE_CATEGORIAS_PAINEL = 6;
 const RAIO_OCORRENCIAS_PROXIMAS_KM = 5;
+// Ocorrência resolvida fica no mapa por esse tempo depois da resolução e depois sai
+// (o servidor aplica a mesma regra em /api/ocorrencias-proximas).
+const DIAS_RESOLVIDA_NO_MAPA = 7;
+const UM_DIA_MS = 24 * 60 * 60 * 1000;
 
 const { icone: iconePainel, iconeCategoria, chaveStatus, STATUS, pilula, PINO, tempoRelativo } =
     window.Cidade360;
@@ -561,13 +565,13 @@ function renderizarKpisPainel(falhou = false) {
         return;
     }
 
-    const pontos = numeroPainel(estadoPainel.pontos?.saldo ?? estadoPainel.usuario?.pontos);
-
+    // Os pontos já aparecem no cartão da boas-vindas, por isso não têm card aqui.
+    // "Em análise" soma Recebido + Em análise (campo "pendentes" do resumo).
     kpisPainel.innerHTML = [
         { cor: "azul", icone: "lista", valor: valor("total"), titulo: "Minhas ocorrências", sub: "Total registradas", status: "" },
+        { cor: "laranja", icone: "lupa", valor: valor("pendentes"), titulo: "Em análise", sub: "Aguardando a prefeitura", status: "em_analise" },
         { cor: "verde", icone: "andamento", valor: valor("em_andamento"), titulo: "Em andamento", sub: "Sendo atendidas agora", status: "em_andamento" },
-        { cor: "roxo", icone: "checkCirculo", valor: valor("resolvidas"), titulo: "Resolvidas", sub: "Ocorrências concluídas", status: "resolvido" },
-        { cor: "laranja", icone: "estrela", valor: formatarNumeroPainel(pontos), titulo: "Pontos acumulados", sub: escaparHtmlPainel(obterTituloPainel(pontos).nome), destino: PAGINA_PONTOS_PAINEL }
+        { cor: "roxo", icone: "checkCirculo", valor: valor("resolvidas"), titulo: "Resolvidas", sub: "Ocorrências concluídas", status: "resolvido" }
     ].map(htmlKpiPainel).join("");
 }
 
@@ -1096,7 +1100,13 @@ function renderizarLegendaPainel() {
     }
 
     legendaPainel.innerHTML =
-        chaves.map((chave) => `<span class="st" data-st="${chave}"><i></i>${STATUS[chave].nome}</span>`).join("") +
+        chaves.map((chave) => {
+            const nome = chave === "resolvido"
+                ? `${STATUS[chave].nome} (até ${DIAS_RESOLVIDA_NO_MAPA} dias)`
+                : STATUS[chave].nome;
+
+            return `<span class="st" data-st="${chave}"><i></i>${nome}</span>`;
+        }).join("") +
         (ehAdministradorPainel() ? "" : `<span><i class="legenda-voce"></i>Você</span>`);
 }
 
@@ -1225,6 +1235,52 @@ function renderizarLocalizacaoUsuarioPainel() {
 
 /*========================================================================================================
 
+RESOLVIDAS NO MAPA
+
+Ocorrência resolvida fica no mapa por DIAS_RESOLVIDA_NO_MAPA depois da resolução, para não poluir.
+Ela continua no sistema: só sai do mapa. A data vem de "data_resolucao" (ocorrências próximas)
+ou, nas minhas ocorrências, de "data_atualizacao" (a última mudança, que é a própria resolução).
+
+=========================================================================================================*/
+
+function msDesdeResolucaoPainel(ocorrencia) {
+    if (chaveStatusPainel(ocorrencia.status) !== "resolvido") {
+        return null;
+    }
+
+    const data = new Date(ocorrencia.data_resolucao || ocorrencia.data_atualizacao);
+
+    return Number.isNaN(data.getTime())
+        ? null
+        : Math.max(Date.now() - data.getTime(), 0);
+}
+
+
+function saiuDoMapaPainel(ocorrencia) {
+    const ms = msDesdeResolucaoPainel(ocorrencia);
+
+    return ms !== null && ms > DIAS_RESOLVIDA_NO_MAPA * UM_DIA_MS;
+}
+
+
+function textoPrazoMapaPainel(ocorrencia) {
+    const ms = msDesdeResolucaoPainel(ocorrencia);
+
+    if (ms === null) {
+        return "";
+    }
+
+    const dias = Math.floor(ms / UM_DIA_MS);
+    const restam = DIAS_RESOLVIDA_NO_MAPA - dias;
+    const resolvida = dias === 0 ? "Resolvida hoje" : `Resolvida há ${dias} ${dias === 1 ? "dia" : "dias"}`;
+    const sai = restam <= 0 ? "sai do mapa hoje" : `sai do mapa em ${restam} ${restam === 1 ? "dia" : "dias"}`;
+
+    return `${resolvida} · ${sai}`;
+}
+
+
+/*========================================================================================================
+
 MARCADORES (pino com a cor do status)
 
 =========================================================================================================*/
@@ -1309,6 +1365,8 @@ function htmlBalaoPainel(ocorrencia, tipo) {
         !admin && Number.isFinite(distancia) ? `${distancia.toFixed(1).replace(".", ",")} km de você` : ""
     ].filter(Boolean).join(" · ");
 
+    const prazoMapa = textoPrazoMapaPainel(ocorrencia);
+
     return `
         <div class="balao">
             <span class="tipo-balao">${tipoTexto}</span>
@@ -1321,6 +1379,7 @@ function htmlBalaoPainel(ocorrencia, tipo) {
                     ? `<a class="link-seta" href="${linkOcorrenciasPainel({ ocorrencia: Number(ocorrencia.id) || 0 })}">Ver ${iconePainel("direita", 14)}</a>`
                     : ""}
             </div>
+            ${prazoMapa ? `<span class="prazo-mapa">${prazoMapa}</span>` : ""}
             ${ehMinha ? "" : `<span class="privacidade">${iconePainel("cadeado", 12)} Por privacidade, os dados de quem registrou não são exibidos.</span>`}
         </div>
     `;
@@ -1341,6 +1400,10 @@ function renderizarMarcadoresMapaPainel() {
     estadoPainel.ocorrencias.forEach((ocorrencia, indice) => {
         idsMinhas.add(Number(ocorrencia.id));
 
+        if (saiuDoMapaPainel(ocorrencia)) {
+            return;
+        }
+
         const ponto = adicionarMarcadorOcorrenciaPainel(ocorrencia, "minha", indice);
 
         if (ponto) {
@@ -1349,7 +1412,7 @@ function renderizarMarcadoresMapaPainel() {
     });
 
     estadoPainel.ocorrenciasProximas.forEach((ocorrencia, indice) => {
-        if (idsMinhas.has(Number(ocorrencia.id))) {
+        if (idsMinhas.has(Number(ocorrencia.id)) || saiuDoMapaPainel(ocorrencia)) {
             return;
         }
 

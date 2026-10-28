@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- O link do convite leva um código secreto: não repassar o endereço para outros sites -->
+    <meta name="referrer" content="no-referrer">
+
+    <!-- Tema salvo (Configurações > Tema escuro): carregado antes do CSS para não piscar -->
+    <script src="/FrontEnd/pages/global/tema.js?v=1"></script>
+
+    <link rel="icon" href="/assets/img/global/logo/icone-cidade360.png">
+    <link rel="stylesheet" href="/FrontEnd/pages/login/login.css?v=2">
+    <title>Cidade360-Ativar acesso</title>
+
+    <style>
+        /* Só desta tela (o resto vem do login.css) */
+        [hidden] { display: none !important; }
+        .dados-convite { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2, transparent); font-size: 14px; }
+        .dados-convite div { display: flex; justify-content: space-between; gap: 12px; }
+        .dados-convite span { color: var(--muted); }
+        .dados-convite b { font-weight: 600; text-align: right; overflow-wrap: anywhere; min-width: 0; }
+        .linha-convite { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        #mensagemConvite, #botoesConvite { width: 100%; margin-top: 22px; }
+        #linkLoginConvite { margin-top: 22px; text-decoration: none; }
+        @media (max-width: 480px) { .linha-convite { grid-template-columns: 1fr; } }
+    </style>
+</head>
+
+<body>
+    <div class="container-login">
+        <div class="ilustracao">
+            <img src="/assets/img/login/Fundo-cidade360.png" alt="Cidade360: conectando você a uma cidade melhor.">
+        </div>
+
+        <div class="area-login">
+            <form class="miolo" id="formularioConvite" novalidate>
+
+                <div class="logo-mobile">
+                    <img src="/assets/img/global/logo/icone-cidade360.png" alt="">
+                    <span>Cidade<b>360</b></span>
+                </div>
+
+                <div class="caixa-titulo">
+                    <h1 id="tituloConvite">Ativar acesso de administrador</h1>
+                    <span id="subtituloConvite">Abrindo o seu convite...</span>
+                </div>
+
+                <!-- Montado pelo convite.js quando o convite é válido -->
+                <div class="caixa-login" id="camposConvite" hidden></div>
+
+                <div class="mensagem" id="mensagemConvite" role="status" aria-live="polite" hidden></div>
+
+                <div class="area-botoes" id="botoesConvite" hidden>
+                    <button type="submit" id="btnAtivarConvite" class="btn-principal">Ativar e entrar</button>
+                </div>
+
+                <a class="caixa-criar-conta" id="linkLoginConvite" href="/FrontEnd/pages/login/login.html" hidden>Ir para a tela de login</a>
+            </form>
+        </div>
+    </div>
+
+    <script src="/FrontEnd/pages/login/convite.js?v=1"></script>
+</body>
+
+</html>

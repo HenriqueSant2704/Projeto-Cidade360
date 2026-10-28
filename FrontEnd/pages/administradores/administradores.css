@@ -1,0 +1,835 @@
+/*========================================================================================================
+
+ADMINISTRADORES
+
+Equipe da prefeitura, convites pendentes, regras e histórico.
+O menu lateral, o topo, as cores (claro/escuro), os botões, o .dialogo e o .toast vêm do global.css.
+
+=========================================================================================================*/
+
+.pagina-admins {
+    width: 100%;
+    max-width: var(--largura-pagina, 1240px);
+    margin: 0 auto;
+    padding: 28px var(--respiro-pagina, 24px) 64px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+
+    color: var(--ink);
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+}
+
+.pagina-admins *,
+.pagina-admins *::before,
+.pagina-admins *::after,
+.dialogo-admins *,
+.dialogo-admins *::before,
+.dialogo-admins *::after {
+    box-sizing: border-box;
+}
+
+.pagina-admins button,
+.dialogo-admins button {
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.pagina-admins :focus-visible,
+.dialogo-admins :focus-visible {
+    outline: 3px solid var(--accent-ring);
+    outline-offset: 2px;
+    border-radius: 10px;
+}
+
+.pagina-admins h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+
+/*-------------------------------------------------------------------
+  CABEÇALHO
+-------------------------------------------------------------------*/
+
+.admins-cabecalho {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 18px;
+
+    padding: 26px 28px;
+
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+}
+
+.admins-cabecalho h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.admins-cabecalho p {
+    margin: 0;
+    max-width: 62ch;
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+.aviso-migracao {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+
+    padding: 14px 18px;
+
+    border-radius: 16px;
+    background: var(--s-analise-soft);
+    color: var(--ink-soft);
+
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.aviso-migracao svg {
+    flex-shrink: 0;
+    color: var(--s-analise);
+    margin-top: 1px;
+}
+
+.aviso-migracao[hidden] {
+    display: none;
+}
+
+
+/*-------------------------------------------------------------------
+  GRADE
+-------------------------------------------------------------------*/
+
+.admins-grade {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 22px;
+    align-items: start;
+}
+
+.admins-equipe,
+.cartao-admins {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+}
+
+.admins-equipe {
+    padding: 24px;
+    min-width: 0;
+}
+
+.admins-lateral {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.cartao-admins {
+    padding: 22px;
+}
+
+.cartao-admins h2 {
+    margin-bottom: 14px;
+}
+
+.pagina-admins .cabecalho-secao {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.pagina-admins .cabecalho-secao p {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 13.5px;
+}
+
+
+/*-------------------------------------------------------------------
+  FILTROS
+-------------------------------------------------------------------*/
+
+.filtros-admins {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.filtro-admins {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 7px 14px;
+
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+
+    background: var(--surface);
+    color: var(--ink-soft);
+
+    font-size: 13px;
+    font-weight: 500;
+
+    transition: background-color .2s, color .2s, border-color .2s;
+}
+
+.filtro-admins span {
+    min-width: 22px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.filtro-admins:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.filtro-admins[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #ffffff;
+}
+
+.filtro-admins[aria-pressed="true"] span {
+    background: rgba(255, 255, 255, .22);
+    color: #ffffff;
+}
+
+
+/*-------------------------------------------------------------------
+  LISTA DA EQUIPE
+-------------------------------------------------------------------*/
+
+.lista-admins {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.linha-admin {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 14px;
+
+    padding: 16px 4px;
+}
+
+.linha-admin + .linha-admin {
+    border-top: 1px solid var(--line);
+}
+
+.avatar-admin {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+
+    border-radius: 14px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: #ffffff;
+
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.avatar-admin.pequeno {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    font-size: 13px;
+}
+
+.linha-admin.convite .avatar-admin {
+    background: var(--surface-2);
+    color: var(--muted);
+    border: 1px dashed var(--line-strong);
+}
+
+.dados-admin {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dados-admin strong {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.dados-admin span,
+.dados-admin small {
+    color: var(--muted);
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.dados-admin small {
+    font-size: 12.5px;
+}
+
+.selo-voce {
+    padding: 1px 9px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 11.5px;
+    font-style: normal;
+    font-weight: 600;
+}
+
+.situacao-admin {
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.situacao-admin.ativo {
+    background: var(--s-andamento-soft);
+    color: var(--s-andamento);
+}
+
+.situacao-admin.pendente {
+    background: var(--s-analise-soft);
+    color: var(--s-analise);
+}
+
+.situacao-admin.vencido {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.acoes-admin {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.nota-admin {
+    max-width: 200px;
+    color: var(--muted);
+    font-size: 12.5px;
+    text-align: right;
+}
+
+.botao-linha {
+    padding: 8px 14px;
+
+    border: 1px solid var(--line-strong);
+    border-radius: 12px;
+
+    background: var(--surface);
+    color: var(--ink-soft);
+
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+
+    transition: background-color .2s, color .2s, border-color .2s;
+}
+
+.botao-linha:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.botao-linha.perigo {
+    color: var(--danger);
+}
+
+.botao-linha.perigo:hover:not(:disabled) {
+    border-color: var(--danger);
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.botao-linha.ativo,
+.botao-linha.ativo:hover:not(:disabled) {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #ffffff;
+}
+
+.botao-linha:disabled {
+    opacity: .6;
+    cursor: wait;
+}
+
+.botao-linha .girando,
+.btn-secundario .girando {
+    width: 14px;
+    height: 14px;
+    border-color: var(--line-strong);
+    border-top-color: var(--accent);
+}
+
+.vazio-admins {
+    padding: 28px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: var(--muted);
+    text-align: center;
+}
+
+.vazio-admins p {
+    margin: 0;
+}
+
+.lista-admins .esqueleto {
+    height: 76px;
+    margin-bottom: 10px;
+    border-radius: 16px;
+    background: linear-gradient(90deg, var(--surface) 0%, var(--surface-2) 50%, var(--surface) 100%);
+    background-size: 200% 100%;
+    animation: brilho-admins 1.4s ease-in-out infinite;
+}
+
+@keyframes brilho-admins {
+    to { background-position: -200% 0; }
+}
+
+
+/*-------------------------------------------------------------------
+  REGRAS E HISTÓRICO
+-------------------------------------------------------------------*/
+
+.regras-admins,
+.historico-admins {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.regras-admins li {
+    display: flex;
+    gap: 12px;
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    line-height: 1.5;
+}
+
+.icone-regra-admin {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.historico-admins li {
+    position: relative;
+    padding-left: 18px;
+    color: var(--ink-soft);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.historico-admins li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 7px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+}
+
+.historico-admins li.negativo::before {
+    background: var(--danger);
+}
+
+.historico-admins li.vazio-historico {
+    padding-left: 0;
+    color: var(--muted);
+}
+
+.historico-admins li.vazio-historico::before {
+    display: none;
+}
+
+.historico-admins b {
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.historico-admins time {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}
+
+
+/*-------------------------------------------------------------------
+  DIÁLOGOS (adicionar, confirmar, remover)
+-------------------------------------------------------------------*/
+
+.dialogo-admins .icone-dialogo-admin {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.dialogo-admins h3 {
+    padding-right: 40px;
+}
+
+.dialogo-admins .acoes .btn-primario,
+.dialogo-admins .acoes .btn-secundario,
+.dialogo-admins .acoes .btn-perigo {
+    padding: 12px 20px;
+    font-size: 15px;
+}
+
+.abas-admin {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.aba-admin {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+
+    padding: 12px 14px;
+
+    border: 1.5px solid var(--line-strong);
+    border-radius: 16px;
+
+    background: var(--surface);
+    color: var(--muted);
+
+    text-align: left;
+
+    transition: border-color .2s, background-color .2s;
+}
+
+.aba-admin svg {
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.aba-admin b {
+    display: block;
+    color: var(--ink);
+    font-size: 14px;
+}
+
+.aba-admin small {
+    display: block;
+    margin-top: 2px;
+    font-size: 12.5px;
+    line-height: 1.4;
+}
+
+.aba-admin:hover {
+    border-color: var(--accent);
+}
+
+.aba-admin[aria-selected="true"] {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.aba-admin[aria-selected="true"] b {
+    color: var(--accent);
+}
+
+.corpo-dialogo-admin {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 8px;
+}
+
+.entrada-admin {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 0 14px;
+
+    border: 1px solid var(--line-strong);
+    border-radius: 14px;
+
+    background: var(--surface);
+    color: var(--muted);
+
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.entrada-admin:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-ring);
+}
+
+/* Mais forte que o ".campo input" do global.css: aqui a borda fica na .entrada-admin */
+.dialogo-admins .entrada-admin input {
+    flex: 1;
+    min-width: 0;
+
+    padding: 12px 0;
+
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    outline: none;
+
+    background: transparent;
+    color: var(--ink);
+
+    font: inherit;
+    font-size: 15px;
+}
+
+.dialogo-admins .entrada-admin input::placeholder {
+    color: var(--muted);
+    opacity: .8;
+}
+
+.resultados-cidadaos {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    border: 1px solid var(--line);
+    border-radius: 16px;
+
+    overflow: hidden;
+}
+
+.resultados-cidadaos li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+
+    padding: 12px 14px;
+}
+
+.resultados-cidadaos li + li {
+    border-top: 1px solid var(--line);
+}
+
+.resultados-cidadaos li.selecionado {
+    background: var(--accent-soft);
+}
+
+.resultados-cidadaos .dados-admin strong {
+    font-size: 14px;
+}
+
+.resultados-cidadaos .dados-admin span,
+.resultados-cidadaos .dados-admin small {
+    font-size: 12.5px;
+}
+
+.resultados-cidadaos li.vazio-busca {
+    display: block;
+    padding: 18px;
+    color: var(--muted);
+    font-size: 13.5px;
+    text-align: center;
+}
+
+.link-admin {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.aviso-admin,
+.poderes-admin {
+    border-radius: 14px;
+    font-size: 13.5px;
+    line-height: 1.55;
+}
+
+.aviso-admin {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    color: var(--ink-soft);
+}
+
+.aviso-admin svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.aviso-admin.info {
+    background: var(--accent-soft);
+}
+
+.aviso-admin.info svg {
+    color: var(--accent);
+}
+
+.aviso-admin.alerta {
+    background: var(--s-analise-soft);
+}
+
+.aviso-admin.alerta svg {
+    color: var(--s-analise);
+}
+
+.aviso-admin.erro-aviso {
+    background: var(--danger-soft);
+}
+
+.aviso-admin.erro-aviso svg {
+    color: var(--danger);
+}
+
+.poderes-admin {
+    padding: 14px 16px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+}
+
+.poderes-admin b {
+    color: var(--ink);
+}
+
+.poderes-admin ul {
+    margin: 6px 0 0;
+    padding-left: 18px;
+}
+
+
+/*-------------------------------------------------------------------
+  TELAS MENORES
+-------------------------------------------------------------------*/
+
+@media (max-width: 1080px) {
+    .admins-grade {
+        grid-template-columns: 1fr;
+    }
+
+    .admins-lateral {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    .admins-lateral {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .pagina-admins {
+        padding-top: 18px;
+        gap: 16px;
+    }
+
+    .admins-cabecalho,
+    .admins-equipe,
+    .cartao-admins {
+        padding: 20px;
+        border-radius: 20px;
+    }
+
+    .admins-cabecalho h2 {
+        font-size: 21px;
+    }
+
+    .admins-cabecalho .btn-primario {
+        width: 100%;
+    }
+
+    .linha-admin {
+        grid-template-columns: auto minmax(0, 1fr);
+        row-gap: 10px;
+    }
+
+    .linha-admin .situacao-admin,
+    .linha-admin .acoes-admin {
+        grid-column: 2;
+        justify-self: start;
+    }
+
+    .acoes-admin {
+        justify-content: flex-start;
+    }
+
+    .nota-admin {
+        text-align: left;
+        max-width: none;
+    }
+
+    .abas-admin {
+        grid-template-columns: 1fr;
+    }
+
+    .resultados-cidadaos li {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .resultados-cidadaos li .botao-linha {
+        grid-column: 2;
+        justify-self: start;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lista-admins .esqueleto {
+        animation: none;
+    }
+}

@@ -5,6 +5,15 @@ const db =
 let cacheColunasOcorrencias =
     null;
 
+let cacheTemHistorico =
+    null;
+
+
+// Ocorrência resolvida fica no mapa por esse tempo depois da resolução.
+// O painel (painel.js) usa o mesmo valor: DIAS_RESOLVIDA_NO_MAPA.
+const DIAS_RESOLVIDA_NO_MAPA =
+    7;
+
 
 /*========================================================================================================
 
@@ -39,6 +48,31 @@ async function carregarColunasOcorrencias() {
         );
 
     return cacheColunasOcorrencias;
+}
+
+
+/*========================================================================================================
+
+HISTÓRICO DE STATUS
+
+É dele que vem a data em que a ocorrência virou "Resolvido".
+
+=========================================================================================================*/
+
+async function temTabelaHistorico() {
+    if (cacheTemHistorico !== null) {
+        return cacheTemHistorico;
+    }
+
+    const [linhas] =
+        await db.execute(
+            "SHOW TABLES LIKE 'historico_ocorrencia'"
+        );
+
+    cacheTemHistorico =
+        linhas.length > 0;
+
+    return cacheTemHistorico;
 }
 
 
@@ -129,6 +163,42 @@ const ProximasOcorrenciasModel = {
                 "cidade"
             );
 
+        // Data da resolução: a última vez que virou "Resolvido" no histórico.
+        // Sem histórico, usa a última atualização da ocorrência (a resolução costuma ser a última mudança).
+        const temHistorico =
+            await temTabelaHistorico();
+
+        const campoAtualizacao =
+            colunas.has(
+                "data_atualizacao"
+            )
+                ? "o.data_atualizacao"
+                : campoData;
+
+        const juncaoResolucao =
+            temHistorico
+                ? `
+                LEFT JOIN (
+                    SELECT
+                        h.ocorrencia_id,
+                        MAX(h.data_alteracao) AS data_resolucao
+                    FROM historico_ocorrencia h
+                    INNER JOIN status_ocorrencia sh
+                        ON sh.id = h.status_novo
+                    WHERE
+                        sh.nome = 'Resolvido'
+                    GROUP BY
+                        h.ocorrencia_id
+                ) r
+                    ON r.ocorrencia_id = o.id
+                `
+                : "";
+
+        const campoResolucao =
+            temHistorico
+                ? `COALESCE(r.data_resolucao, ${campoAtualizacao})`
+                : campoAtualizacao;
+
         const limiteSeguro =
             Math.min(
                 Math.max(
@@ -151,6 +221,10 @@ const ProximasOcorrenciasModel = {
                     ${campoCidade} AS cidade,
                     c.nome AS categoria,
                     s.nome AS status,
+                    CASE
+                        WHEN s.nome = 'Resolvido' THEN ${campoResolucao}
+                        ELSE NULL
+                    END AS data_resolucao,
                     CASE
                         WHEN o.usuario_id = ? THEN 1
                         ELSE 0
@@ -178,10 +252,16 @@ const ProximasOcorrenciasModel = {
                     ON c.id = o.categoria_id
                 INNER JOIN status_ocorrencia s
                     ON s.id = o.status_id
+                ${juncaoResolucao}
                 WHERE
                     o.latitude IS NOT NULL
                     AND o.longitude IS NOT NULL
                     AND LOWER(s.nome) <> 'cancelado'
+                    AND (
+                        s.nome <> 'Resolvido'
+                        OR ${campoResolucao} IS NULL
+                        OR ${campoResolucao} >= NOW() - INTERVAL ${DIAS_RESOLVIDA_NO_MAPA} DAY
+                    )
                 HAVING
                     distancia_km <= ?
                 ORDER BY

@@ -475,6 +475,16 @@ a.kpi:hover .kpi-tendencia {
     text-transform: uppercase;
 }
 
+/* Resolvida: quanto tempo ainda fica no mapa */
+.balao .prazo-mapa {
+    padding: 5px 10px;
+    border-radius: 10px;
+    background-color: var(--s-resolvido-soft);
+    color: var(--s-resolvido);
+    font-size: 11.5px;
+    font-weight: 500;
+}
+
 
 /*-------------------------------------------------------------------
   LISTA DE OCORRÊNCIAS RECENTES

@@ -1162,34 +1162,169 @@
   NOVA OCORRÊNCIA
 -------------------------------------------------------------------*/
 
+/* Cabeçalho compacto: título à esquerda, etapas à direita */
+.cab-nova {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px 24px;
+}
+
+.cab-nova .voltar {
+    margin-bottom: 10px;
+    padding: 0;
+
+    border: none;
+    background: none;
+    color: var(--muted);
+
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.cab-nova .voltar:hover {
+    background: none;
+    color: var(--accent);
+}
+
+.cab-nova h2 {
+    margin: 0;
+
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+}
+
+.cab-nova p {
+    margin: 4px 0 0;
+
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.etapas-topo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    margin: 0;
+    padding: 0;
+
+    list-style: none;
+}
+
+.etapas-topo li[data-etapa] {
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 0 14px 0 6px;
+
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+
+    background-color: var(--surface);
+    color: var(--muted);
+
+    font-size: 13px;
+    font-weight: 500;
+
+    transition: all .3s var(--ease);
+}
+
+.etapas-topo .n {
+    width: 26px;
+    height: 26px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 999px;
+
+    background-color: var(--accent-soft);
+    color: var(--accent);
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.etapas-topo .traco {
+    width: 18px;
+    height: 2px;
+
+    border-radius: 2px;
+
+    background-color: var(--line-strong);
+}
+
+/* A etapa do topo fica azul quando a etapa do formulário recebe "ok" (ocorrencia.js) */
+#tela-formulario:has(#etapa-detalhes.ok) [data-etapa="detalhes"],
+#tela-formulario:has(#etapa-localizacao.ok) [data-etapa="localizacao"],
+#tela-formulario:has(#etapa-fotos.ok) [data-etapa="fotos"] {
+    border-color: var(--accent);
+    color: var(--ink);
+}
+
+#tela-formulario:has(#etapa-detalhes.ok) [data-etapa="detalhes"] .n,
+#tela-formulario:has(#etapa-localizacao.ok) [data-etapa="localizacao"] .n,
+#tela-formulario:has(#etapa-fotos.ok) [data-etapa="fotos"] .n {
+    background-color: var(--accent);
+    color: #ffffff;
+}
+
+/* Celular / tela estreita: uma coluna, na ordem 1, 2, 3 */
 .form-etapas {
     width: 100%;
-    max-width: 860px;
 
     display: flex;
     flex-direction: column;
     gap: 18px;
 }
 
-.etapa {
-    display: grid;
-    grid-template-columns: 44px minmax(0, 1fr);
+.coluna-etapas {
+    display: flex;
+    flex-direction: column;
     gap: 18px;
+    min-width: 0;
+}
+
+.etapa {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.etapa .cartao {
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.cab-etapa {
+    display: flex;
+    align-items: center;
+    gap: 14px;
 }
 
 .etapa .num {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
 
     display: grid;
     place-items: center;
 
-    border-radius: 14px;
+    border-radius: 12px;
 
     background-color: var(--accent-soft);
     color: var(--accent);
 
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
 
     transition: all .4s var(--ease);
@@ -1200,22 +1335,16 @@
     color: #ffffff;
 }
 
-.etapa .cartao {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
 .etapa h3 {
     margin: 0;
     font-size: 17px;
     font-weight: 600;
 }
 
-.etapa h3 + p {
-    margin: -10px 0 0;
+.cab-etapa p {
+    margin: 2px 0 0;
     color: var(--muted);
-    font-size: 13.5px;
+    font-size: 13px;
 }
 
 /* O <select> de categoria fica escondido (os botões são a parte visível) */
@@ -1229,6 +1358,7 @@
 .cats-grade {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-auto-rows: 1fr;
     gap: 8px;
 }
 
@@ -1240,6 +1370,8 @@
 }
 
 .cat-op {
+    min-height: 48px;
+
     display: flex;
     align-items: center;
     gap: 10px;
@@ -1326,10 +1458,12 @@
 
 .mapa-form {
     position: relative;
+    isolation: isolate;
 }
 
 .mapa.pequeno {
     aspect-ratio: 16 / 10;
+    max-height: 400px;
 }
 
 .mapa-form .mapa {
@@ -1469,10 +1603,59 @@
 .rodape-form {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     justify-content: flex-end;
+    gap: 10px 12px;
+
+    padding: 12px 14px 12px 20px;
+
+    border: 1px solid var(--line);
+    border-radius: 18px;
+
+    background-color: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+.resumo-form {
+    flex: 1 1 260px;
+
+    display: flex;
+    align-items: center;
     gap: 10px;
 
-    padding-left: 62px;
+    margin: 0;
+
+    color: var(--muted);
+    font-size: 13.5px;
+}
+
+.resumo-form .bola {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+
+    border-radius: 999px;
+
+    background-color: var(--line-strong);
+}
+
+.resumo-form .pronto {
+    display: none;
+    color: var(--ink);
+    font-weight: 500;
+}
+
+/* Detalhes + local + foto completos: troca o texto e acende a bolinha */
+#form-ocorrencia:has(#etapa-detalhes.ok):has(#etapa-localizacao.ok):has(#etapa-fotos.ok) .resumo-form .falta {
+    display: none;
+}
+
+#form-ocorrencia:has(#etapa-detalhes.ok):has(#etapa-localizacao.ok):has(#etapa-fotos.ok) .resumo-form .pronto {
+    display: inline;
+}
+
+#form-ocorrencia:has(#etapa-detalhes.ok):has(#etapa-localizacao.ok):has(#etapa-fotos.ok) .resumo-form .bola {
+    background-color: var(--s-andamento);
 }
 
 
@@ -1480,29 +1663,136 @@
   RESPONSIVO
 -------------------------------------------------------------------*/
 
-/* Monitor grande: as etapas lado a lado (1 e 3 à esquerda, o mapa da 2 à direita). */
-@media (min-width: 1440px) {
+/* Notebook e monitor: 2 colunas (1 à esquerda; 2 e 3 à direita).
+   As duas colunas terminam na mesma linha: a descrição e o mapa esticam. */
+@media (min-width: 1200px) {
 
     .form-etapas {
-        max-width: none;
-
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        align-items: start;
-        gap: 18px 24px;
+        align-items: stretch;
+        gap: 20px;
     }
-
-    #etapa-detalhes { grid-column: 1; grid-row: 1; }
-    #etapa-fotos { grid-column: 1; grid-row: 2; }
-    #etapa-localizacao { grid-column: 2; grid-row: 1 / span 2; }
 
     .form-etapas > .mensagem-ocorrencia,
     .form-etapas > .rodape-form {
         grid-column: 1 / -1;
     }
 
+    .coluna-etapas {
+        gap: 20px;
+    }
+
+    #etapa-localizacao {
+        flex: 1;
+    }
+
+    .cats-grade {
+        grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+    }
+
+    .campo-descricao {
+        flex: 1;
+    }
+
+    .campo-descricao textarea {
+        flex: 1;
+        min-height: 150px;
+    }
+
+    /* Endereço e botão do GPS na mesma linha */
+    #etapa-localizacao .linha-gps .campo {
+        flex: 1 1 170px;
+    }
+
+    #etapa-localizacao .btn-gps {
+        padding: 0 14px;
+        white-space: nowrap;
+        font-size: 13.5px;
+    }
+
+    #etapa-localizacao .mapa-form {
+        flex: 1;
+        min-height: 240px;
+
+        display: flex;
+    }
+
     #etapa-localizacao .mapa.pequeno {
-        aspect-ratio: 4 / 3;
+        aspect-ratio: auto;
+        height: auto;
+        max-height: none;
+        min-height: 240px;
+    }
+
+    /* Miniaturas menores para a coluna não crescer demais */
+    #etapa-fotos .fotos-escolhidas {
+        grid-template-columns: repeat(auto-fill, 64px);
+    }
+
+    /* Área da foto deitada: ícone à esquerda, textos à direita */
+    #etapa-fotos .zona-foto {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        column-gap: 14px;
+        row-gap: 2px;
+        align-items: center;
+
+        padding: 14px 18px;
+
+        text-align: left;
+    }
+
+    #etapa-fotos .zona-foto svg {
+        grid-row: span 2;
+    }
+
+}
+
+@media (min-width: 1440px) {
+
+    .form-etapas {
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+        gap: 24px;
+    }
+
+    .coluna-etapas {
+        gap: 24px;
+    }
+
+    .etapa .cartao {
+        padding: 26px 28px;
+        gap: 20px;
+    }
+
+    .cab-nova h2 {
+        font-size: 30px;
+    }
+
+    .etapa h3 {
+        font-size: 18px;
+    }
+
+    .cats-grade {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .cat-op {
+        min-height: 54px;
+        font-size: 14px;
+    }
+
+    .campo-descricao textarea {
+        min-height: 220px;
+    }
+
+    #etapa-localizacao .mapa-form,
+    #etapa-localizacao .mapa.pequeno {
+        min-height: 280px;
+    }
+
+    #etapa-fotos .fotos-escolhidas {
+        grid-template-columns: repeat(auto-fill, 88px);
     }
 
 }
@@ -1558,9 +1848,12 @@
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .etapa {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 10px;
+    .cab-nova h2 {
+        font-size: 22px;
+    }
+
+    .etapas-topo {
+        display: none;
     }
 
     .etapa .num {
@@ -1575,10 +1868,10 @@
     }
 
     .rodape-form {
-        padding-left: 0;
+        padding: 12px;
     }
 
-    .rodape-form > * {
+    .rodape-form > button {
         flex: 1 1 auto;
         justify-content: center;
     }

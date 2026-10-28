@@ -775,6 +775,7 @@ if (
     const LOGIN_PAGE_TOPO = "/FrontEnd/pages/login/login.html";
     const PAGINA_AVISOS_TOPO = "/FrontEnd/pages/avisos/avisos.html";
     const PAGINA_PONTOS_TOPO = "/FrontEnd/pages/pontos/pontos.html";
+    const PAGINA_ADMINISTRADORES_TOPO = "/FrontEnd/pages/administradores/administradores.html";
 
     // Saldo e título do cartão do perfil: busca de novo depois de 1 minuto.
     const VALIDADE_RESUMO_PONTOS = 60 * 1000;
@@ -842,6 +843,7 @@ if (
         medalha: svg('<circle cx="12" cy="9" r="6"/><path d="m8.5 13.5-1.5 8.5 5-3 5 3-1.5-8.5"/>'),
         prancheta: svg('<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h4"/>'),
         usuario: svg('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'),
+        escudo: svg('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>'),
         ajustes: svg('<path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/>'),
         ajuda: svg('<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>'),
         sair: svg('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>'),
@@ -1559,6 +1561,10 @@ if (
                 <a class="opcao-topo" role="menuitem" href="${PAGINA_OCORRENCIAS_TOPO}">
                     ${ICONES.prancheta}
                     <span>Todas as ocorrências</span>
+                </a>
+                <a class="opcao-topo" role="menuitem" href="${PAGINA_ADMINISTRADORES_TOPO}">
+                    ${ICONES.escudo}
+                    <span>Administradores</span>
                 </a>` : `
                 <a class="opcao-topo" role="menuitem" href="${PAGINA_PONTOS_TOPO}">
                     ${ICONES.medalha}

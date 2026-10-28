@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!--Aplica o tema (claro ou escuro) antes da página aparecer.-->
+    <script src="/FrontEnd/pages/global/tema.js?v=1"></script>
+
+    <link rel="stylesheet" href="/FrontEnd/pages/global/global.css?v=10">
+    <link rel="stylesheet" href="/FrontEnd/pages/administradores/administradores.css?v=1">
+
+    <title>Cidade360-Administradores</title>
+</head>
+
+<body>
+    <div class="container-sistema">
+
+        <nav class="menu-lateral" aria-label="Menu principal">
+
+            <a class="logo" href="/" aria-label="Cidade360, ir para o painel">
+                <img src="/assets/img/global/logo/icone-cidade360.png" alt="">
+                <span>Cidade<b>360</b></span>
+            </a>
+
+            <div class="menu-corpo">
+
+                <div class="menu-secao">Principal</div>
+
+                <ul class="menu-lista">
+                    <li class="menu-item">
+                        <a href="/" title="Painel">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+                            <span>Painel</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="/FrontEnd/pages/ocorrencia/ocorrencia.html" title="Ocorrências">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.3 3.9-8.2 14a2 2 0 0 0 1.7 3h16.4a2 2 0 0 0 1.7-3l-8.2-14a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                            <span>Ocorrências</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="menu-secao">Comunicação</div>
+
+                <ul class="menu-lista">
+                    <li class="menu-item">
+                        <a class="item-breve" role="link" aria-disabled="true" title="Campanhas (em breve)">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>
+                            <span>Campanhas</span>
+                            <small class="tag-breve">Em breve</small>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="/FrontEnd/pages/avisos/avisos.html" title="Avisos">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+                            <span>Avisos</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a class="item-breve" role="link" aria-disabled="true" title="Eventos (em breve)">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+                            <span>Eventos</span>
+                            <small class="tag-breve">Em breve</small>
+                        </a>
+                    </li>
+                </ul>
+
+            </div>
+
+        </nav>
+
+
+        <div class="container-conteudo">
+
+            <header class="menu-topo">
+
+                <div class="titulo-pagina">
+
+                    <button class="minimizar-menu btn-icone" id="btnMinimizarMenuPainel" type="button" aria-label="Abrir menu">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+
+                    <h1>Administradores</h1>
+
+                </div>
+
+
+                <div class="opcoes-menu-topo">
+
+                    <div class="menu-acoes">
+                        <button class="btn-icone" id="btnConfiguracoesPainel" type="button" aria-label="Configurações">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.2 2h-.4a2 2 0 0 0-2 2v.2a2 2 0 0 1-1 1.7l-.4.3a2 2 0 0 1-2 0l-.2-.1a2 2 0 0 0-2.7.7l-.2.4a2 2 0 0 0 .7 2.7l.2.1a2 2 0 0 1 1 1.7v.5a2 2 0 0 1-1 1.7l-.2.1a2 2 0 0 0-.7 2.7l.2.4a2 2 0 0 0 2.7.7l.2-.1a2 2 0 0 1 2 0l.4.3a2 2 0 0 1 1 1.7v.2a2 2 0 0 0 2 2h.4a2 2 0 0 0 2-2v-.2a2 2 0 0 1 1-1.7l.4-.3a2 2 0 0 1 2 0l.2.1a2 2 0 0 0 2.7-.7l.2-.4a2 2 0 0 0-.7-2.7l-.2-.1a2 2 0 0 1-1-1.7v-.5a2 2 0 0 1 1-1.7l.2-.1a2 2 0 0 0 .7-2.7l-.2-.4a2 2 0 0 0-2.7-.7l-.2.1a2 2 0 0 1-2 0l-.4-.3a2 2 0 0 1-1-1.7V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+
+                    <div class="menu-acoes">
+                        <button class="btn-icone" id="btnNotificacoesPainel" type="button" aria-label="Notificações">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                        </button>
+                    </div>
+
+                    <div class="perfil-usuario" id="perfilUsuarioPainel">
+
+                        <div class="usuario">
+                            <span>Usuário</span>
+                            <p>Usuário</p>
+                        </div>
+
+                        <div class="foto-usuario" aria-hidden="true"></div>
+
+                    </div>
+
+                </div>
+
+            </header>
+
+
+            <!-- =====================================================
+                 ADMINISTRADORES (só administrador)
+                 Equipe, convites e histórico são montados pelo administradores.js.
+                 O servidor também confere a permissão em /api/administradores.
+            ====================================================== -->
+
+            <main class="pagina-admins" id="paginaAdmins" aria-busy="true">
+
+                <section class="admins-cabecalho">
+                    <div>
+                        <h2>Administradores</h2>
+                        <p>Quem trabalha na prefeitura e pode mudar status, cancelar trotes e publicar avisos no Cidade360.</p>
+                    </div>
+
+                    <button class="btn-primario" id="btnAdicionarAdmin" type="button" disabled>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                        Adicionar administrador
+                    </button>
+                </section>
+
+                <div class="aviso-migracao" id="avisoMigracaoAdmins" role="status" hidden></div>
+
+                <div class="admins-grade">
+
+                    <section class="admins-equipe" aria-labelledby="tituloEquipeAdmins">
+                        <div class="cabecalho-secao">
+                            <div>
+                                <h2 id="tituloEquipeAdmins">Equipe da prefeitura</h2>
+                                <p id="contagemAdmins">Carregando...</p>
+                            </div>
+
+                            <div class="filtros-admins" id="filtrosAdmins" role="toolbar" aria-label="Filtrar equipe"></div>
+                        </div>
+
+                        <ul class="lista-admins" id="listaAdmins" aria-live="polite">
+                            <li class="esqueleto"></li>
+                            <li class="esqueleto"></li>
+                        </ul>
+                    </section>
+
+                    <aside class="admins-lateral">
+                        <section class="cartao-admins" aria-labelledby="tituloRegrasAdmins">
+                            <h2 id="tituloRegrasAdmins">Regras de segurança</h2>
+                            <ul class="regras-admins" id="regrasAdmins"></ul>
+                        </section>
+
+                        <section class="cartao-admins" aria-labelledby="tituloHistoricoAdmins">
+                            <h2 id="tituloHistoricoAdmins">Histórico</h2>
+                            <ul class="historico-admins" id="historicoAdmins"></ul>
+                        </section>
+                    </aside>
+
+                </div>
+
+            </main>
+
+        </div>
+
+    </div>
+
+
+    <!--Script para controlar o Login do usuário, e redirecionar para a página de login caso não esteja logado.-->
+    <script src="/FrontEnd/pages/global/authGuard.js"></script>
+
+    <!--Script para realizar o logout do usuário.-->
+    <script src="/FrontEnd/pages/global/logout.js"></script>
+
+    <!--Ícones e status compartilhados.-->
+    <script src="/FrontEnd/pages/global/icones.js?v=2"></script>
+
+    <script src="/FrontEnd/pages/global/global.js?v=12"></script>
+
+    <!--Script responsável pela página Administradores.-->
+    <script src="/FrontEnd/pages/administradores/administradores.js?v=1"></script>
+
+</body>
+
+</html>
