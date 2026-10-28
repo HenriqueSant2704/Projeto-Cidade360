@@ -389,7 +389,15 @@ function inicializarMapaOcorrencia() {
         }
     ).addTo(mapaOcorrencia);
 
+    // O mapa fica preso em Jaborandi-SP (global/mapaCidade.js)
+    window.MapaCidade360?.travar(mapaOcorrencia);
+
     mapaOcorrencia.on("click", (event) => {
+        if (!localDentroDaCidadeOcorrencia(event.latlng.lat, event.latlng.lng)) {
+            recusarLocalForaOcorrencia(event.latlng.lat, event.latlng.lng, "toque");
+            return;
+        }
+
         atualizarLocalizacaoOcorrencia(
             event.latlng.lat,
             event.latlng.lng,
@@ -397,6 +405,46 @@ function inicializarMapaOcorrencia() {
             false
         );
     });
+}
+
+/*
+ * Ocorrência só pode ser aberta dentro da cidade atendida.
+ * O servidor confere de novo ao salvar.
+ */
+function localDentroDaCidadeOcorrencia(latitude, longitude) {
+    if (!window.MapaCidade360) {
+        return true;
+    }
+
+    return window.MapaCidade360.dentro(latitude, longitude);
+}
+
+function recusarLocalForaOcorrencia(latitude, longitude, origem) {
+    const cidade = window.MapaCidade360?.nomeCidade() || "Jaborandi-SP";
+
+    const mensagens = {
+        toque: `Esse ponto fica fora de ${cidade}. Marque um local dentro da cidade (área tracejada).`,
+        arraste: `O pino não pode sair de ${cidade}. Ele voltou para o último local válido.`,
+        gps: `Sua localização atual fica fora de ${cidade}. Toque no mapa para marcar o local do problema.`
+    };
+
+    if (mapaOcorrencia && origem !== "gps") {
+        window.MapaCidade360?.sinalizarFora(mapaOcorrencia, latitude, longitude);
+    }
+
+    mostrarErroCampoOcorrencia(
+        mapaPreviewOcorrencia,
+        mensagens[origem] || mensagens.toque
+    );
+}
+
+function limparErroMapaOcorrencia() {
+    const erro = document.querySelector('#form-ocorrencia [data-erro-para="mapa-ocorrencia"]');
+
+    if (erro) {
+        erro.textContent = "";
+        erro.hidden = true;
+    }
 }
 
 function atualizarMarcadorOcorrencia(latitude, longitude) {
@@ -422,6 +470,16 @@ function atualizarMarcadorOcorrencia(latitude, longitude) {
 
         marcadorOcorrencia.on("dragend", () => {
             const posicao = marcadorOcorrencia.getLatLng();
+
+            if (!localDentroDaCidadeOcorrencia(posicao.lat, posicao.lng)) {
+                recusarLocalForaOcorrencia(posicao.lat, posicao.lng, "arraste");
+
+                marcadorOcorrencia.setLatLng([
+                    estadoOcorrencia.latitude,
+                    estadoOcorrencia.longitude
+                ]);
+                return;
+            }
 
             atualizarLocalizacaoOcorrencia(
                 posicao.lat,
@@ -499,6 +557,8 @@ function atualizarLocalizacaoOcorrencia(
     ) {
         return;
     }
+
+    limparErroMapaOcorrencia();
 
     estadoOcorrencia.latitude = latitudeNumero;
     estadoOcorrencia.longitude = longitudeNumero;
@@ -592,14 +652,23 @@ function usarGpsOcorrencia() {
 
     navigator.geolocation.getCurrentPosition(
         (posicao) => {
+            definirEstadoBotaoGps(false);
+
+            if (!localDentroDaCidadeOcorrencia(posicao.coords.latitude, posicao.coords.longitude)) {
+                recusarLocalForaOcorrencia(
+                    posicao.coords.latitude,
+                    posicao.coords.longitude,
+                    "gps"
+                );
+                return;
+            }
+
             atualizarLocalizacaoOcorrencia(
                 posicao.coords.latitude,
                 posicao.coords.longitude,
                 posicao.coords.accuracy,
                 true
             );
-
-            definirEstadoBotaoGps(false);
         },
         (error) => {
             definirEstadoBotaoGps(false);
@@ -892,6 +961,14 @@ function validarFormularioOcorrencia() {
         return {
             valido: false,
             mensagem: "Use o GPS ou marque o local da ocorrência no mapa.",
+            campo: mapaPreviewOcorrencia
+        };
+    }
+
+    if (!localDentroDaCidadeOcorrencia(estadoOcorrencia.latitude, estadoOcorrencia.longitude)) {
+        return {
+            valido: false,
+            mensagem: `O local marcado fica fora de ${window.MapaCidade360?.nomeCidade() || "Jaborandi-SP"}. Marque um ponto dentro da cidade.`,
             campo: mapaPreviewOcorrencia
         };
     }

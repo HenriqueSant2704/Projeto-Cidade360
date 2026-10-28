@@ -1655,6 +1655,12 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
             title: ocorrencia.titulo || "Ocorrência"
         }).addTo(estado.detalhes.mapa);
 
+        // Mesma trava de Jaborandi-SP dos outros mapas (global/mapaCidade.js)
+        window.MapaCidade360?.travar(estado.detalhes.mapa, {
+            pontoVisivel: posicao,
+            zoomMinimo: 12
+        });
+
         // O Leaflet precisa recalcular o tamanho depois que a tela termina de aparecer.
         setTimeout(() => {
             estado.detalhes.mapa?.invalidateSize();

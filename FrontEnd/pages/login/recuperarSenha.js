@@ -13,6 +13,8 @@ const linkEsqueciSenha = document.getElementById("linkEsqueciSenha");
 
 let etapaRecuperacaoSenha = 1;
 
+const NOMES_ETAPAS_RECUPERACAO = ["Email", "Código", "Senha"];
+
 const dadosRecuperacaoSenha = {
     email: "",
     codigo: "",
@@ -29,6 +31,11 @@ CLIQUE EM ESQUECEU SUA SENHA
 if (linkEsqueciSenha) {
     linkEsqueciSenha.addEventListener("click", (event) => {
         event.preventDefault();
+
+        if (btnEntrar.disabled) {
+            return;
+        }
+
         entrarModoRecuperarSenha();
     });
 }
@@ -46,98 +53,21 @@ function entrarModoRecuperarSenha() {
         etapaRecuperacaoSenha = 1;
 
         limparDadosRecuperacaoSenha();
+
+        // Aproveita o email que já estava digitado no login
+        if (validarEmailLogin(emailInput.value)) {
+            dadosRecuperacaoSenha.email = emailInput.value.trim().toLowerCase();
+        }
+
         limparMensagemGeral();
 
         limparErroCampo(emailInput);
         limparErroCampo(passwordInput);
 
-        tituloFormulario.textContent = "Recuperar Senha";
-        subtituloFormulario.textContent = "Informe o email cadastrado para receber um código.";
+        modoFormulario(true);
 
-        textoEtapa1.textContent = "Email";
-        textoEtapa2.textContent = "Código";
-        textoEtapa3.textContent = "Senha";
-
-        indicadorEtapa.style.display = "flex";
-        areaLembrete.style.display = "none";
-
-        campoEmailLogin.style.display = "none";
-        campoSenhaLogin.style.display = "none";
-
-        if (btnVoltarEtapa) {
-            btnVoltarEtapa.style.display = "none";
-        }
-
-        btnEntrar.innerHTML = `Enviar código <svg
-            class="seta-btn"
-            xmlns="http://www.w3.org/2000/svg"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-        >
-            <path d="M5 12H19"></path>
-            <path d="M12 6L18 12L12 18"></path>
-        </svg>`;
-
-        btnCriarConta.innerHTML = `
-            <img src="../../../assets/icons/login/saida.png" alt="">
-            Voltar para Login
-        `;
-
-        atualizarProgressoRecuperacaoSenha();
         renderizarEtapaRecuperacaoSenha();
     });
-}
-
-/*========================================================================================================
-
-BARRA DE PROGRESSO DA RECUPERAÇÃO
-
-=========================================================================================================*/
-
-function atualizarProgressoRecuperacaoSenha() {
-    etapa1.classList.remove("ativa");
-    etapa2.classList.remove("ativa");
-    etapa3.classList.remove("ativa");
-
-    textoEtapa1.classList.remove("ativo");
-    textoEtapa2.classList.remove("ativo");
-    textoEtapa3.classList.remove("ativo");
-
-    barra1.classList.remove("ativa");
-    barra2.classList.remove("ativa");
-
-    etapa1.innerHTML = "";
-    etapa2.innerHTML = "";
-    etapa3.innerHTML = "";
-
-    if (etapaRecuperacaoSenha >= 1) {
-        etapa1.classList.add("ativa");
-        textoEtapa1.classList.add("ativo");
-    }
-
-    if (etapaRecuperacaoSenha >= 2) {
-        etapa1.innerHTML = "✓";
-
-        etapa2.classList.add("ativa");
-        textoEtapa2.classList.add("ativo");
-
-        barra1.classList.add("ativa");
-    }
-
-    if (etapaRecuperacaoSenha >= 3) {
-        etapa2.innerHTML = "✓";
-
-        etapa3.classList.add("ativa");
-        textoEtapa3.classList.add("ativo");
-
-        barra2.classList.add("ativa");
-    }
 }
 
 /*========================================================================================================
@@ -147,23 +77,32 @@ RENDERIZAR ETAPAS DA RECUPERAÇÃO
 =========================================================================================================*/
 
 function renderizarEtapaRecuperacaoSenha() {
+    atualizarProgressoEtapas(etapaRecuperacaoSenha, NOMES_ETAPAS_RECUPERACAO);
+
+    btnVoltarEtapa.hidden = etapaRecuperacaoSenha === 1;
+
     if (etapaRecuperacaoSenha === 1) {
-        camposCadastro.innerHTML = `
-            <div class="caixa-input">
-                <label for="emailRecuperacao">Email cadastrado</label>
-                <img src="../../../assets/icons/login/e-mail.png" alt="">
-                <input
-                    type="email"
-                    id="emailRecuperacao"
-                    placeholder="Digite o email da sua conta"
-                    maxlength="254"
-                    autocomplete="email"
-                    value="${escaparValorInputRecuperacao(dadosRecuperacaoSenha.email)}">
-            </div>
-        `;
+        tituloFormulario.textContent = "Recuperar Senha";
+        subtituloFormulario.textContent = "Informe o email cadastrado para receber um código.";
+
+        camposCadastro.innerHTML = campoHTML({
+            id: "emailRecuperacao",
+            rotulo: "Email cadastrado",
+            icone: "email",
+            tipo: "email",
+            placeholder: "Digite o email da sua conta",
+            max: 254,
+            valor: dadosRecuperacaoSenha.email,
+            extra: 'autocomplete="email"'
+        });
+
+        rotuloBotaoPrincipal("Enviar código");
     }
 
     if (etapaRecuperacaoSenha === 2) {
+        tituloFormulario.textContent = "Código de Segurança";
+        subtituloFormulario.textContent = "Digite o código enviado para seu email.";
+
         camposCadastro.innerHTML = `
             <div class="caixa-input codigo-seguranca">
                 <label for="codigoRecuperacao">Código de segurança</label>
@@ -174,51 +113,50 @@ function renderizarEtapaRecuperacaoSenha() {
                     maxlength="6"
                     inputmode="numeric"
                     autocomplete="one-time-code"
-                    value="${escaparValorInputRecuperacao(dadosRecuperacaoSenha.codigo)}">
+                    value="${escaparTextoLogin(dadosRecuperacaoSenha.codigo)}">
             </div>
+
+            <p class="codigo-ajuda">
+                Enviado para <b>${escaparTextoLogin(dadosRecuperacaoSenha.email)}</b>
+            </p>
         `;
+
+        rotuloBotaoPrincipal("Continuar");
     }
 
     if (etapaRecuperacaoSenha === 3) {
-        camposCadastro.innerHTML = `
-            <div class="caixa-input">
-                <label for="novaSenhaRecuperacao">Nova senha</label>
-                <img src="../../../assets/icons/login/trancar.png" alt="">
-                <input
-                    type="password"
-                    id="novaSenhaRecuperacao"
-                    placeholder="Mínimo 8 caracteres, letra, número e símbolo"
-                    maxlength="72"
-                    autocomplete="new-password"
-                    value="${escaparValorInputRecuperacao(dadosRecuperacaoSenha.novaSenha)}">
-                <img
-                    class="mostrar-senha-recuperacao"
-                    data-target="novaSenhaRecuperacao"
-                    src="../../../assets/icons/login/olho.png"
-                    alt="Mostrar senha">
-            </div>
+        tituloFormulario.textContent = "Criar Nova Senha";
+        subtituloFormulario.textContent = "Escolha uma nova senha segura para sua conta.";
 
-            <div class="caixa-input">
-                <label for="confirmarNovaSenhaRecuperacao">Confirmar nova senha</label>
-                <img src="../../../assets/icons/login/confirmar-senha.png" alt="">
-                <input
-                    type="password"
-                    id="confirmarNovaSenhaRecuperacao"
-                    placeholder="Confirme sua nova senha"
-                    maxlength="72"
-                    autocomplete="new-password"
-                    value="${escaparValorInputRecuperacao(dadosRecuperacaoSenha.confirmarNovaSenha)}">
-                <img
-                    class="mostrar-senha-recuperacao"
-                    data-target="confirmarNovaSenhaRecuperacao"
-                    src="../../../assets/icons/login/olho.png"
-                    alt="Mostrar senha">
-            </div>
-        `;
+        camposCadastro.innerHTML =
+            campoHTML({
+                id: "novaSenhaRecuperacao",
+                rotulo: "Nova senha",
+                icone: "cadeado",
+                tipo: "password",
+                placeholder: "Mínimo 8 caracteres, letra, número e símbolo",
+                max: 72,
+                valor: dadosRecuperacaoSenha.novaSenha,
+                senha: true,
+                extra: 'autocomplete="new-password"'
+            }) +
+            campoHTML({
+                id: "confirmarNovaSenhaRecuperacao",
+                rotulo: "Confirmar nova senha",
+                icone: "escudo",
+                tipo: "password",
+                placeholder: "Confirme sua nova senha",
+                max: 72,
+                valor: dadosRecuperacaoSenha.confirmarNovaSenha,
+                senha: true,
+                extra: 'autocomplete="new-password"'
+            });
+
+        rotuloBotaoPrincipal("Redefinir senha");
     }
 
+    prepararOlhosSenha(camposCadastro);
     adicionarEventosRecuperacaoSenha();
-    adicionarEventosMostrarSenhaRecuperacao();
 }
 
 /*========================================================================================================
@@ -232,61 +170,16 @@ function adicionarEventosRecuperacaoSenha() {
 
     inputs.forEach((input) => {
         input.addEventListener("input", () => {
-            salvarDadosRecuperacaoSenha();
-
             if (input.id === "codigoRecuperacao") {
                 input.value = input.value.replace(/\D/g, "").slice(0, 6);
-                dadosRecuperacaoSenha.codigo = input.value;
             }
+
+            salvarDadosRecuperacaoSenha();
 
             limparErroCampo(input);
             limparMensagemGeral();
         });
-
-        input.addEventListener("keydown", (event) => {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                avancarRecuperacaoSenha();
-            }
-        });
     });
-}
-
-function adicionarEventosMostrarSenhaRecuperacao() {
-
-    const botoes = camposCadastro.querySelectorAll(".mostrar-senha-recuperacao");
-
-    botoes.forEach((botao) => {
-
-        botao.addEventListener("click", (event) => {
-
-            event.preventDefault();
-
-            const target = botao.getAttribute("data-target");
-            const input = document.getElementById(target);
-
-            if (!input) return;
-
-            const senhaVisivel = input.type === "text";
-
-            if (senhaVisivel) {
-
-                input.type = "password";
-                botao.src = "../../../assets/icons/login/olho.png";
-                botao.alt = "Mostrar senha";
-
-            } else {
-
-                input.type = "text";
-                botao.src = "../../../assets/icons/login/olho-aberto.png";
-                botao.alt = "Ocultar senha";
-
-            }
-
-        });
-
-    });
-
 }
 
 /*========================================================================================================
@@ -356,54 +249,11 @@ function voltarEtapaRecuperacaoSenha() {
     }
 
     trocarTela(() => {
+        limparMensagemGeral();
+
         etapaRecuperacaoSenha--;
 
-        atualizarProgressoRecuperacaoSenha();
         renderizarEtapaRecuperacaoSenha();
-
-        if (btnVoltarEtapa) {
-            btnVoltarEtapa.style.display = etapaRecuperacaoSenha > 1 ? "block" : "none";
-        }
-
-        if (etapaRecuperacaoSenha === 1) {
-            tituloFormulario.textContent = "Recuperar Senha";
-            subtituloFormulario.textContent = "Informe o email cadastrado para receber um código.";
-            btnEntrar.innerHTML = `Enviar código <svg
-                class="seta-btn"
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <path d="M5 12H19"></path>
-                <path d="M12 6L18 12L12 18"></path>
-            </svg>`;
-        }
-
-        if (etapaRecuperacaoSenha === 2) {
-            tituloFormulario.textContent = "Código de Segurança";
-            subtituloFormulario.textContent = "Digite o código enviado para seu email.";
-            btnEntrar.innerHTML = `Continuar <svg
-                class="seta-btn"
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <path d="M5 12H19"></path>
-                <path d="M12 6L18 12L12 18"></path>
-            </svg>`;
-        }
     });
 }
 
@@ -429,8 +279,7 @@ async function enviarCodigoRecuperacao() {
     }
 
     try {
-        btnEntrar.disabled = true;
-        btnEntrar.textContent = "Enviando...";
+        carregandoBotaoPrincipal("Enviando...");
 
         const resposta = await fetch(`${API_URL}/recuperar-senha/enviar-codigo`, {
             method: "POST",
@@ -442,7 +291,7 @@ async function enviarCodigoRecuperacao() {
             })
         });
 
-        const dados = await resposta.json();
+        const dados = await lerRespostaJson(resposta);
 
         if (!resposta.ok || !dados.sucesso) {
             mostrarMensagem(
@@ -452,39 +301,15 @@ async function enviarCodigoRecuperacao() {
             return;
         }
 
-        mostrarMensagem(
-            dados.mensagem || "Enviamos um código de recuperação para o email informado.",
-            "sucesso"
-        );
-
         trocarTela(() => {
             etapaRecuperacaoSenha = 2;
 
-            tituloFormulario.textContent = "Código de Segurança";
-            subtituloFormulario.textContent = "Digite o código enviado para seu email.";
-
-            btnEntrar.innerHTML = `Continuar <svg
-                class="seta-btn"
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <path d="M5 12H19"></path>
-                <path d="M12 6L18 12L12 18"></path>
-            </svg>`;
-
-            if (btnVoltarEtapa) {
-                btnVoltarEtapa.style.display = "block";
-            }
-
-            atualizarProgressoRecuperacaoSenha();
             renderizarEtapaRecuperacaoSenha();
+
+            mostrarMensagem(
+                dados.mensagem || "Enviamos um código de recuperação para o email informado.",
+                "sucesso"
+            );
         });
 
     } catch (error) {
@@ -499,28 +324,14 @@ async function enviarCodigoRecuperacao() {
         btnEntrar.disabled = false;
 
         if (modoRecuperarSenha && etapaRecuperacaoSenha === 1) {
-            btnEntrar.innerHTML = `Enviar código <svg
-                class="seta-btn"
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <path d="M5 12H19"></path>
-                <path d="M12 6L18 12L12 18"></path>
-            </svg>`;
+            rotuloBotaoPrincipal("Enviar código");
         }
     }
 }
 
 /*========================================================================================================
 
-VALIDAR CÓDIGO LOCALMENTE E IR PARA SENHA
+CONFERIR CÓDIGO E IR PARA SENHA
 
 =========================================================================================================*/
 
@@ -543,8 +354,7 @@ async function validarCodigoEIrParaSenha() {
     }
 
     try {
-        btnEntrar.disabled = true;
-        btnEntrar.textContent = "Verificando...";
+        carregandoBotaoPrincipal("Verificando...");
 
         const resposta = await fetch(`${API_URL}/recuperar-senha/confirmar-codigo`, {
             method: "POST",
@@ -557,59 +367,31 @@ async function validarCodigoEIrParaSenha() {
             })
         });
 
-        const dados = await resposta.json();
+        const dados = await lerRespostaJson(resposta);
 
         if (!resposta.ok || !dados.sucesso) {
+            // Uma mensagem só, embaixo do campo do código
             mostrarErroCampo(
                 codigoRecuperacao,
-                dados.mensagem || "Código inválido ou expirado."
-            );
-
-            mostrarMensagem(
-                dados.mensagem || "Código inválido ou expirado. Confira e tente novamente.",
-                "erro"
+                dados.mensagem || "Código inválido ou expirado. Confira e tente novamente."
             );
 
             return;
         }
 
-        mostrarMensagem("Código confirmado com sucesso.", "sucesso");
-
         trocarTela(() => {
             etapaRecuperacaoSenha = 3;
 
-            tituloFormulario.textContent = "Criar Nova Senha";
-            subtituloFormulario.textContent = "Escolha uma nova senha segura para sua conta.";
-
-            btnEntrar.innerHTML = `Redefinir senha <svg
-                class="seta-btn"
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <path d="M5 12H19"></path>
-                <path d="M12 6L18 12L12 18"></path>
-            </svg>`;
-
-            if (btnVoltarEtapa) {
-                btnVoltarEtapa.style.display = "block";
-            }
-
-            atualizarProgressoRecuperacaoSenha();
             renderizarEtapaRecuperacaoSenha();
+
+            mostrarMensagem("Código confirmado com sucesso.", "sucesso");
         });
 
     } catch (error) {
         console.error("Erro ao confirmar código:", error);
 
         mostrarMensagem(
-            "Não foi possível verificar o código. Verifique o servidor e tente novamente.",
+            "Não foi possível verificar o código agora. Tente novamente em alguns instantes.",
             "erro"
         );
 
@@ -617,21 +399,7 @@ async function validarCodigoEIrParaSenha() {
         btnEntrar.disabled = false;
 
         if (modoRecuperarSenha && etapaRecuperacaoSenha === 2) {
-            btnEntrar.innerHTML = `Continuar <svg
-                class="seta-btn"
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <path d="M5 12H19"></path>
-                <path d="M12 6L18 12L12 18"></path>
-            </svg>`;
+            rotuloBotaoPrincipal("Continuar");
         }
     }
 }
@@ -670,9 +438,10 @@ async function redefinirSenha() {
         return;
     }
 
+    let redefiniu = false;
+
     try {
-        btnEntrar.disabled = true;
-        btnEntrar.textContent = "Redefinindo...";
+        carregandoBotaoPrincipal("Redefinindo...");
 
         const resposta = await fetch(`${API_URL}/recuperar-senha/redefinir`, {
             method: "POST",
@@ -686,7 +455,7 @@ async function redefinirSenha() {
             })
         });
 
-        const dados = await resposta.json();
+        const dados = await lerRespostaJson(resposta);
 
         if (!resposta.ok || !dados.sucesso) {
             mostrarMensagem(
@@ -696,18 +465,23 @@ async function redefinirSenha() {
             return;
         }
 
+        redefiniu = true;
+
         mostrarMensagem(
             dados.mensagem || "Senha redefinida com sucesso. Você já pode acessar sua conta.",
             "sucesso"
         );
 
-        emailInput.value = dadosRecuperacaoSenha.email;
-        passwordInput.value = "";
-
-        limparDadosRecuperacaoSenha();
+        const emailConta = dadosRecuperacaoSenha.email;
 
         setTimeout(() => {
             voltarModoLogin();
+
+            setTimeout(() => {
+                emailInput.value = emailConta;
+                passwordInput.value = "";
+                passwordInput.focus();
+            }, 300);
         }, 1200);
 
     } catch (error) {
@@ -719,24 +493,12 @@ async function redefinirSenha() {
         );
 
     } finally {
-        btnEntrar.disabled = false;
+        if (!redefiniu) {
+            btnEntrar.disabled = false;
 
-        if (modoRecuperarSenha) {
-            btnEntrar.innerHTML = `Redefinir senha <svg
-                class="seta-btn"
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <path d="M5 12H19"></path>
-                <path d="M12 6L18 12L12 18"></path>
-            </svg>`;
+            if (modoRecuperarSenha) {
+                rotuloBotaoPrincipal("Redefinir senha");
+            }
         }
     }
 }
@@ -794,18 +556,4 @@ function validarSenhaRecuperacao(senha) {
     }
 
     return { valido: true };
-}
-
-/*========================================================================================================
-
-ESCAPAR VALORES
-
-=========================================================================================================*/
-
-function escaparValorInputRecuperacao(valor) {
-    return String(valor || "")
-        .replace(/&/g, "&amp;")
-        .replace(/"/g, "&quot;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
 }

@@ -6,9 +6,13 @@ VARIÁVEIS DO CADASTRO
 
 let etapaCadastro = 1;
 
+const NOMES_ETAPAS_CADASTRO = ["Dados", "Contato", "Segurança"];
+
 const dadosCadastro = {
     nome: "",
     cpf: "",
+    uf: "SP",
+    cidade: "",
     email: "",
     telefone: "",
     senha: "",
@@ -22,6 +26,116 @@ const dadosCadastro = {
 
 /*========================================================================================================
 
+ESTADOS, CIDADES E CIDADES ATENDIDAS
+
+- A lista de cidades (IBGE) fica em /assets/data/municipios-brasil.json e só carrega ao abrir o cadastro.
+- As cidades atendidas vêm do servidor (GET /api/cidade-atendida). Hoje: somente Jaborandi-SP.
+- O servidor confere tudo de novo no /cadastrar, então a tela é só uma ajuda para a pessoa.
+
+=========================================================================================================*/
+
+const ESTADOS_BRASIL = [
+    ["AC", "Acre"], ["AL", "Alagoas"], ["AP", "Amapá"], ["AM", "Amazonas"],
+    ["BA", "Bahia"], ["CE", "Ceará"], ["DF", "Distrito Federal"], ["ES", "Espírito Santo"],
+    ["GO", "Goiás"], ["MA", "Maranhão"], ["MT", "Mato Grosso"], ["MS", "Mato Grosso do Sul"],
+    ["MG", "Minas Gerais"], ["PA", "Pará"], ["PB", "Paraíba"], ["PR", "Paraná"],
+    ["PE", "Pernambuco"], ["PI", "Piauí"], ["RJ", "Rio de Janeiro"], ["RN", "Rio Grande do Norte"],
+    ["RS", "Rio Grande do Sul"], ["RO", "Rondônia"], ["RR", "Roraima"], ["SC", "Santa Catarina"],
+    ["SP", "São Paulo"], ["SE", "Sergipe"], ["TO", "Tocantins"]
+];
+
+let cidadesPorEstado = null;
+let carregandoCidadesPorEstado = null;
+
+let cidadesAtendidas = [
+    { nome: "Jaborandi", uf: "SP" }
+];
+
+let mensagemCidadeIndisponivel =
+    "Essa cidade ainda não está disponível no Cidade360. No momento, atendemos somente Jaborandi-SP.";
+
+let cidadesAtendidasCarregadas = false;
+
+function carregarCidadesDoBrasil() {
+    if (cidadesPorEstado) {
+        return Promise.resolve(cidadesPorEstado);
+    }
+
+    if (!carregandoCidadesPorEstado) {
+        carregandoCidadesPorEstado = fetch("/assets/data/municipios-brasil.json?v=1")
+            .then((resposta) => {
+                if (!resposta.ok) {
+                    throw new Error("Lista de cidades indisponível");
+                }
+
+                return resposta.json();
+            })
+            .then((dados) => {
+                cidadesPorEstado = dados;
+                return dados;
+            })
+            .catch((error) => {
+                console.warn("Não foi possível carregar a lista de cidades:", error);
+                carregandoCidadesPorEstado = null;
+                return null;
+            });
+    }
+
+    return carregandoCidadesPorEstado;
+}
+
+async function carregarCidadesAtendidas() {
+    if (cidadesAtendidasCarregadas) {
+        return;
+    }
+
+    try {
+        const resposta = await fetch(`${API_URL}/cidade-atendida`);
+        const dados = await lerRespostaJson(resposta);
+
+        if (resposta.ok && dados.sucesso && Array.isArray(dados.cidades) && dados.cidades.length) {
+            cidadesAtendidas = dados.cidades.map((cidade) => ({
+                nome: cidade.nome,
+                uf: cidade.uf
+            }));
+
+            if (dados.mensagem_indisponivel) {
+                mensagemCidadeIndisponivel = dados.mensagem_indisponivel;
+            }
+
+            cidadesAtendidasCarregadas = true;
+        }
+    } catch (error) {
+        // Sem conexão: segue com a lista padrão (o servidor confere no final).
+        console.warn("Não foi possível carregar as cidades atendidas:", error);
+    }
+}
+
+function cidadesDoEstado(uf) {
+    if (cidadesPorEstado && Array.isArray(cidadesPorEstado[uf])) {
+        return cidadesPorEstado[uf];
+    }
+
+    // Lista ainda não carregou (ou falhou): ao menos as cidades atendidas aparecem
+    return cidadesAtendidas
+        .filter((cidade) => cidade.uf === uf)
+        .map((cidade) => cidade.nome);
+}
+
+function nomeOficialDaCidade(cidade, uf) {
+    return cidadesDoEstado(uf).find((nome) => {
+        return normalizarTexto(nome) === normalizarTexto(cidade);
+    }) || "";
+}
+
+function cidadeEstaDisponivel(cidade, uf) {
+    return cidadesAtendidas.some((atendida) => {
+        return atendida.uf === uf && normalizarTexto(atendida.nome) === normalizarTexto(cidade);
+    });
+}
+
+/*========================================================================================================
+
 BOTÃO CRIAR CONTA / VOLTAR PARA LOGIN
 
 =========================================================================================================*/
@@ -30,26 +144,29 @@ if (btnCriarConta) {
     btnCriarConta.addEventListener("click", (event) => {
         event.preventDefault();
 
-        if (modoRecuperarSenha) {
+        if (btnEntrar.disabled) {
+            return;
+        }
+
+        if (modoCadastro || modoRecuperarSenha) {
             voltarModoLogin();
             return;
         }
 
-        if (!modoCadastro) {
-            entrarModoCadastro();
-        } else {
-            voltarModoLogin();
-        }
+        entrarModoCadastro();
     });
 }
 
 /*========================================================================================================
 
-ENTRAR / SAIR DO MODO CADASTRO
+ENTRAR NO MODO CADASTRO
 
 =========================================================================================================*/
 
 function entrarModoCadastro() {
+    carregarCidadesDoBrasil();
+    carregarCidadesAtendidas();
+
     trocarTela(() => {
         modoCadastro = true;
         modoRecuperarSenha = false;
@@ -61,139 +178,13 @@ function entrarModoCadastro() {
         limparErroCampo(emailInput);
         limparErroCampo(passwordInput);
 
-        atualizarProgresso();
-        renderizarEtapaCadastro();
+        modoFormulario(true);
 
         tituloFormulario.textContent = "Criar Conta";
         subtituloFormulario.textContent = "Informe seus dados para continuar.";
 
-        indicadorEtapa.style.display = "flex";
-        areaLembrete.style.display = "none";
-
-        campoEmailLogin.style.display = "none";
-        campoSenhaLogin.style.display = "none";
-
-        if (btnVoltarEtapa) {
-            btnVoltarEtapa.style.display = "none";
-        }
-
-        btnEntrar.innerHTML = `Próximo <svg
-        class="seta-btn"
-        xmlns="http://www.w3.org/2000/svg"
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-    >
-        <path d="M5 12H19"></path>
-        <path d="M12 6L18 12L12 18"></path>
-    </svg>`;
-
-        btnCriarConta.innerHTML = `
-            <img src="../../../assets/icons/login/saida.png" alt="">
-            Voltar para Login
-        `;
+        renderizarEtapaCadastro();
     });
-}
-
-function voltarModoLogin() {
-    trocarTela(() => {
-        modoCadastro = false;
-        modoRecuperarSenha = false;
-        etapaCadastro = 1;
-
-        limparDadosCadastro();
-        limparMensagemGeral();
-
-        tituloFormulario.textContent = "Bem-vindo de volta!";
-        subtituloFormulario.textContent = "Acesse sua conta para continuar.";
-
-        if (textoEtapa1) textoEtapa1.textContent = "Dados";
-        if (textoEtapa2) textoEtapa2.textContent = "Contato";
-        if (textoEtapa3) textoEtapa3.textContent = "Segurança";
-
-        indicadorEtapa.style.display = "none";
-        areaLembrete.style.display = "flex";
-
-        campoEmailLogin.style.display = "flex";
-        campoSenhaLogin.style.display = "flex";
-
-        if (btnVoltarEtapa) {
-            btnVoltarEtapa.style.display = "none";
-        }
-
-        camposCadastro.innerHTML = "";
-
-        btnEntrar.innerHTML = `
-            <img src="../../../assets/icons/login/usuario.png" alt="">
-            Entrar
-        `;
-
-        btnCriarConta.innerHTML = `
-            <img src="../../../assets/icons/login/adicionar-usuario.png" alt="">
-            Criar nova conta
-        `;
-    });
-}
-
-/*========================================================================================================
-
-BARRA DE PROGRESSO DO CADASTRO
-
-=========================================================================================================*/
-
-function atualizarProgresso() {
-    etapa1.classList.remove("ativa");
-    etapa2.classList.remove("ativa");
-    etapa3.classList.remove("ativa");
-
-    textoEtapa1.classList.remove("ativo");
-    textoEtapa2.classList.remove("ativo");
-    textoEtapa3.classList.remove("ativo");
-
-    barra1.classList.remove("ativa");
-    barra2.classList.remove("ativa");
-
-    etapa1.innerHTML = "";
-    etapa2.innerHTML = "";
-    etapa3.innerHTML = "";
-
-    if (etapaCadastro === 1) {
-        etapa1.classList.add("ativa");
-        textoEtapa1.classList.add("ativo");
-    }
-
-    if (etapaCadastro === 2) {
-        etapa1.classList.add("ativa");
-        etapa2.classList.add("ativa");
-
-        etapa1.innerHTML = "✓";
-
-        textoEtapa1.classList.add("ativo");
-        textoEtapa2.classList.add("ativo");
-
-        barra1.classList.add("ativa");
-    }
-
-    if (etapaCadastro === 3) {
-        etapa1.classList.add("ativa");
-        etapa2.classList.add("ativa");
-        etapa3.classList.add("ativa");
-
-        etapa1.innerHTML = "✓";
-        etapa2.innerHTML = "✓";
-
-        textoEtapa1.classList.add("ativo");
-        textoEtapa2.classList.add("ativo");
-        textoEtapa3.classList.add("ativo");
-
-        barra1.classList.add("ativa");
-        barra2.classList.add("ativa");
-    }
 }
 
 /*========================================================================================================
@@ -203,141 +194,343 @@ RENDERIZAR CAMPOS DO CADASTRO
 =========================================================================================================*/
 
 function renderizarEtapaCadastro() {
+    atualizarProgressoEtapas(etapaCadastro, NOMES_ETAPAS_CADASTRO);
+
+    btnVoltarEtapa.hidden = etapaCadastro === 1;
+
     if (etapaCadastro === 1) {
-        camposCadastro.innerHTML = `
-            <div class="caixa-input">
-                <label for="nomeCadastro">Nome Completo</label>
-                <img src="../../../assets/icons/login/nome-cinza.png" alt="">
-                <input
-                    type="text"
-                    id="nomeCadastro"
-                    placeholder="Digite seu nome completo"
-                    maxlength="80"
-                    autocomplete="name"
-                    value="${escaparValorInput(dadosCadastro.nome)}">
+        camposCadastro.innerHTML =
+            campoHTML({
+                id: "nomeCadastro",
+                rotulo: "Nome Completo",
+                icone: "pessoa",
+                placeholder: "Digite seu nome completo",
+                max: 80,
+                valor: dadosCadastro.nome,
+                extra: 'autocomplete="name"'
+            }) +
+            campoHTML({
+                id: "cpfCadastro",
+                rotulo: "CPF",
+                icone: "cpf",
+                placeholder: "Digite seu CPF",
+                max: 14,
+                valor: formatarCPF(dadosCadastro.cpf),
+                extra: 'inputmode="numeric" autocomplete="off"'
+            }) +
+            `
+            <div class="linha-dupla">
+                <div class="caixa-input">
+                    <label for="ufCadastro">Estado</label>
+                    <div class="campo">
+                        ${ICONES_LOGIN.mapa}
+                        <select id="ufCadastro" autocomplete="address-level1">
+                            ${ESTADOS_BRASIL.map(([uf, nome]) => `
+                                <option value="${uf}" title="${nome}" ${uf === dadosCadastro.uf ? "selected" : ""}>${uf}</option>
+                            `).join("")}
+                        </select>
+                        ${ICONES_LOGIN.setaSelect}
+                    </div>
+                </div>
+
+                <div class="caixa-input">
+                    <label for="cidadeCadastro">Cidade</label>
+                    <div class="campo">
+                        ${ICONES_LOGIN.predio}
+                        <input
+                            type="text"
+                            id="cidadeCadastro"
+                            placeholder="Digite sua cidade"
+                            maxlength="80"
+                            autocomplete="off"
+                            role="combobox"
+                            aria-expanded="false"
+                            aria-controls="listaCidades"
+                            aria-autocomplete="list"
+                            value="${escaparTextoLogin(dadosCadastro.cidade)}">
+                    </div>
+                    <ul class="lista-cidades" id="listaCidades" role="listbox" hidden></ul>
+                </div>
             </div>
 
-            <div class="caixa-input">
-                <label for="cpfCadastro">CPF</label>
-                <img src="../../../assets/icons/login/cpf.png" alt="">
-                <input
-                    type="text"
-                    id="cpfCadastro"
-                    placeholder="Digite seu CPF"
-                    maxlength="14"
-                    inputmode="numeric"
-                    autocomplete="off"
-                    value="${escaparValorInput(formatarCPF(dadosCadastro.cpf))}">
-            </div>
+            <div class="aviso-cidade" id="avisoCidade" role="status" hidden></div>
         `;
+
+        rotuloBotaoPrincipal("Próximo");
     }
 
     if (etapaCadastro === 2) {
         if (!dadosCadastro.aguardandoCodigoEmail) {
-            camposCadastro.innerHTML = `
-                <div class="caixa-input">
-                    <label for="emailCadastro">Email</label>
-                    <img src="../../../assets/icons/login/e-mail.png" alt="">
-                    <input
-                        type="email"
-                        id="emailCadastro"
-                        placeholder="Digite seu email"
-                        maxlength="254"
-                        autocomplete="email"
-                        value="${escaparValorInput(dadosCadastro.email)}">
-                </div>
+            camposCadastro.innerHTML =
+                campoHTML({
+                    id: "emailCadastro",
+                    rotulo: "Email",
+                    icone: "email",
+                    tipo: "email",
+                    placeholder: "Digite seu email",
+                    max: 254,
+                    valor: dadosCadastro.email,
+                    extra: 'autocomplete="email"'
+                }) +
+                campoHTML({
+                    id: "telefoneCadastro",
+                    rotulo: "Telefone",
+                    icone: "telefone",
+                    placeholder: "Digite seu telefone com DDD",
+                    max: 15,
+                    valor: formatarTelefone(dadosCadastro.telefone),
+                    extra: 'inputmode="tel" autocomplete="tel"'
+                });
 
-                <div class="caixa-input">
-                    <label for="telefoneCadastro">Telefone</label>
-                    <img src="../../../assets/icons/login/telefone.png" alt="">
-                    <input
-                        type="text"
-                        id="telefoneCadastro"
-                        placeholder="Digite seu telefone com DDD"
-                        maxlength="15"
-                        inputmode="numeric"
-                        autocomplete="tel"
-                        value="${escaparValorInput(formatarTelefone(dadosCadastro.telefone))}">
-                </div>
-            `;
+            rotuloBotaoPrincipal("Próximo");
         } else {
-            camposCadastro.innerHTML = `
-                <div class="caixa-input">
-                    <label for="emailCadastro">Email</label>
-                    <img src="../../../assets/icons/login/e-mail.png" alt="">
-                    <input
-                        type="email"
-                        id="emailCadastro"
-                        value="${escaparValorInput(dadosCadastro.email)}"
-                        readonly>
-                </div>
+            camposCadastro.innerHTML =
+                campoHTML({
+                    id: "emailCadastro",
+                    rotulo: "Email",
+                    icone: "email",
+                    valor: dadosCadastro.email,
+                    somenteLeitura: true
+                }) +
+                campoHTML({
+                    id: "telefoneCadastro",
+                    rotulo: "Telefone",
+                    icone: "telefone",
+                    valor: formatarTelefone(dadosCadastro.telefone),
+                    somenteLeitura: true
+                }) +
+                campoHTML({
+                    id: "codigoEmailCadastro",
+                    rotulo: "Código enviado ao email",
+                    icone: "escudo",
+                    placeholder: "Digite o código de 6 dígitos",
+                    max: 6,
+                    valor: dadosCadastro.codigoEmail,
+                    extra: 'inputmode="numeric" autocomplete="one-time-code"'
+                });
 
-                <div class="caixa-input">
-                    <label for="telefoneCadastro">Telefone</label>
-                    <img src="../../../assets/icons/login/telefone.png" alt="">
-                    <input
-                        type="text"
-                        id="telefoneCadastro"
-                        value="${escaparValorInput(formatarTelefone(dadosCadastro.telefone))}"
-                        readonly>
-                </div>
-
-                <div class="caixa-input">
-                    <label for="codigoEmailCadastro">Código enviado ao email</label>
-                    <img src="../../../assets/icons/login/confirmar-senha.png" alt="">
-                    <input
-                        type="text"
-                        id="codigoEmailCadastro"
-                        placeholder="Digite o código de 6 dígitos"
-                        maxlength="6"
-                        inputmode="numeric"
-                        autocomplete="one-time-code"
-                        value="${escaparValorInput(dadosCadastro.codigoEmail)}">
-                </div>
-            `;
+            rotuloBotaoPrincipal("Verificar Email");
         }
     }
 
     if (etapaCadastro === 3) {
-        camposCadastro.innerHTML = `
-            <div class="caixa-input">
-                <label for="senhaCadastro">Senha</label>
-                <img src="../../../assets/icons/login/trancar.png" alt="">
-                <input
-                    type="password"
-                    id="senhaCadastro"
-                    placeholder="Mínimo 8 caracteres, letra, número e símbolo"
-                    maxlength="72"
-                    autocomplete="new-password"
-                    value="${escaparValorInput(dadosCadastro.senha)}">
-                <img
-                    class="mostrar-senha-cadastro"
-                    data-target="senhaCadastro"
-                    src="../../../assets/icons/login/olho.png"
-                    alt="Mostrar senha">
-            </div>
+        camposCadastro.innerHTML =
+            campoHTML({
+                id: "senhaCadastro",
+                rotulo: "Senha",
+                icone: "cadeado",
+                tipo: "password",
+                placeholder: "Mínimo 8 caracteres, letra, número e símbolo",
+                max: 72,
+                valor: dadosCadastro.senha,
+                senha: true,
+                extra: 'autocomplete="new-password"'
+            }) +
+            campoHTML({
+                id: "confirmarSenhaCadastro",
+                rotulo: "Confirmar Senha",
+                icone: "escudo",
+                tipo: "password",
+                placeholder: "Confirme sua senha",
+                max: 72,
+                valor: dadosCadastro.confirmarSenha,
+                senha: true,
+                extra: 'autocomplete="new-password"'
+            });
 
-            <div class="caixa-input">
-                <label for="confirmarSenhaCadastro">Confirmar Senha</label>
-                <img src="../../../assets/icons/login/confirmar-senha.png" alt="">
-                <input
-                    type="password"
-                    id="confirmarSenhaCadastro"
-                    placeholder="Confirme sua senha"
-                    maxlength="72"
-                    autocomplete="new-password"
-                    value="${escaparValorInput(dadosCadastro.confirmarSenha)}">
-                <img
-                    class="mostrar-senha-cadastro"
-                    data-target="confirmarSenhaCadastro"
-                    src="../../../assets/icons/login/olho.png"
-                    alt="Mostrar senha">
-            </div>
-        `;
+        rotuloBotaoPrincipal("Finalizar Cadastro");
     }
 
+    prepararOlhosSenha(camposCadastro);
     adicionarEventosNosInputsCadastro();
-    adicionarEventosMostrarSenhaCadastro();
+
+    if (etapaCadastro === 1) {
+        prepararCampoCidade();
+        atualizarAvisoCidade();
+    }
+}
+
+/*========================================================================================================
+
+CAMPO CIDADE (busca com sugestões, só aceita cidade da lista do estado escolhido)
+
+=========================================================================================================*/
+
+function prepararCampoCidade() {
+    const selectUf = document.getElementById("ufCadastro");
+    const inputCidade = document.getElementById("cidadeCadastro");
+    const lista = document.getElementById("listaCidades");
+
+    if (!selectUf || !inputCidade || !lista) return;
+
+    let marcado = -1;
+
+    function sugestoes() {
+        const termo = normalizarTexto(inputCidade.value);
+
+        const cidades = cidadesDoEstado(selectUf.value);
+
+        // Primeiro as que começam com o texto, depois as que contêm
+        const comecam = cidades.filter((cidade) => normalizarTexto(cidade).startsWith(termo));
+        const contem = cidades.filter((cidade) => {
+            const nome = normalizarTexto(cidade);
+            return !nome.startsWith(termo) && nome.includes(termo);
+        });
+
+        return comecam.concat(contem).slice(0, 8);
+    }
+
+    function abrirLista() {
+        const itens = sugestoes();
+
+        marcado = -1;
+        inputCidade.removeAttribute("aria-activedescendant");
+
+        lista.innerHTML = itens.length
+            ? itens.map((cidade, indice) => `
+                <li role="option" id="opcaoCidade${indice}" data-cidade="${escaparTextoLogin(cidade)}">
+                    <span>${escaparTextoLogin(cidade)}</span>
+                    <small>${selectUf.value}</small>
+                </li>
+            `).join("")
+            : `<li class="vazio">Nenhuma cidade encontrada em ${selectUf.value}</li>`;
+
+        lista.hidden = false;
+        inputCidade.setAttribute("aria-expanded", "true");
+    }
+
+    function fecharLista() {
+        lista.hidden = true;
+        inputCidade.setAttribute("aria-expanded", "false");
+    }
+
+    function escolherCidade(cidade) {
+        inputCidade.value = cidade;
+        dadosCadastro.cidade = cidade;
+
+        fecharLista();
+        limparErroCampo(inputCidade);
+        limparMensagemGeral();
+        atualizarAvisoCidade();
+    }
+
+    function marcarOpcao(indice) {
+        const itens = [...lista.querySelectorAll("[data-cidade]")];
+
+        if (!itens.length) return;
+
+        marcado = (indice + itens.length) % itens.length;
+
+        itens.forEach((item, posicao) => {
+            item.setAttribute("aria-selected", String(posicao === marcado));
+        });
+
+        inputCidade.setAttribute("aria-activedescendant", itens[marcado].id);
+        itens[marcado].scrollIntoView({ block: "nearest" });
+    }
+
+    inputCidade.addEventListener("focus", () => {
+        // A lista do IBGE pode chegar depois do primeiro foco
+        carregarCidadesDoBrasil().then(() => {
+            if (document.activeElement === inputCidade) {
+                abrirLista();
+            }
+        });
+
+        abrirLista();
+    });
+
+    inputCidade.addEventListener("input", () => {
+        dadosCadastro.cidade = normalizarEspacos(inputCidade.value);
+
+        limparErroCampo(inputCidade);
+        limparMensagemGeral();
+        abrirLista();
+        atualizarAvisoCidade();
+    });
+
+    inputCidade.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowDown") {
+            event.preventDefault();
+
+            if (lista.hidden) abrirLista();
+
+            marcarOpcao(marcado + 1);
+        }
+
+        if (event.key === "ArrowUp") {
+            event.preventDefault();
+            marcarOpcao(marcado - 1);
+        }
+
+        if (event.key === "Escape") {
+            fecharLista();
+        }
+
+        if (event.key === "Enter" && !lista.hidden && marcado >= 0) {
+            event.preventDefault();
+
+            const opcao = lista.querySelectorAll("[data-cidade]")[marcado];
+
+            if (opcao) escolherCidade(opcao.dataset.cidade);
+        }
+    });
+
+    inputCidade.addEventListener("blur", () => {
+        setTimeout(fecharLista, 150);
+    });
+
+    lista.addEventListener("mousedown", (event) => {
+        const opcao = event.target.closest("[data-cidade]");
+
+        if (!opcao) return;
+
+        event.preventDefault();
+        escolherCidade(opcao.dataset.cidade);
+    });
+
+    selectUf.addEventListener("change", () => {
+        dadosCadastro.uf = selectUf.value;
+
+        // Trocou o estado: a cidade digitada só fica se existir no novo estado
+        if (!nomeOficialDaCidade(inputCidade.value, selectUf.value)) {
+            inputCidade.value = "";
+            dadosCadastro.cidade = "";
+        }
+
+        limparErroCampo(selectUf);
+        limparErroCampo(inputCidade);
+        limparMensagemGeral();
+        atualizarAvisoCidade();
+    });
+}
+
+function atualizarAvisoCidade() {
+    const aviso = document.getElementById("avisoCidade");
+
+    if (!aviso) return;
+
+    const cidadeOficial = nomeOficialDaCidade(dadosCadastro.cidade, dadosCadastro.uf);
+
+    if (!dadosCadastro.cidade || !cidadeOficial) {
+        aviso.hidden = true;
+        return;
+    }
+
+    const texto = document.createElement("span");
+
+    if (cidadeEstaDisponivel(cidadeOficial, dadosCadastro.uf)) {
+        aviso.dataset.tipo = "ok";
+        texto.textContent = `Tudo certo. ${cidadeOficial}-${dadosCadastro.uf} está disponível no Cidade360.`;
+        aviso.innerHTML = ICONES_LOGIN.ok;
+    } else {
+        aviso.dataset.tipo = "erro";
+        texto.textContent = mensagemCidadeIndisponivel;
+        aviso.innerHTML = ICONES_LOGIN.erro;
+    }
+
+    aviso.appendChild(texto);
+    aviso.hidden = false;
 }
 
 /*========================================================================================================
@@ -349,6 +542,12 @@ AVANÇAR / VOLTAR CADASTRO
 async function avancarCadastro() {
     salvarDadosDaEtapaAtual();
     limparMensagemGeral();
+
+    if (etapaCadastro === 1) {
+        // Garante a lista de cidades antes de conferir a cidade digitada
+        await carregarCidadesDoBrasil();
+        await carregarCidadesAtendidas();
+    }
 
     if (!validarEtapaCadastro()) {
         return;
@@ -370,47 +569,7 @@ async function avancarCadastro() {
     if (etapaCadastro < 3) {
         trocarTela(() => {
             etapaCadastro++;
-
-            atualizarProgresso();
             renderizarEtapaCadastro();
-
-            if (btnVoltarEtapa) {
-                btnVoltarEtapa.style.display = etapaCadastro > 1 ? "block" : "none";
-            }
-
-            if (etapaCadastro === 3) {
-                btnEntrar.innerHTML = `Finalizar Cadastro <svg
-                    class="seta-btn"
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <path d="M5 12H19"></path>
-                    <path d="M12 6L18 12L12 18"></path>
-                </svg>`;
-            } else {
-                btnEntrar.innerHTML = `Próximo <svg
-                    class="seta-btn"
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <path d="M5 12H19"></path>
-                    <path d="M12 6L18 12L12 18"></path>
-                </svg>`;
-            }
         });
 
     } else {
@@ -424,30 +583,17 @@ function voltarEtapaCadastro() {
     }
 
     trocarTela(() => {
-        etapaCadastro--;
+        limparMensagemGeral();
 
-        atualizarProgresso();
-        renderizarEtapaCadastro();
-
-        if (btnVoltarEtapa) {
-            btnVoltarEtapa.style.display = etapaCadastro > 1 ? "block" : "none";
+        // Esperando o código: "Voltar" deixa corrigir o email antes de voltar etapa
+        if (etapaCadastro === 2 && dadosCadastro.aguardandoCodigoEmail && !dadosCadastro.emailVerificado) {
+            dadosCadastro.aguardandoCodigoEmail = false;
+            dadosCadastro.codigoEmail = "";
+        } else {
+            etapaCadastro--;
         }
 
-        btnEntrar.innerHTML = `Próximo <svg
-            class="seta-btn"
-            xmlns="http://www.w3.org/2000/svg"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-        >
-            <path d="M5 12H19"></path>
-            <path d="M12 6L18 12L12 18"></path>
-        </svg>`;
+        renderizarEtapaCadastro();
     });
 }
 
@@ -460,6 +606,8 @@ SALVAR DADOS ENTRE AS ETAPAS
 function salvarDadosDaEtapaAtual() {
     const nomeCadastro = document.getElementById("nomeCadastro");
     const cpfCadastro = document.getElementById("cpfCadastro");
+    const ufCadastro = document.getElementById("ufCadastro");
+    const cidadeCadastro = document.getElementById("cidadeCadastro");
     const emailCadastro = document.getElementById("emailCadastro");
     const telefoneCadastro = document.getElementById("telefoneCadastro");
     const codigoEmailCadastro = document.getElementById("codigoEmailCadastro");
@@ -475,11 +623,19 @@ function salvarDadosDaEtapaAtual() {
         cpfCadastro.value = formatarCPF(dadosCadastro.cpf);
     }
 
-    if (emailCadastro) {
+    if (ufCadastro) {
+        dadosCadastro.uf = ufCadastro.value;
+    }
+
+    if (cidadeCadastro) {
+        dadosCadastro.cidade = normalizarEspacos(cidadeCadastro.value);
+    }
+
+    if (emailCadastro && !emailCadastro.readOnly) {
         dadosCadastro.email = emailCadastro.value.trim().toLowerCase();
     }
 
-    if (telefoneCadastro) {
+    if (telefoneCadastro && !telefoneCadastro.readOnly) {
         dadosCadastro.telefone = apenasNumeros(telefoneCadastro.value);
         telefoneCadastro.value = formatarTelefone(dadosCadastro.telefone);
     }
@@ -499,7 +655,8 @@ function salvarDadosDaEtapaAtual() {
 }
 
 function adicionarEventosNosInputsCadastro() {
-    const inputs = camposCadastro.querySelectorAll("input");
+    // O campo Cidade tem eventos próprios (prepararCampoCidade)
+    const inputs = camposCadastro.querySelectorAll("input:not([readonly]):not(#cidadeCadastro)");
 
     inputs.forEach((input) => {
         input.addEventListener("input", () => {
@@ -514,40 +671,6 @@ function adicionarEventosNosInputsCadastro() {
 
             limparErroCampo(input);
             limparMensagemGeral();
-        });
-
-        input.addEventListener("keydown", (event) => {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                avancarCadastro();
-            }
-        });
-    });
-}
-
-function adicionarEventosMostrarSenhaCadastro() {
-    const botoes = camposCadastro.querySelectorAll(".mostrar-senha-cadastro");
-
-    botoes.forEach((botao) => {
-        botao.addEventListener("click", (event) => {
-            event.preventDefault();
-
-            const target = botao.getAttribute("data-target");
-            const input = document.getElementById(target);
-
-            if (!input) return;
-
-            const senhaVisivel = input.type === "text";
-
-            if (senhaVisivel) {
-                input.type = "password";
-                botao.src = "../../../assets/icons/login/olho.png";
-                botao.alt = "Mostrar senha";
-            } else {
-                input.type = "text";
-                botao.src = "../../../assets/icons/login/olho-aberto.png";
-                botao.alt = "Ocultar senha";
-            }
         });
     });
 }
@@ -565,6 +688,8 @@ function validarEtapaCadastro() {
 
     const nomeCadastro = document.getElementById("nomeCadastro");
     const cpfCadastro = document.getElementById("cpfCadastro");
+    const ufCadastro = document.getElementById("ufCadastro");
+    const cidadeCadastro = document.getElementById("cidadeCadastro");
     const emailCadastro = document.getElementById("emailCadastro");
     const telefoneCadastro = document.getElementById("telefoneCadastro");
     const codigoEmailCadastro = document.getElementById("codigoEmailCadastro");
@@ -574,6 +699,8 @@ function validarEtapaCadastro() {
     if (etapaCadastro === 1) {
         limparErroCampo(nomeCadastro);
         limparErroCampo(cpfCadastro);
+        limparErroCampo(ufCadastro);
+        limparErroCampo(cidadeCadastro);
 
         const validacaoNome = validarNomeCompleto(dadosCadastro.nome);
 
@@ -590,6 +717,34 @@ function validarEtapaCadastro() {
         } else if (!validarCPF(dadosCadastro.cpf)) {
             mostrarErroCampo(cpfCadastro, "Digite um CPF válido para continuar.");
             valido = false;
+        }
+
+        const cidadeOficial = nomeOficialDaCidade(dadosCadastro.cidade, dadosCadastro.uf);
+
+        if (!dadosCadastro.uf) {
+            mostrarErroCampo(ufCadastro, "Selecione seu estado.");
+            valido = false;
+        }
+
+        if (!dadosCadastro.cidade) {
+            mostrarErroCampo(cidadeCadastro, "Informe sua cidade.");
+            valido = false;
+        } else if (!cidadeOficial) {
+            mostrarErroCampo(cidadeCadastro, "Escolha uma cidade da lista.");
+            valido = false;
+        } else if (!cidadeEstaDisponivel(cidadeOficial, dadosCadastro.uf)) {
+            // O aviso vermelho embaixo já explica; só destaca o campo
+            atualizarAvisoCidade();
+
+            if (cidadeCadastro) {
+                cidadeCadastro.classList.add("input-erro");
+                balancar(cidadeCadastro.closest(".campo"));
+            }
+
+            balancar(document.getElementById("avisoCidade"));
+            valido = false;
+        } else {
+            dadosCadastro.cidade = cidadeOficial;
         }
     }
 
@@ -667,13 +822,16 @@ async function finalizarCadastro() {
     salvarDadosDaEtapaAtual();
 
     if (!validarEtapaCadastro()) {
-        mostrarMensagem("Antes de finalizar, corrija os campos destacados.", "erro");
+        if (mensagemLogin.hidden) {
+            mostrarMensagem("Antes de finalizar, corrija os campos destacados.", "erro");
+        }
         return;
     }
 
+    let cadastrou = false;
+
     try {
-        btnEntrar.disabled = true;
-        btnEntrar.textContent = "Cadastrando...";
+        carregandoBotaoPrincipal("Cadastrando...");
 
         const resposta = await fetch(`${API_URL}/cadastrar`, {
             method: "POST",
@@ -685,13 +843,15 @@ async function finalizarCadastro() {
                 cpf: apenasNumeros(dadosCadastro.cpf),
                 email: dadosCadastro.email,
                 telefone: apenasNumeros(dadosCadastro.telefone),
+                cidade: dadosCadastro.cidade,
+                uf: dadosCadastro.uf,
                 senha: dadosCadastro.senha,
                 tipo_usuario: "CIDADAO",
                 email_verificacao_token: dadosCadastro.emailVerificacaoToken
             })
         });
 
-        const dados = await resposta.json();
+        const dados = await lerRespostaJson(resposta);
 
         if (!resposta.ok || !dados.sucesso) {
             mostrarMensagem(
@@ -701,16 +861,21 @@ async function finalizarCadastro() {
             return;
         }
 
+        cadastrou = true;
+
         mostrarMensagem("Conta criada com sucesso! Agora você já pode fazer login.", "sucesso");
 
-        emailInput.value = dadosCadastro.email;
-        passwordInput.value = "";
-
-        limparDadosCadastro();
+        const emailCriado = dadosCadastro.email;
 
         setTimeout(() => {
             voltarModoLogin();
-        }, 1000);
+
+            setTimeout(() => {
+                emailInput.value = emailCriado;
+                passwordInput.value = "";
+                passwordInput.focus();
+            }, 300);
+        }, 1200);
 
     } catch (error) {
         console.error("Erro ao cadastrar usuário:", error);
@@ -721,24 +886,12 @@ async function finalizarCadastro() {
         );
 
     } finally {
-        btnEntrar.disabled = false;
+        if (!cadastrou) {
+            btnEntrar.disabled = false;
 
-        if (modoCadastro) {
-            btnEntrar.innerHTML = `Finalizar Cadastro <svg
-                class="seta-btn"
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <path d="M5 12H19"></path>
-                <path d="M12 6L18 12L12 18"></path>
-            </svg>`;
+            if (modoCadastro) {
+                rotuloBotaoPrincipal("Finalizar Cadastro");
+            }
         }
     }
 }
@@ -746,6 +899,8 @@ async function finalizarCadastro() {
 function limparDadosCadastro() {
     dadosCadastro.nome = "";
     dadosCadastro.cpf = "";
+    dadosCadastro.uf = "SP";
+    dadosCadastro.cidade = "";
     dadosCadastro.email = "";
     dadosCadastro.telefone = "";
     dadosCadastro.senha = "";
@@ -765,8 +920,7 @@ ENVIO E CONFIRMAÇÃO DE CÓDIGO DE EMAIL
 
 async function enviarCodigoEmailCadastro() {
     try {
-        btnEntrar.disabled = true;
-        btnEntrar.textContent = "Enviando código...";
+        carregandoBotaoPrincipal("Enviando código...");
 
         const resposta = await fetch(`${API_URL}/cadastro/email/enviar-codigo`, {
             method: "POST",
@@ -778,7 +932,7 @@ async function enviarCodigoEmailCadastro() {
             })
         });
 
-        const dados = await resposta.json();
+        const dados = await lerRespostaJson(resposta);
 
         if (!resposta.ok || !dados.sucesso) {
             mostrarMensagem(
@@ -790,28 +944,16 @@ async function enviarCodigoEmailCadastro() {
 
         dadosCadastro.aguardandoCodigoEmail = true;
 
+        renderizarEtapaCadastro();
+
         mostrarMensagem(
             "Enviamos um código para seu email. Digite o código para continuar.",
             "sucesso"
         );
 
-        renderizarEtapaCadastro();
+        const codigo = document.getElementById("codigoEmailCadastro");
 
-        btnEntrar.innerHTML = `Verificar Email <svg
-            class="seta-btn"
-            xmlns="http://www.w3.org/2000/svg"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-        >
-            <path d="M5 12H19"></path>
-            <path d="M12 6L18 12L12 18"></path>
-        </svg>`;
+        if (codigo) codigo.focus();
 
         return true;
 
@@ -828,22 +970,8 @@ async function enviarCodigoEmailCadastro() {
     } finally {
         btnEntrar.disabled = false;
 
-        if (modoCadastro && etapaCadastro === 2 && dadosCadastro.aguardandoCodigoEmail) {
-            btnEntrar.innerHTML = `Verificar Email <svg
-                class="seta-btn"
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <path d="M5 12H19"></path>
-                <path d="M12 6L18 12L12 18"></path>
-            </svg>`;
+        if (modoCadastro && etapaCadastro === 2) {
+            rotuloBotaoPrincipal(dadosCadastro.aguardandoCodigoEmail ? "Verificar Email" : "Próximo");
         }
     }
 }
@@ -863,9 +991,10 @@ async function confirmarCodigoEmailCadastro() {
         return false;
     }
 
+    let confirmou = false;
+
     try {
-        btnEntrar.disabled = true;
-        btnEntrar.textContent = "Verificando...";
+        carregandoBotaoPrincipal("Verificando...");
 
         const resposta = await fetch(`${API_URL}/cadastro/email/confirmar-codigo`, {
             method: "POST",
@@ -878,12 +1007,13 @@ async function confirmarCodigoEmailCadastro() {
             })
         });
 
-        const dados = await resposta.json();
+        const dados = await lerRespostaJson(resposta);
 
         if (!resposta.ok || !dados.sucesso) {
-            mostrarMensagem(
-                dados.mensagem || "Código inválido ou expirado. Confira o código e tente novamente.",
-                "erro"
+            // Erro do código fica só embaixo do campo (sem repetir em cima)
+            mostrarErroCampo(
+                codigoEmailCadastro,
+                dados.mensagem || "Código inválido ou expirado. Confira o código e tente novamente."
             );
             return false;
         }
@@ -891,6 +1021,8 @@ async function confirmarCodigoEmailCadastro() {
         dadosCadastro.emailVerificado = true;
         dadosCadastro.emailVerificacaoToken = dados.email_verificacao_token;
         dadosCadastro.aguardandoCodigoEmail = false;
+
+        confirmou = true;
 
         mostrarMensagem("Email confirmado com sucesso. Agora crie uma senha segura.", "sucesso");
 
@@ -909,22 +1041,8 @@ async function confirmarCodigoEmailCadastro() {
     } finally {
         btnEntrar.disabled = false;
 
-        if (modoCadastro && etapaCadastro === 2) {
-            btnEntrar.innerHTML = `Verificar Email <svg
-                class="seta-btn"
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <path d="M5 12H19"></path>
-                <path d="M12 6L18 12L12 18"></path>
-            </svg>`;
+        if (!confirmou && modoCadastro && etapaCadastro === 2) {
+            rotuloBotaoPrincipal("Verificar Email");
         }
     }
 }

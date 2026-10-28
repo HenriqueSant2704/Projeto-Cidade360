@@ -47,6 +47,9 @@ const preferenciasRoutes =
 const pontosRoutes =
     require("./src/routes/pontosRoutes");
 
+const cidadeRoutes =
+    require("./src/routes/cidadeRoutes");
+
 
 const app =
     express();
@@ -395,6 +398,13 @@ app.use(
 app.use(
     "/api/pontos",
     pontosRoutes
+);
+
+
+// Cidade atendida (pública): contorno usado para travar os mapas
+app.use(
+    "/api/cidade-atendida",
+    cidadeRoutes
 );
 
 

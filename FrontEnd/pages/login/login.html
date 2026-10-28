@@ -4,100 +4,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../../../FrontEnd/pages/login/login.css">
+
+    <!-- Tema salvo (Configurações > Tema escuro): carregado antes do CSS para não piscar -->
+    <script src="/FrontEnd/pages/global/tema.js?v=1"></script>
+
+    <link rel="icon" href="/assets/img/global/logo/icone-cidade360.png">
+    <link rel="stylesheet" href="/FrontEnd/pages/login/login.css?v=2">
     <title>Cidade360-Login</title>
 </head>
 
 <body>
     <div class="container-login">
-        <img src="../../../assets/img/login/Fundo-cidade360.png" alt="">
+        <div class="ilustracao">
+            <img src="/assets/img/login/Fundo-cidade360.png" alt="Cidade360: conectando você a uma cidade melhor.">
+        </div>
+
         <div class="area-login">
+            <form class="miolo" id="formularioLogin" novalidate>
 
-            <div class="caixa-titulo">
-                <h1 id="tituloFormulario">Bem-vindo de volta!</h1>
-                <span id="subtituloFormulario">Acesse sua conta para continuar.</span>
+                <div class="logo-mobile">
+                    <img src="/assets/img/global/logo/icone-cidade360.png" alt="">
+                    <span>Cidade<b>360</b></span>
+                </div>
 
-                <div class="progresso-cadastro" id="indicadorEtapa" style="display:none;">
-                    <div class="linha-progresso">
+                <div class="caixa-titulo">
+                    <h1 id="tituloFormulario">Bem-vindo de volta!</h1>
+                    <span id="subtituloFormulario">Acesse sua conta para continuar.</span>
 
-                        <div class="etapa ativa" id="etapa1"></div>
-                        <div class="barra" id="barra1"></div>
+                    <div class="progresso-cadastro" id="indicadorEtapa" hidden>
+                        <div class="linha-progresso">
 
-                        <div class="etapa" id="etapa2"></div>
-                        <div class="barra" id="barra2"></div>
+                            <div class="etapa ativa" id="etapa1"></div>
+                            <div class="barra" id="barra1"><i></i></div>
 
-                        <div class="etapa" id="etapa3"></div>
+                            <div class="etapa" id="etapa2"></div>
+                            <div class="barra" id="barra2"><i></i></div>
 
+                            <div class="etapa" id="etapa3"></div>
+
+                        </div>
+
+                        <div class="nomes-etapas">
+                            <span id="textoEtapa1">Dados</span>
+                            <span id="textoEtapa2">Contato</span>
+                            <span id="textoEtapa3">Segurança</span>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="caixa-login" id="formLogin">
+                    <div class="caixa-input" id="campoEmailLogin">
+                        <label for="email">Email</label>
+                        <div class="campo">
+                            <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>
+                            <input type="email" id="email" placeholder="Digite seu email" maxlength="254" autocomplete="email">
+                        </div>
                     </div>
 
-                    <div class="nomes-etapas">
-                        <span id="textoEtapa1">Dados</span>
-                        <span id="textoEtapa2">Contato</span>
-                        <span id="textoEtapa3">Segurança</span>
+                    <div class="caixa-input" id="campoSenhaLogin">
+                        <label for="password">Senha</label>
+                        <div class="campo">
+                            <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+                            <input type="password" id="password" placeholder="Digite sua senha" maxlength="72" autocomplete="current-password">
+                            <button type="button" class="olho" data-alvo="password" aria-label="Mostrar senha"></button>
+                        </div>
                     </div>
-                </div>
-            </div>
 
-
-            <div class="caixa-login" id="formLogin">
-                <div class="caixa-input" id="campoEmailLogin">
-                    <label for="email">Email</label>
-                    <img src="../../../assets/icons/login/e-mail.png" alt="">
-                    <input type="email" id="email" placeholder="Digite seu email" required>
-                </div>
-
-                <div class="caixa-input" id="campoSenhaLogin">
-                    <label for="password">Senha</label>
-                    <img src="../../../assets/icons/login/trancar.png" alt="">
-                    <input type="password" id="password" placeholder="Digite sua senha" required>
-                    <img src="../../../assets/icons/login/olho.png" alt="" id="mostrarSenha">
-                </div>
-
-                <div class="caixa-lembrete-esqueci" id="areaLembrete">
-                    <div class="caixa-lembrete">
-                        <input type="checkbox" id="remember" name="remember">
-                        <label for="remember">Lembrar-me</label>
+                    <div class="caixa-lembrete-esqueci" id="areaLembrete">
+                        <label class="caixa-lembrete" for="remember">
+                            <input type="checkbox" id="remember" name="remember">
+                            Lembrar-me
+                        </label>
+                        <button type="button" class="link" id="linkEsqueciSenha">Esqueceu sua senha?</button>
                     </div>
-                    <a href="#" id="linkEsqueciSenha">Esqueceu sua senha?</a>
-                </div>
 
-                <div id="camposCadastro"></div>
+                    <div id="camposCadastro"></div>
 
-                <p id="mensagemLogin" style="display: none; margin: -10px 0 0 0; font-size: 14px; font-weight: 600;">
-                </p>
+                    <div class="mensagem" id="mensagemLogin" role="status" aria-live="polite" hidden></div>
 
-                <div id="areaBotoes" class="area-botoes">
-                    <button type="button" id="btnVoltarEtapa" class="btn-voltar" style="display:none;">
-                        <span class="conteudo-voltar">
-                            <svg class="seta-voltar" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M19 12H5"></path>
-                                <path d="M12 6L6 12L12 18"></path>
-                            </svg>
+                    <div id="areaBotoes" class="area-botoes">
+                        <button type="button" id="btnVoltarEtapa" class="btn-voltar" hidden>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 6l-6 6 6 6"/></svg>
                             Voltar
-                        </span>
-                    </button>
+                        </button>
 
-                    <button type="button" id="btnEntrar">
-                        <img src="../../../assets/icons/login/usuario.png" alt="">
-                        Entrar
-                    </button>
+                        <button type="submit" id="btnEntrar" class="btn-principal">Entrar</button>
+                    </div>
                 </div>
-            </div>
 
-            <p class="caixa-ou" id="textoOu">ou</p>
+                <p class="caixa-ou" id="textoOu">ou</p>
 
-            <button class="caixa-criar-conta" type="button" id="btnCriarConta">
-                <img src="../../../assets/icons/login/adicionar-usuario.png" alt="">
-                Criar nova conta
-            </button>
+                <button class="caixa-criar-conta" type="button" id="btnCriarConta">Criar nova conta</button>
+            </form>
         </div>
     </div>
 
-    <script src="../../../FrontEnd/pages/login/login.js"></script>
-    <script src="../../../FrontEnd/pages/login/cadastro.js"></script>
-    <script src="../../../FrontEnd/pages/login/recuperarSenha.js"></script>
+    <script src="/FrontEnd/pages/login/login.js?v=2"></script>
+    <script src="/FrontEnd/pages/login/cadastro.js?v=2"></script>
+    <script src="/FrontEnd/pages/login/recuperarSenha.js?v=2"></script>
 </body>
 
 </html>

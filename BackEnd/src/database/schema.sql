@@ -29,6 +29,11 @@ CREATE TABLE IF NOT EXISTS usuarios (
 
     telefone VARCHAR(20) NOT NULL,
 
+    -- Cidade e estado onde o cidadão mora (migração 010)
+    cidade VARCHAR(120) NULL,
+
+    uf CHAR(2) NULL,
+
     senha_hash VARCHAR(255) NOT NULL,
 
     tipo_usuario ENUM(

@@ -25,6 +25,11 @@ const {
 } =
     require("../utils/eventosNotificacao");
 
+const {
+    cidadeDoPonto
+} =
+    require("../utils/cidadeAtendida");
+
 
 iniciarProcessamentoEmailsOcorrencia();
 
@@ -302,12 +307,6 @@ const OcorrenciaController = {
                     120
                 );
 
-            const cidade =
-                texto(
-                    req.body.cidade,
-                    120
-                );
-
             const arquivos =
                 Array.isArray(req.files)
                     ? req.files
@@ -363,6 +362,23 @@ const OcorrenciaController = {
                     res,
                     400,
                     "Longitude inválida. Use o GPS ou marque o local no mapa."
+                );
+            }
+
+            // O sistema só atende dentro do limite da cidade (hoje, Jaborandi-SP).
+            // O mapa já trava isso no front; aqui é a garantia do servidor.
+            const cidadeDoLocal =
+                cidadeDoPonto(
+                    latitude,
+                    longitude
+                );
+
+            if (!cidadeDoLocal) {
+                return responderErroComLimpeza(
+                    req,
+                    res,
+                    400,
+                    "O local marcado fica fora de Jaborandi-SP. Marque um ponto dentro da cidade."
                 );
             }
 
@@ -446,7 +462,8 @@ const OcorrenciaController = {
 
                     bairro,
 
-                    cidade,
+                    cidade:
+                        cidadeDoLocal.nome,
 
                     fotos
                 });

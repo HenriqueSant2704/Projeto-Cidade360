@@ -1077,6 +1077,9 @@ function inicializarMapaPainel() {
         { collapsed: true }
     ).addTo(estadoPainel.mapa);
 
+    // O mapa fica preso em Jaborandi-SP (global/mapaCidade.js)
+    window.MapaCidade360?.travar(estadoPainel.mapa);
+
     setTimeout(() => estadoPainel.mapa?.invalidateSize(), 200);
 }
 
@@ -1138,13 +1141,41 @@ async function carregarOcorrenciasProximasPainel() {
         return [];
     }
 
-    estadoPainel.localizacaoUsuario = localizacao;
+    // Fora da cidade (viajando, GPS impreciso): busca a partir do centro de Jaborandi-SP
+    // e não coloca o "Você" no mapa, que fica preso na cidade.
+    let pontoBusca = localizacao;
 
-    renderizarLocalizacaoUsuarioPainel();
+    if (window.MapaCidade360) {
+        await window.MapaCidade360.carregar();
+
+        if (!window.MapaCidade360.dentro(localizacao.latitude, localizacao.longitude)) {
+            const [latitudeCentro, longitudeCentro] = window.MapaCidade360.centro();
+
+            pontoBusca = {
+                latitude: latitudeCentro,
+                longitude: longitudeCentro
+            };
+
+            mostrarMensagemPainel(
+                `Você está fora de ${window.MapaCidade360.nomeCidade()}. Mostrando as ocorrências a partir do centro da cidade.`
+            );
+        }
+    }
+
+    estadoPainel.localizacaoUsuario =
+        pontoBusca === localizacao
+            ? localizacao
+            : null;
+
+    if (estadoPainel.localizacaoUsuario) {
+        renderizarLocalizacaoUsuarioPainel();
+    } else {
+        estadoPainel.camadaLocalizacao?.clearLayers();
+    }
 
     const parametros = new URLSearchParams({
-        latitude: String(localizacao.latitude),
-        longitude: String(localizacao.longitude),
+        latitude: String(pontoBusca.latitude),
+        longitude: String(pontoBusca.longitude),
         raio: String(RAIO_OCORRENCIAS_PROXIMAS_KM),
         limite: "100"
     });

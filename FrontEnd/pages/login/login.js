@@ -3,6 +3,33 @@ const EMAIL_LEMBRADO_KEY = "cidade360_email_lembrado";
 
 /*========================================================================================================
 
+ÍCONES (SVG: ficam nítidos em qualquer tela e seguem a cor do tema)
+
+=========================================================================================================*/
+
+const ICONES_LOGIN = {
+    seta: '<svg class="seta" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 6l6 6-6 6"/></svg>',
+    entrar: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+    criar: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M19 8v6M16 11h6"/></svg>',
+    voltar: '<svg class="icone-voltar" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 6l-6 6 6 6"/></svg>',
+    olho: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+    olhoFechado: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6A17.4 17.4 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
+    erro: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>',
+    ok: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>',
+    check: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>',
+    pessoa: '<svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+    cpf: '<svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="2"/><path d="M6 16a3 3 0 0 1 6 0M15 10h3M15 14h3"/></svg>',
+    email: '<svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>',
+    telefone: '<svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>',
+    cadeado: '<svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+    escudo: '<svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>',
+    mapa: '<svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>',
+    predio: '<svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16M14 9h5a1 1 0 0 1 1 1v11M3 21h18M8 8h2M8 12h2M8 16h2"/></svg>',
+    setaSelect: '<svg class="seta-select" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>'
+};
+
+/*========================================================================================================
+
 VARIÁVEIS GERAIS
 
 =========================================================================================================*/
@@ -11,12 +38,12 @@ var modoCadastro = false;
 var modoRecuperarSenha = false;
 var transicaoTelaAtiva = false;
 
+var formularioLogin = document.getElementById("formularioLogin");
 var formLogin = document.getElementById("formLogin");
 var emailInput = document.getElementById("email");
 var passwordInput = document.getElementById("password");
 var mensagemLogin = document.getElementById("mensagemLogin");
 var btnEntrar = document.getElementById("btnEntrar");
-var mostrarSenha = document.getElementById("mostrarSenha");
 var btnCriarConta = document.getElementById("btnCriarConta");
 var rememberInput = document.getElementById("remember");
 var campoEmailLogin = document.getElementById("campoEmailLogin");
@@ -30,17 +57,6 @@ var textoOu = document.getElementById("textoOu");
 var camposCadastro = document.getElementById("camposCadastro");
 var btnVoltarEtapa = document.getElementById("btnVoltarEtapa");
 
-var etapa1 = document.getElementById("etapa1");
-var etapa2 = document.getElementById("etapa2");
-var etapa3 = document.getElementById("etapa3");
-
-var textoEtapa1 = document.getElementById("textoEtapa1");
-var textoEtapa2 = document.getElementById("textoEtapa2");
-var textoEtapa3 = document.getElementById("textoEtapa3");
-
-var barra1 = document.getElementById("barra1");
-var barra2 = document.getElementById("barra2");
-
 /*========================================================================================================
 
 EVENTOS INICIAIS
@@ -48,8 +64,6 @@ EVENTOS INICIAIS
 =========================================================================================================*/
 
 document.addEventListener("DOMContentLoaded", () => {
-    prepararAnimacoesLogin();
-
     const token = buscarTokenSalvo();
 
     if (token) {
@@ -57,66 +71,31 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    rotuloBotaoPrincipal("Entrar", "entrar");
+    rotuloBotaoCriarConta(false);
+    prepararOlhosSenha(formLogin);
     carregarEmailLembrado();
 });
 
 /*========================================================================================================
 
-BLOQUEAR ENVIO PADRÃO
+ENVIO DO FORMULÁRIO (botão principal e Enter em qualquer campo)
 
 =========================================================================================================*/
 
-if (formLogin) {
-    formLogin.addEventListener("submit", (event) => {
-        event.preventDefault();
-        executarAcaoPrincipal();
-    });
-}
-
-/*========================================================================================================
-
-MOSTRAR / OCULTAR SENHA DO LOGIN
-
-=========================================================================================================*/
-
-if (mostrarSenha && passwordInput) {
-
-    mostrarSenha.addEventListener("click", (event) => {
-
-        event.preventDefault();
-
-        const senhaVisivel = passwordInput.type === "text";
-
-        if (senhaVisivel) {
-
-            passwordInput.type = "password";
-
-            mostrarSenha.src = "../../../assets/icons/login/olho.png";
-
-        } else {
-
-            passwordInput.type = "text";
-
-            mostrarSenha.src = "../../../assets/icons/login/olho-aberto.png";
-
-        }
-    });
-}
-
-/*========================================================================================================
-
-BOTÃO ENTRAR / PRÓXIMO / FINALIZAR
-
-=========================================================================================================*/
-
-if (btnEntrar) {
-    btnEntrar.addEventListener("click", (event) => {
+if (formularioLogin) {
+    formularioLogin.addEventListener("submit", (event) => {
         event.preventDefault();
         executarAcaoPrincipal();
     });
 }
 
 function executarAcaoPrincipal() {
+    // Evita enviar duas vezes (duplo clique ou Enter durante o carregamento)
+    if (btnEntrar.disabled || transicaoTelaAtiva) {
+        return;
+    }
+
     if (modoRecuperarSenha && typeof avancarRecuperacaoSenha === "function") {
         avancarRecuperacaoSenha();
         return;
@@ -140,6 +119,10 @@ if (btnVoltarEtapa) {
     btnVoltarEtapa.addEventListener("click", (event) => {
         event.preventDefault();
 
+        if (btnEntrar.disabled) {
+            return;
+        }
+
         if (modoCadastro && typeof voltarEtapaCadastro === "function") {
             voltarEtapaCadastro();
             return;
@@ -154,27 +137,9 @@ if (btnVoltarEtapa) {
 
 /*========================================================================================================
 
-ENTER NOS CAMPOS PRINCIPAIS
+LIMPAR ERROS AO DIGITAR
 
 =========================================================================================================*/
-
-if (passwordInput) {
-    passwordInput.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            executarAcaoPrincipal();
-        }
-    });
-}
-
-if (emailInput) {
-    emailInput.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            executarAcaoPrincipal();
-        }
-    });
-}
 
 if (emailInput) {
     emailInput.addEventListener("input", () => {
@@ -200,7 +165,7 @@ async function fazerLogin() {
     limparMensagemGeral();
 
     if (!emailInput || !passwordInput || !btnEntrar) {
-        mostrarMensagem("Erro ao carregar a tela de login. Verifique o HTML da página.", "erro");
+        mostrarMensagem("Erro ao carregar a tela de login. Atualize a página e tente novamente.", "erro");
         return;
     }
 
@@ -211,9 +176,10 @@ async function fazerLogin() {
         return;
     }
 
+    let entrou = false;
+
     try {
-        btnEntrar.disabled = true;
-        btnEntrar.innerHTML = "Entrando...";
+        carregandoBotaoPrincipal("Entrando...");
 
         const resposta = await fetch(`${API_URL}/login`, {
             method: "POST",
@@ -226,17 +192,22 @@ async function fazerLogin() {
             })
         });
 
-        const dados = await resposta.json();
+        const dados = await lerRespostaJson(resposta);
 
         if (!resposta.ok || !dados.sucesso) {
             mostrarMensagem(
                 dados.mensagem || "Não foi possível entrar. Verifique seu email e senha.",
                 "erro"
             );
+
+            passwordInput.classList.add("input-erro");
+            balancar(passwordInput.closest(".campo"));
             return;
         }
 
         salvarLogin(dados.token, dados.usuario, email);
+
+        entrou = true;
 
         mostrarMensagem("Acesso autorizado. Redirecionando para o sistema...", "sucesso");
 
@@ -253,13 +224,13 @@ async function fazerLogin() {
         );
 
     } finally {
-        btnEntrar.disabled = false;
+        // Depois de entrar o botão fica girando até a página trocar
+        if (!entrou) {
+            btnEntrar.disabled = false;
 
-        if (!modoCadastro && !modoRecuperarSenha) {
-            btnEntrar.innerHTML = `
-                <img src="../../../assets/icons/login/usuario.png" alt="">
-                Entrar
-            `;
+            if (!modoCadastro && !modoRecuperarSenha) {
+                rotuloBotaoPrincipal("Entrar", "entrar");
+            }
         }
     }
 }
@@ -356,59 +327,29 @@ function buscarTokenSalvo() {
 
 /*========================================================================================================
 
-ANIMAÇÕES DE TROCA DE TELA
+RESPOSTA DO SERVIDOR
+
+Se o servidor responder algo que não é JSON (queda, página de erro do Render),
+devolve um objeto vazio para a tela mostrar a mensagem padrão em vez de travar.
 
 =========================================================================================================*/
 
-function prepararAnimacoesLogin() {
-    if (document.getElementById("cidade360-login-animacoes")) {
-        return;
+async function lerRespostaJson(resposta) {
+    try {
+        return await resposta.json();
+    } catch (error) {
+        return {};
     }
-
-    const style = document.createElement("style");
-    style.id = "cidade360-login-animacoes";
-    style.textContent = `
-        .caixa-login.animacao-saida {
-            opacity: 0;
-            transform: translateX(-18px) scale(0.985);
-            transition: opacity 260ms ease, transform 260ms ease;
-        }
-
-        .caixa-login.animacao-entrada {
-            opacity: 0;
-            transform: translateX(18px) scale(0.985);
-        }
-
-        .caixa-login.animacao-entrada.ativa {
-            opacity: 1;
-            transform: translateX(0) scale(1);
-            transition: opacity 260ms ease, transform 260ms ease;
-        }
-
-        .seta-btn {
-            display: inline-block;
-            margin-left: 8px;
-            transition: transform 180ms ease;
-        }
-
-        #btnEntrar:hover .seta-btn {
-            transform: translateX(3px);
-        }
-
-        .mostrar-senha-cadastro,
-        .mostrar-senha-recuperacao {
-            cursor: pointer;
-            user-select: none;
-        }
-    `;
-
-    document.head.appendChild(style);
 }
 
-function trocarTela(callback) {
-    const caixa = document.querySelector(".caixa-login");
+/*========================================================================================================
 
-    if (!caixa || typeof callback !== "function") {
+TROCA DE TELA (login, cadastro e recuperação usam a mesma caixa)
+
+=========================================================================================================*/
+
+function trocarTela(callback) {
+    if (!formLogin || typeof callback !== "function") {
         if (typeof callback === "function") {
             callback();
         }
@@ -422,24 +363,198 @@ function trocarTela(callback) {
 
     transicaoTelaAtiva = true;
 
-    caixa.classList.remove("animacao-entrada", "ativa");
-    caixa.classList.add("animacao-saida");
+    formLogin.classList.remove("animacao-entrada", "ativa");
+    formLogin.classList.add("animacao-saida");
 
     setTimeout(() => {
         callback();
 
-        caixa.classList.remove("animacao-saida");
-        caixa.classList.add("animacao-entrada");
+        formLogin.classList.remove("animacao-saida");
+        formLogin.classList.add("animacao-entrada");
 
         requestAnimationFrame(() => {
-            caixa.classList.add("ativa");
+            requestAnimationFrame(() => {
+                formLogin.classList.add("ativa");
+            });
         });
 
         setTimeout(() => {
-            caixa.classList.remove("animacao-entrada", "ativa");
+            formLogin.classList.remove("animacao-entrada", "ativa");
             transicaoTelaAtiva = false;
-        }, 280);
+        }, 320);
     }, 260);
+}
+
+/*
+ * Mostra ou esconde as partes do login quando entra no cadastro ou na recuperação.
+ */
+function modoFormulario(ativo) {
+    indicadorEtapa.hidden = !ativo;
+    areaLembrete.hidden = ativo;
+    campoEmailLogin.hidden = ativo;
+    campoSenhaLogin.hidden = ativo;
+    textoOu.hidden = ativo;
+
+    rotuloBotaoCriarConta(ativo);
+
+    if (!ativo) {
+        camposCadastro.innerHTML = "";
+    }
+}
+
+function voltarModoLogin() {
+    trocarTela(() => {
+        modoCadastro = false;
+        modoRecuperarSenha = false;
+
+        if (typeof limparDadosCadastro === "function") {
+            limparDadosCadastro();
+        }
+
+        if (typeof limparDadosRecuperacaoSenha === "function") {
+            limparDadosRecuperacaoSenha();
+        }
+
+        modoFormulario(false);
+        limparMensagemGeral();
+
+        tituloFormulario.textContent = "Bem-vindo de volta!";
+        subtituloFormulario.textContent = "Acesse sua conta para continuar.";
+
+        btnVoltarEtapa.hidden = true;
+        btnEntrar.disabled = false;
+
+        rotuloBotaoPrincipal("Entrar", "entrar");
+    });
+}
+
+/*========================================================================================================
+
+PROGRESSO DAS ETAPAS (cadastro e recuperação)
+
+=========================================================================================================*/
+
+function atualizarProgressoEtapas(etapaAtual, nomes) {
+    for (let i = 1; i <= 3; i++) {
+        const bolinha = document.getElementById(`etapa${i}`);
+        const texto = document.getElementById(`textoEtapa${i}`);
+
+        bolinha.classList.toggle("ativa", i <= etapaAtual);
+        bolinha.innerHTML = i < etapaAtual ? ICONES_LOGIN.check : "";
+
+        texto.textContent = nomes[i - 1];
+        texto.classList.toggle("ativo", i <= etapaAtual);
+    }
+
+    document.getElementById("barra1").classList.toggle("ativa", etapaAtual > 1);
+    document.getElementById("barra2").classList.toggle("ativa", etapaAtual > 2);
+}
+
+/*========================================================================================================
+
+BOTÕES
+
+=========================================================================================================*/
+
+function rotuloBotaoPrincipal(texto, icone) {
+    if (!btnEntrar) return;
+
+    const span = document.createElement("span");
+    span.textContent = texto;
+
+    btnEntrar.innerHTML = "";
+
+    if (icone === "entrar") {
+        btnEntrar.insertAdjacentHTML("beforeend", ICONES_LOGIN.entrar);
+        btnEntrar.appendChild(span);
+    } else {
+        btnEntrar.appendChild(span);
+        btnEntrar.insertAdjacentHTML("beforeend", ICONES_LOGIN.seta);
+    }
+}
+
+function carregandoBotaoPrincipal(texto) {
+    if (!btnEntrar) return;
+
+    btnEntrar.disabled = true;
+    btnEntrar.innerHTML = '<span class="girando" aria-hidden="true"></span>';
+    btnEntrar.appendChild(document.createTextNode(texto));
+}
+
+function rotuloBotaoCriarConta(voltarParaLogin) {
+    if (!btnCriarConta) return;
+
+    btnCriarConta.innerHTML = voltarParaLogin
+        ? `${ICONES_LOGIN.voltar}Voltar para Login`
+        : `${ICONES_LOGIN.criar}Criar nova conta`;
+}
+
+/*========================================================================================================
+
+CAMPOS (montagem padrão usada no cadastro e na recuperação)
+
+=========================================================================================================*/
+
+function campoHTML({
+    id,
+    rotulo,
+    icone,
+    tipo = "text",
+    placeholder = "",
+    max,
+    valor = "",
+    extra = "",
+    somenteLeitura = false,
+    senha = false
+}) {
+    return `
+        <div class="caixa-input">
+            <label for="${id}">${rotulo}</label>
+            <div class="campo">
+                ${ICONES_LOGIN[icone] || ""}
+                <input
+                    type="${tipo}"
+                    id="${id}"
+                    placeholder="${escaparTextoLogin(placeholder)}"
+                    ${max ? `maxlength="${max}"` : ""}
+                    value="${escaparTextoLogin(valor)}"
+                    ${somenteLeitura ? "readonly" : ""}
+                    ${extra}>
+                ${senha ? `<button type="button" class="olho" data-alvo="${id}" aria-label="Mostrar senha"></button>` : ""}
+            </div>
+        </div>
+    `;
+}
+
+function prepararOlhosSenha(raiz) {
+    if (!raiz) return;
+
+    raiz.querySelectorAll(".olho").forEach((botao) => {
+        botao.innerHTML = ICONES_LOGIN.olho;
+
+        botao.addEventListener("click", (event) => {
+            event.preventDefault();
+
+            const input = document.getElementById(botao.dataset.alvo);
+
+            if (!input) return;
+
+            const senhaVisivel = input.type === "text";
+
+            input.type = senhaVisivel ? "password" : "text";
+            botao.innerHTML = senhaVisivel ? ICONES_LOGIN.olho : ICONES_LOGIN.olhoFechado;
+            botao.setAttribute("aria-label", senhaVisivel ? "Mostrar senha" : "Ocultar senha");
+        });
+    });
+}
+
+function escaparTextoLogin(valor) {
+    return String(valor ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
 }
 
 /*========================================================================================================
@@ -454,15 +569,19 @@ function mostrarMensagem(texto, tipo) {
         return;
     }
 
-    mensagemLogin.style.display = "block";
-    mensagemLogin.textContent = texto;
-    mensagemLogin.style.color = tipo === "sucesso" ? "#00b894" : "#ff4d4d";
+    const textoMensagem = document.createElement("span");
+    textoMensagem.textContent = texto;
+
+    mensagemLogin.dataset.tipo = tipo === "sucesso" ? "sucesso" : "erro";
+    mensagemLogin.innerHTML = tipo === "sucesso" ? ICONES_LOGIN.ok : ICONES_LOGIN.erro;
+    mensagemLogin.appendChild(textoMensagem);
+    mensagemLogin.hidden = false;
 }
 
 function limparMensagemGeral() {
     if (!mensagemLogin) return;
 
-    mensagemLogin.style.display = "none";
+    mensagemLogin.hidden = true;
     mensagemLogin.textContent = "";
 }
 
@@ -479,7 +598,7 @@ function mostrarErroCampo(input, mensagem) {
 
     if (!caixaInput) return;
 
-    let erro = caixaInput.querySelector(".erro-input");
+    let erro = caixaInput.querySelector(":scope > .erro-input");
 
     if (!erro) {
         erro = document.createElement("small");
@@ -490,22 +609,32 @@ function mostrarErroCampo(input, mensagem) {
     input.classList.add("input-erro");
 
     erro.textContent = mensagem;
-    erro.style.display = "block";
+    erro.hidden = false;
+
+    balancar(input.closest(".campo") || input);
 }
 
 function limparErroCampo(input) {
     if (!input) return;
 
+    input.classList.remove("input-erro");
+
     const caixaInput = input.closest(".caixa-input");
 
     if (!caixaInput) return;
 
-    const erro = caixaInput.querySelector(".erro-input");
-
-    input.classList.remove("input-erro");
+    const erro = caixaInput.querySelector(":scope > .erro-input");
 
     if (erro) {
         erro.textContent = "";
-        erro.style.display = "none";
+        erro.hidden = true;
     }
+}
+
+function balancar(elemento) {
+    if (!elemento) return;
+
+    elemento.classList.remove("balancar");
+    void elemento.offsetWidth;
+    elemento.classList.add("balancar");
 }

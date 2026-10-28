@@ -1,378 +1,509 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 
-* {
-    box-sizing: border-box;
-    font-family: 'Poppins', sans-serif;
+/*========================================================================================================
+
+    Cores do login (mesmas do sistema). O tema escuro vem do tema.js: html[data-tema="escuro"]
+
+==========================================================================================================*/
+
+:root {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f8fafc;
+    --line: #dfe3ea;
+    --line-soft: #eceff4;
+    --ink: #1f2937;
+    --ink-soft: #4b5563;
+    --muted: #6b7280;
+    --accent: #2563EB;
+    --accent-hover: #1d4ed8;
+    --accent-soft: #eff4ff;
+    --accent-ring: rgba(37, 99, 235, .18);
+    --danger: #dc2626;
+    --danger-soft: #fdecec;
+    --ok: #15803d;
+    --ok-soft: #e8f6ed;
+    --img-filtro: none;
+    --sombra-lista: 0 18px 40px -12px rgba(15, 23, 42, .28);
+    --font: 'Poppins', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-body {
-    margin: 0;
-    padding: 0;
-}
-
-.container-login {
-    width: 100%;
-    height: 100vh;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.container-login img {
-    width: 45%;
-    height: 100vh;
-    object-fit: cover;
-    user-select: none;
-}
-
-.area-login {
-    width: 55%;
-    padding: 40px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-.caixa-titulo {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.caixa-titulo h1 {
-    color: #333;
-    margin: 8px;
-}
-
-.caixa-titulo span {
-    font-size: 15px;
-    color: #757575;
-    font-weight: 500;
-}
-
-.caixa-login {
-    width: 80%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 30px;
-}
-
-.caixa-input {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    user-select: none;
-    position: relative;
-}
-
-.caixa-input label {
-    font-size: 14px;
-    font-weight: 500;
-    color: #585858;
-}
-
-
-/* Ícone da esquerda */
-.caixa-input img:first-of-type {
-    position: absolute;
-    left: 12px;
-    top: 38px;
-    width: 18px;
-    height: 18px;
-    z-index: 2;
-    object-fit: contain;
-}
-
-/* Ícone da direita - olho da senha */
-.caixa-input img:last-of-type:not(:first-of-type) {
-    position: absolute;
-    right: 12px;
-    top: 38px;
-    width: 18px;
-    height: 18px;
-    z-index: 2;
-    cursor: pointer;
-    object-fit: contain;
-}
-
-
-.mostrar-senha-cadastro,
-.mostrar-senha-recuperacao {
-    position: absolute;
-    right: 12px;
-    top: 38px;
-    width: 18px;
-    height: 18px;
-    z-index: 20;
-    cursor: pointer;
-    object-fit: contain;
-    pointer-events: auto;
-    user-select: none;
-}
-
-.caixa-input input {
-    width: 100%;
-    height: 42px;
-    padding: 10px 42px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    color: #5a5a5a;
-    font-size: 16px;
-    box-sizing: border-box;
-}
-
-.caixa-input input:focus {
-    border-color: #007BFF;
-    border-width: 2px;
-    outline: none;
-}
-
-.caixa-input input::placeholder {
-    color: #929292;
-    font-size: 14px;
-    font-style: italic;
-    font-weight: 500;
-}
-
-.caixa-input input,
-.caixa-input select,
-.caixa-input textarea {
-    font-size: 16px;
-}
-
-.caixa-lembrete-esqueci {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: -70px;
-}
-
-.caixa-lembrete {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 5px;
-}
-
-.caixa-lembrete input {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-}
-
-.caixa-lembrete label {
-    font-size: 14px;
-    color: #535353;
-    font-weight: 600;
-}
-
-.caixa-lembrete-esqueci a {
-    font-size: 14px;
-    font-weight: 600;
-    color: #007BFF;
-    text-decoration: none;
-}
-
-.caixa-lembrete-esqueci a:hover {
-    text-decoration: underline;
-    text-decoration-thickness: 1.2px;
-    text-underline-offset: 4px;
-}
-
-.caixa-login button {
-    width: 90%;
-    padding: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    user-select: none;
-}
-
-.caixa-login button:hover {
-    background-color: #0056b3;
-}
-
-.caixa-login button img {
-    width: 16px;
-    height: 16px;
-    margin-bottom: 2px;
-}
-
-.caixa-ou {
-    width: 72%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
-    margin: 20px 0;
-    font-size: 14px;
-    color: #666;
-    user-select: none;
-}
-
-.caixa-ou::before,
-.caixa-ou::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background-color: #d9d9d9;
-}
-
-.caixa-criar-conta {
-    width: 72%;
-    padding: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    border: solid #007BFF 2px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    background-color: transparent;
-    color: #007BFF;
-    user-select: none;
-}
-
-.caixa-criar-conta:hover {
-    background-color: #f2f8ff;
-    color: #007BFF;
-    border-color: #007BFF;
-}
-
-.caixa-criar-conta img {
-    width: 18px;
-    height: 18px;
+html[data-tema="escuro"] {
+    --bg: #0e131d;
+    --surface: #161c28;
+    --surface-2: #1b2230;
+    --line: #2e3849;
+    --line-soft: #242c3b;
+    --ink: #e8ebf2;
+    --ink-soft: #cfd5e1;
+    --muted: #98a1b6;
+    --accent: #4f83ff;
+    --accent-hover: #6f99ff;
+    --accent-soft: #1a2540;
+    --accent-ring: rgba(79, 131, 255, .3);
+    --danger: #f87171;
+    --danger-soft: #3a1d22;
+    --ok: #4ade80;
+    --ok-soft: #16301f;
+    --img-filtro: brightness(.78) saturate(.9);
+    --sombra-lista: 0 18px 40px -12px rgba(0, 0, 0, .6);
+    color-scheme: dark;
 }
 
 
 /*========================================================================================================
 
-    Cadastro de usuario
+    Base
 
 ==========================================================================================================*/
 
-.progresso-cadastro {
+* {
+    box-sizing: border-box;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+html,
+body {
+    min-height: 100%;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select {
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+:focus-visible {
+    outline: 3px solid var(--accent-ring);
+    outline-offset: 2px;
+    border-radius: 8px;
+}
+
+
+/*========================================================================================================
+
+    Estrutura: ilustração à esquerda, formulário centralizado à direita
+
+==========================================================================================================*/
+
+.container-login {
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: stretch;
+}
+
+.ilustracao {
+    width: 45%;
+    position: relative;
+    overflow: hidden;
+    background: #e8eefb;
+}
+
+.ilustracao img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    user-select: none;
+    filter: var(--img-filtro);
+}
+
+.area-login {
+    width: 55%;
+    padding: 40px 24px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    margin-top: 20px;
+    justify-content: center;
+    align-items: center;
+}
+
+.miolo {
+    width: min(460px, 100%);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.logo-mobile {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.logo-mobile img {
+    width: 44px;
+}
+
+.logo-mobile span {
+    font-weight: 700;
+    font-size: 21px;
+    letter-spacing: -.02em;
+}
+
+.logo-mobile span b {
+    color: var(--accent);
+}
+
+
+/*========================================================================================================
+
+    Título e progresso das etapas
+
+==========================================================================================================*/
+
+.caixa-titulo {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 26px;
+}
+
+.caixa-titulo h1 {
+    color: var(--ink);
+    margin: 0 0 6px;
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -.02em;
+}
+
+.caixa-titulo > span {
+    font-size: 15px;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.progresso-cadastro {
+    margin-top: 22px;
 }
 
 .linha-progresso {
     display: flex;
     align-items: center;
-    width: 450px;
+    width: 100%;
+    padding: 0 6px;
 }
 
 .etapa {
-    width: 28px;
-    height: 28px;
+    flex: none;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
-    background: #dcdcdc;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    font-size: 16px;
-    font-weight: bold;
-    border: 3px solid white;
-    box-shadow: 0 0 0 2px #dcdcdc;
-    transition: all 0.3s ease;
-}
-
-.nomes-etapas {
-    position: relative;
-    width: 100%;
-    height: 20px;
-    margin-top: 0px;
-}
-
-.nomes-etapas span {
-    position: absolute;
-    transform: translateX(-50%);
-    font-size: 13px;
-    color: #b0b0b0;
-    font-weight: 600;
-}
-
-#textoEtapa1 {
-    left: 3%;
-}
-
-#textoEtapa2 {
-    left: 50%;
-}
-
-#textoEtapa3 {
-    left: 97%;
-}
-
-.nomes-etapas span.ativo {
-    color: #007bff;
+    display: grid;
+    place-items: center;
+    background: var(--line);
+    color: #fff;
+    border: 3px solid var(--surface);
+    box-shadow: 0 0 0 2px var(--line);
+    transition: background-color .3s var(--ease), box-shadow .3s var(--ease);
 }
 
 .etapa.ativa {
-    background: #007bff;
-    box-shadow: 0 0 0 2px #007bff;
+    background: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent);
 }
 
 .barra {
     flex: 1;
     height: 3px;
-    background: #dcdcdc;
+    background: var(--line);
+    border-radius: 3px;
+    overflow: hidden;
 }
 
-.barra.ativa {
-    background: #007bff;
+.barra i {
+    display: block;
+    width: 0;
+    height: 100%;
+    background: var(--accent);
+    transition: width .45s var(--ease);
 }
 
-#camposCadastro {
+.barra.ativa i {
+    width: 100%;
+}
+
+.nomes-etapas {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.nomes-etapas span.ativo {
+    color: var(--accent);
+}
+
+
+/*========================================================================================================
+
+    Campos
+
+==========================================================================================================*/
+
+.caixa-login {
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 30px;
-    margin: 30px 0px 50px 0px;
+    gap: 22px;
 }
 
-#camposCadastro .caixa-input {
-    width: 100%;
+#camposCadastro {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
 }
 
-#camposCadastro input,
-#camposCadastro select,
-#camposCadastro textarea {
-    font-size: 16px;
-}
-
-.caixa-input input.input-erro,
-.input-erro {
-    border-color: #ff3b3b !important;
-    border-width: 2px !important;
-}
-
-
-.erro-input {
+#camposCadastro:empty {
     display: none;
+}
+
+.caixa-input {
+    position: relative;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.caixa-input label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-soft);
+}
+
+.campo {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.campo > svg.ic {
+    position: absolute;
+    left: 14px;
+    color: var(--muted);
+    pointer-events: none;
+    transition: color .2s;
+}
+
+.campo input,
+.campo select {
     width: 100%;
-    color: #ff3b3b;
-    font-size: 12px;
+    height: 48px;
+    padding: 0 14px 0 44px;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 16px;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.campo select {
+    appearance: none;
+    padding-right: 34px;
+    cursor: pointer;
+}
+
+.campo .seta-select {
+    position: absolute;
+    right: 12px;
+    pointer-events: none;
+    color: var(--muted);
+}
+
+.campo input::placeholder {
+    color: var(--muted);
+    opacity: .85;
+    font-size: 14px;
+    font-style: italic;
+    font-weight: 500;
+}
+
+.campo input:hover,
+.campo select:hover {
+    border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+}
+
+.campo input:focus,
+.campo select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-ring);
+}
+
+.campo:focus-within > svg.ic {
+    color: var(--accent);
+}
+
+.campo input[readonly] {
+    background: var(--surface-2);
+    color: var(--muted);
+    border-style: dashed;
+    box-shadow: none;
+}
+
+.campo input.input-erro,
+.campo select.input-erro {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 14%, transparent);
+}
+
+/* Olho de mostrar/ocultar senha */
+.campo .olho {
+    position: absolute;
+    right: 6px;
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--muted);
+}
+
+.campo .olho:hover {
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.campo:has(.olho) input {
+    padding-right: 48px;
+}
+
+/* Erro embaixo do campo: sempre no fluxo, nunca empurra nem sobrepõe nada */
+.erro-input {
+    display: block;
+    color: var(--danger);
+    font-size: 12.5px;
     font-weight: 600;
-    margin-top: 3px;
+    line-height: 1.35;
     padding-left: 2px;
-    line-height: 1.2;
+}
+
+.balancar {
+    animation: balancar .38s;
+}
+
+@keyframes balancar {
+    20%, 60% { transform: translateX(-5px); }
+    40%, 80% { transform: translateX(5px); }
+}
+
+
+/*========================================================================================================
+
+    Estado e Cidade (cadastro)
+
+==========================================================================================================*/
+
+.linha-dupla {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: 12px;
+}
+
+.lista-cidades {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 30;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    max-height: 220px;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: var(--sombra-lista);
+}
+
+.lista-cidades li {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 9px 11px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.lista-cidades li small {
+    color: var(--muted);
+    font-size: 11.5px;
+}
+
+.lista-cidades li[aria-selected="true"],
+.lista-cidades li:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.lista-cidades .vazio,
+.lista-cidades .vazio:hover {
+    color: var(--muted);
+    background: none;
+    cursor: default;
+}
+
+/* "Nenhuma cidade encontrada" é só um aviso: não bloqueia o clique no botão embaixo */
+.lista-cidades:has(.vazio) {
+    pointer-events: none;
+}
+
+.aviso-cidade {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.55;
+    animation: aparecer .3s var(--ease);
+}
+
+.aviso-cidade svg {
+    flex: none;
+    margin-top: 2px;
+}
+
+.aviso-cidade[data-tipo="ok"] {
+    background: var(--ok-soft);
+    color: var(--ok);
+}
+
+.aviso-cidade[data-tipo="erro"] {
+    background: var(--danger-soft);
+    color: var(--danger);
 }
 
 
@@ -382,177 +513,312 @@ body {
 
 ==========================================================================================================*/
 
-
 .codigo-seguranca input {
-    height: 65px;
-    padding: 0;
+    width: 100%;
+    height: 62px;
+    padding: 0 14px;
     text-align: center;
-
     font-size: 24px;
     font-weight: 600;
     letter-spacing: 12px;
-
-    border: 2px solid #007BFF;
-    border-radius: 12px;
-
-    color: #7a7a7a;
-    background: white;
-
-    transition: 0.2s;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1.5px solid var(--accent);
+    border-radius: 14px;
+    outline: none;
+    transition: box-shadow .2s;
 }
 
 .codigo-seguranca input:focus {
-    outline: none;
-    border-color: #007BFF;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+    box-shadow: 0 0 0 4px var(--accent-ring);
+}
+
+.codigo-seguranca input.input-erro {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 14%, transparent);
 }
 
 .codigo-seguranca input::placeholder {
     letter-spacing: 12px;
     font-size: 24px;
     font-style: normal;
-    color: #b0b0b0;
+    color: var(--line);
 }
 
-.area-botoes {
-    width: 90%;
+.codigo-ajuda {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--muted);
+    text-align: center;
+}
+
+.codigo-ajuda b {
+    color: var(--ink-soft);
+    font-weight: 600;
+    word-break: break-all;
+}
+
+
+/*========================================================================================================
+
+    Lembrar-me / Esqueceu sua senha
+
+==========================================================================================================*/
+
+.caixa-lembrete-esqueci {
     display: flex;
-    gap: 15px;
-}
-
-.area-botoes button {
-    flex: 1;
-}
-
-.btn-voltar {
-    display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    background: white !important;
-    color: #007BFF !important;
-    border: 2px solid #007BFF !important;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: -6px;
 }
 
-.conteudo-voltar {
-    display: flex;
+.caixa-lembrete {
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
     gap: 8px;
-}
-
-
-#btnVoltarEtapa:hover .seta-voltar {
-    transform: translateX(-3px);
-}
-
-.link-reenviar {
-    margin-top: 8px;
     font-size: 14px;
     font-weight: 600;
-    color: #007BFF;
-    text-decoration: none;
-    align-self: flex-end;
+    color: var(--ink-soft);
+    cursor: pointer;
+    user-select: none;
 }
 
-.link-reenviar:hover {
+.caixa-lembrete input {
+    width: 17px;
+    height: 17px;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.link {
+    padding: 0;
+    border: 0;
+    background: none;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.link:hover {
     text-decoration: underline;
     text-decoration-thickness: 1.2px;
     text-underline-offset: 4px;
 }
 
-.seta-btn {
-    display: inline-block;
-    font-size: 15px;
-    font-weight: 500;
-    transition: transform 180ms ease;
+
+/*========================================================================================================
+
+    Mensagem geral (erro / sucesso): caixa suave com ícone, no fluxo do formulário
+
+==========================================================================================================*/
+
+.mensagem {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+    padding: 11px 13px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    animation: aparecer .3s var(--ease);
 }
 
-#btnEntrar:hover .seta-btn {
+.mensagem svg {
+    flex: none;
+    margin-top: 1px;
+}
+
+.mensagem[data-tipo="erro"] {
+    color: var(--danger);
+    background: var(--danger-soft);
+}
+
+.mensagem[data-tipo="sucesso"] {
+    color: var(--ok);
+    background: var(--ok-soft);
+}
+
+@keyframes aparecer {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+}
+
+
+/*========================================================================================================
+
+    Botões
+
+==========================================================================================================*/
+
+.area-botoes {
+    display: flex;
+    gap: 12px;
+    margin-top: 2px;
+}
+
+.btn-principal {
+    flex: 1;
+    height: 48px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    border-radius: 12px;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    font-size: 15px;
+    user-select: none;
+    box-shadow: 0 8px 18px -8px color-mix(in srgb, var(--accent) 65%, transparent);
+    transition: background-color .2s, transform .2s var(--ease);
+}
+
+.btn-principal:hover:not(:disabled) {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+}
+
+.btn-principal:disabled {
+    opacity: .85;
+    cursor: progress;
+}
+
+.btn-principal .seta {
+    transition: transform .18s ease;
+}
+
+.btn-principal:hover .seta {
     transform: translateX(3px);
 }
 
-.seta-voltar {
-    display: block;
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-    margin: 0;
-    transition: transform 180ms ease;
+.btn-voltar {
+    flex: 0 0 auto;
+    height: 48px;
+    padding: 0 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--accent);
+    font-weight: 600;
+    user-select: none;
+    transition: background-color .2s;
 }
 
-#btnVoltarEtapa:hover .seta-voltar {
+.btn-voltar:hover {
+    background: var(--accent-soft);
+}
+
+.btn-voltar svg {
+    transition: transform .18s ease;
+}
+
+.btn-voltar:hover svg {
     transform: translateX(-3px);
 }
 
-.icone-voltar-login {
-    transition: transform 180ms ease;
+.girando {
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    border: 2.5px solid rgba(255, 255, 255, .35);
+    border-top-color: #fff;
+    animation: girar .7s linear infinite;
 }
 
-.caixa-criar-conta:hover .icone-voltar-login {
+@keyframes girar {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.caixa-ou {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin: 22px 0;
+    font-size: 14px;
+    color: var(--muted);
+    user-select: none;
+}
+
+.caixa-ou::before,
+.caixa-ou::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+}
+
+.caixa-criar-conta {
+    width: 100%;
+    height: 48px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--accent);
+    font-weight: 600;
+    user-select: none;
+    transition: background-color .2s;
+}
+
+.caixa-criar-conta:hover {
+    background: var(--accent-soft);
+}
+
+.caixa-ou[hidden] + .caixa-criar-conta {
+    margin-top: 14px;
+}
+
+.caixa-criar-conta svg {
+    transition: transform .18s ease;
+}
+
+.caixa-criar-conta:hover .icone-voltar {
     transform: translateX(-3px);
 }
 
 
 /*========================================================================================================
 
-    Animações 
+    Animações de troca de tela
 
 ==========================================================================================================*/
 
-
-.transicao-saida {
+.caixa-login.animacao-saida {
     opacity: 0;
-    transform: translateY(-15px);
-    transition: all 0.25s ease;
+    transform: translateX(-24px) scale(.98);
+    transition: opacity .26s ease, transform .26s ease;
 }
 
-.transicao-entrada {
+.caixa-login.animacao-entrada {
     opacity: 0;
-    transform: translateY(15px);
+    transform: translateX(24px) scale(.98);
 }
 
-.transicao-entrada.ativa {
+.caixa-login.animacao-entrada.ativa {
     opacity: 1;
-    transform: translateY(0);
-    transition: all 0.25s ease;
+    transform: none;
+    transition: opacity .3s var(--ease), transform .3s var(--ease);
 }
 
-.animacao-saida {
-    opacity: 0;
-    transform: translateX(-30px) scale(0.97);
-    transition:
-        opacity 0.30s ease,
-        transform 0.30s ease;
-}
-
-.animacao-entrada {
-    opacity: 0;
-    transform: translateX(30px) scale(0.97);
-}
-
-.animacao-entrada.ativa {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-    transition:
-        opacity 0.30s ease,
-        transform 0.30s ease;
-}
-
-@keyframes aparecer {
-    from {
-        opacity: 0;
-        transform: translateY(10px) scale(0.97);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-.animar {
-    animation: aparecer 0.3s ease;
-}
 
 /*========================================================================================================
 
@@ -560,85 +826,69 @@ body {
 
 ==========================================================================================================*/
 
-
-@media (max-width: 992px) {
-    .container-login>img {
-        display: none;
-    }
-
-
-
-    .area-login {
-        width: 100%;
-        padding: 30px;
-    }
-
-    .caixa-login {
-        width: 100%;
-        max-width: 500px;
-    }
-
-    .caixa-ou,
-    .caixa-criar-conta,
-    .area-botoes {
-        width: 100%;
-        max-width: 500px;
-    }
-
-    .linha-progresso {
-        width: 100%;
-        max-width: 400px;
-    }
-}
-
-
-@media (max-width: 576px) {
-    .area-login {
-        padding: 20px 15px;
+@media (min-width: 1600px) {
+    .miolo {
+        width: 500px;
     }
 
     .caixa-titulo h1 {
-        font-size: 24px;
+        font-size: 34px;
+    }
+}
+
+@media (min-width: 2200px) {
+    body {
+        font-size: 16px;
     }
 
-    .caixa-titulo span {
+    .miolo {
+        width: 540px;
+    }
+}
+
+@media (max-width: 992px) {
+    .ilustracao {
+        display: none;
+    }
+
+    .area-login {
+        width: 100%;
+        padding: 32px 16px 40px;
+        justify-content: flex-start;
+    }
+
+    .logo-mobile {
+        display: flex;
+    }
+}
+
+@media (max-width: 576px) {
+    .caixa-titulo h1 {
+        font-size: 25px;
+    }
+
+    .caixa-titulo > span {
         font-size: 14px;
     }
 
-    .caixa-lembrete-esqueci {
-        flex-direction: column;
-        gap: 15px;
-        margin-bottom: -50px;
-    }
-
-
-    .area-botoes {
-        flex-direction: column;
+    .linha-dupla {
+        grid-template-columns: 96px minmax(0, 1fr);
         gap: 10px;
     }
 
-    .area-botoes button {
-        width: 100%;
-    }
-
-    .nomes-etapas span {
-        font-size: 11px;
-    }
-
-    .codigo-seguranca input {
+    .codigo-seguranca input,
+    .codigo-seguranca input::placeholder {
         font-size: 20px;
         letter-spacing: 8px;
     }
+}
 
-    .caixa-lembrete-esqueci {
-        flex-direction: row;
-        justify-content: space-between;
-        margin-bottom: -30px;
-    }
-
-
-    .caixa-lembrete label,
-    .caixa-lembrete-esqueci a {
-        font-size: 14px;
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
     }
 }

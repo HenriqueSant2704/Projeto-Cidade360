@@ -1,6 +1,16 @@
 const ProximasOcorrenciasModel =
     require("../models/proximasOcorrenciasModel");
 
+const {
+    CIDADES_ATENDIDAS
+} =
+    require("../config/cidadeAtendida");
+
+const {
+    cidadeDoPonto
+} =
+    require("../utils/cidadeAtendida");
+
 
 /*========================================================================================================
 
@@ -33,12 +43,12 @@ const ProximasOcorrenciasController = {
         res
     ) {
         try {
-            const latitude =
+            let latitude =
                 numero(
                     req.query.latitude
                 );
 
-            const longitude =
+            let longitude =
                 numero(
                     req.query.longitude
                 );
@@ -58,6 +68,19 @@ const ProximasOcorrenciasController = {
                         mensagem:
                             "Latitude ou longitude inválida."
                     });
+            }
+
+            // Quem está fora da cidade (viajando, GPS impreciso) vê as
+            // ocorrências a partir do centro da cidade atendida.
+            const foraDaCidade =
+                !cidadeDoPonto(
+                    latitude,
+                    longitude
+                );
+
+            if (foraDaCidade) {
+                [latitude, longitude] =
+                    CIDADES_ATENDIDAS[0].centro;
             }
 
             const raioSolicitado =
@@ -107,6 +130,8 @@ const ProximasOcorrenciasController = {
                     sucesso: true,
                     raio_km:
                         raioKm,
+                    fora_da_cidade:
+                        foraDaCidade,
                     total:
                         ocorrencias.length,
                     ocorrencias

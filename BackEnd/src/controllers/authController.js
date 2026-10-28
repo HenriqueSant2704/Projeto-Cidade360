@@ -14,6 +14,12 @@ const {
     buscarCodigoValido
 } = require("../models/recuperacaoSenhaModel");
 
+const {
+    MENSAGEM_CIDADE_INDISPONIVEL,
+    normalizarUf,
+    cidadeEhAtendida
+} = require("../utils/cidadeAtendida");
+
 
 /*========================================================================================================
 
@@ -23,6 +29,105 @@ CONFIGURAÇÕES
 
 const BCRYPT_ROUNDS_SENHA = 12;
 const BCRYPT_ROUNDS_CODIGO = 10;
+
+
+/*========================================================================================================
+
+INSERIR CIDADÃO (com cidade e estado)
+
+As colunas cidade/uf chegam com a migração 010. Enquanto ela não roda no banco,
+o cadastro continua funcionando sem gravar a cidade (a regra da cidade já foi
+conferida antes de chegar aqui).
+
+=========================================================================================================*/
+
+async function inserirUsuarioCidadao(conexao, dados) {
+
+    try {
+
+        const [resultado] =
+            await conexao.execute(
+                `
+                INSERT INTO usuarios
+                (
+                    nome,
+                    email,
+                    telefone,
+                    cpf,
+                    senha_hash,
+                    cidade,
+                    uf,
+                    tipo_usuario
+                )
+                VALUES
+                (
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    'CIDADAO'
+                )
+                `,
+                [
+                    dados.nome,
+                    dados.email,
+                    dados.telefone,
+                    dados.cpf,
+                    dados.senhaHash,
+                    dados.cidade,
+                    dados.uf
+                ]
+            );
+
+        return resultado;
+
+    } catch (error) {
+
+        if (error.code !== "ER_BAD_FIELD_ERROR") {
+            throw error;
+        }
+
+        console.warn(
+            "Colunas cidade/uf ainda não existem em usuarios (rode a migração 010). Cadastrando sem a cidade."
+        );
+
+        const [resultado] =
+            await conexao.execute(
+                `
+                INSERT INTO usuarios
+                (
+                    nome,
+                    email,
+                    telefone,
+                    cpf,
+                    senha_hash,
+                    tipo_usuario
+                )
+                VALUES
+                (
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    'CIDADAO'
+                )
+                `,
+                [
+                    dados.nome,
+                    dados.email,
+                    dados.telefone,
+                    dados.cpf,
+                    dados.senhaHash
+                ]
+            );
+
+        return resultado;
+    }
+}
 
 
 /*========================================================================================================
@@ -691,6 +796,10 @@ const AuthController = {
 
                 senha,
 
+                cidade,
+
+                uf,
+
                 email_verificacao_token
 
             } =
@@ -731,6 +840,17 @@ const AuthController = {
                     email_verificacao_token || ""
                 )
                     .trim();
+
+
+            const ufInformada =
+                normalizarUf(uf);
+
+
+            const cidadeInformada =
+                String(cidade || "")
+                    .replace(/\s+/g, " ")
+                    .trim()
+                    .slice(0, 120);
 
 
             /*============================================================================================
@@ -852,6 +972,51 @@ const AuthController = {
 
                         mensagem:
                             "Digite um telefone válido com DDD."
+                    });
+            }
+
+
+            /*============================================================================================
+
+            CIDADE E ESTADO
+
+            Só cria conta quem escolhe uma cidade atendida pelo Cidade360
+            (hoje, somente Jaborandi-SP). Regra em src/config/cidadeAtendida.js.
+
+            ============================================================================================*/
+
+            if (
+                !cidadeInformada ||
+                !/^[A-Z]{2}$/.test(ufInformada)
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+                        sucesso: false,
+                        mensagem:
+                            "Informe o estado e a cidade onde você mora."
+                    });
+            }
+
+
+            const cidadeAtendida =
+                cidadeEhAtendida(
+                    cidadeInformada,
+                    ufInformada
+                );
+
+
+            if (!cidadeAtendida) {
+
+                return res
+                    .status(400)
+                    .json({
+                        sucesso: false,
+                        codigo:
+                            "CIDADE_INDISPONIVEL",
+                        mensagem:
+                            MENSAGEM_CIDADE_INDISPONIVEL
                     });
             }
 
@@ -1086,48 +1251,30 @@ const AuthController = {
             ============================================================================================*/
 
 
-            const [
-                resultado
-            ] =
-                await conexao.execute(
-                    `
-                    INSERT INTO usuarios
-                    (
-                        nome,
+            const resultado =
+                await inserirUsuarioCidadao(
+                    conexao,
+                    {
+                        nome:
+                            nomeNormalizado,
 
-                        email,
+                        email:
+                            emailNormalizado,
 
-                        telefone,
+                        telefone:
+                            telefoneNumerico,
 
-                        cpf,
+                        cpf:
+                            cpfNumerico,
 
-                        senha_hash,
+                        senhaHash,
 
-                        tipo_usuario
-                    )
+                        cidade:
+                            cidadeAtendida.nome,
 
-                    VALUES
-                    (
-                        ?,
-                        ?,
-                        ?,
-                        ?,
-                        ?,
-                        'CIDADAO'
-                    )
-                    `,
-                    [
-
-                        nomeNormalizado,
-
-                        emailNormalizado,
-
-                        telefoneNumerico,
-
-                        cpfNumerico,
-
-                        senhaHash
-                    ]
+                        uf:
+                            cidadeAtendida.uf
+                    }
                 );
 
 
