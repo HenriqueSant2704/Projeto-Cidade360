@@ -361,7 +361,18 @@ async function carregarUsuarioPainel() {
  * O perfil é confirmado pelo backend antes de escolher as consultas.
  */
 function ehAdministradorPainel() {
-    return String(estadoPainel.usuario?.tipo_usuario || "").trim().toUpperCase() === "ADMIN";
+    // Administrador sem a permissão "Ocorrências" usa o painel como cidadão
+    const permissoes = estadoPainel.usuario?.permissoes;
+
+    return String(estadoPainel.usuario?.tipo_usuario || "").trim().toUpperCase() === "ADMIN"
+        && (!permissoes || permissoes.principal === true || permissoes.ocorrencias === true);
+}
+
+// Botões "Publicar aviso" só para quem tem a permissão "Avisos"
+function podePublicarAvisoPainel() {
+    const permissoes = estadoPainel.usuario?.permissoes;
+
+    return !permissoes || permissoes.principal === true || permissoes.avisos === true;
 }
 
 
@@ -462,7 +473,7 @@ function renderizarBoasVindasPainel() {
                 <p>${escaparHtmlPainel(texto)}</p>
                 <div class="acoes-hero">
                     <a class="btn-claro" href="${linkOcorrenciasPainel({ status: "recebido" })}">${iconePainel("lupa", 18)}Analisar recebidas</a>
-                    <a class="btn-vidro" href="${PAGINA_AVISOS_PAINEL}">${iconePainel("megafone", 18)}Publicar aviso</a>
+                    ${podePublicarAvisoPainel() ? `<a class="btn-vidro" href="${PAGINA_AVISOS_PAINEL}">${iconePainel("megafone", 18)}Publicar aviso</a>` : ""}
                 </div>
             </div>
 
@@ -802,7 +813,7 @@ function renderizarAvisosPainel(erro) {
             <li class="vazio-mini vazio-avisos">
                 <span class="ico-vazio">${iconePainel("megafone", 22)}</span>
                 <strong>Nenhum aviso publicado ainda</strong>
-                <span>${ehAdministradorPainel()
+                <span>${ehAdministradorPainel() && podePublicarAvisoPainel()
                     ? "Use \"Publicar aviso\" para comunicar a população."
                     : "Quando a prefeitura publicar um comunicado, ele aparece aqui."}</span>
             </li>
@@ -867,7 +878,9 @@ function renderizarAcoesRapidasPainel() {
     const acoes = ehAdministradorPainel()
         ? [
             { cor: "laranja", icone: "lupa", titulo: "Analisar recebidas", sub: `${formatarNumeroPainel(resumo.pendentes)} aguardando`, href: linkOcorrenciasPainel({ status: "recebido" }) },
-            { cor: "", icone: "megafone", titulo: "Publicar aviso", sub: "Comunicar a população", href: PAGINA_AVISOS_PAINEL },
+            podePublicarAvisoPainel()
+                ? { cor: "", icone: "megafone", titulo: "Publicar aviso", sub: "Comunicar a população", href: PAGINA_AVISOS_PAINEL }
+                : { cor: "", icone: "megafone", titulo: "Ver avisos", sub: "Comunicados da prefeitura", href: PAGINA_AVISOS_PAINEL },
             { cor: "verde", icone: "lista", titulo: "Todas as ocorrências", sub: `${formatarNumeroPainel(total)} no total`, href: PAGINA_OCORRENCIAS_PAINEL },
             { cor: "roxo", icone: "calendario", titulo: "Ver eventos", sub: "Em breve", breve: "Eventos" }
         ]
@@ -1095,10 +1108,6 @@ function renderizarLegendaPainel() {
 
     const chaves = ["recebido", "em_analise", "em_andamento", "resolvido"];
 
-    if (ehAdministradorPainel()) {
-        chaves.push("cancelado");
-    }
-
     legendaPainel.innerHTML =
         chaves.map((chave) => {
             const nome = chave === "resolvido"
@@ -1235,9 +1244,10 @@ function renderizarLocalizacaoUsuarioPainel() {
 
 /*========================================================================================================
 
-RESOLVIDAS NO MAPA
+RESOLVIDAS E CANCELADAS NO MAPA
 
 Ocorrência resolvida fica no mapa por DIAS_RESOLVIDA_NO_MAPA depois da resolução, para não poluir.
+Ocorrência cancelada nunca aparece no mapa.
 Ela continua no sistema: só sai do mapa. A data vem de "data_resolucao" (ocorrências próximas)
 ou, nas minhas ocorrências, de "data_atualizacao" (a última mudança, que é a própria resolução).
 
@@ -1257,6 +1267,11 @@ function msDesdeResolucaoPainel(ocorrencia) {
 
 
 function saiuDoMapaPainel(ocorrencia) {
+    // Cancelada não existe para a cidade: não aparece no mapa (nem para quem registrou, nem para o admin).
+    if (chaveStatusPainel(ocorrencia.status) === "cancelado") {
+        return true;
+    }
+
     const ms = msDesdeResolucaoPainel(ocorrencia);
 
     return ms !== null && ms > DIAS_RESOLVIDA_NO_MAPA * UM_DIA_MS;

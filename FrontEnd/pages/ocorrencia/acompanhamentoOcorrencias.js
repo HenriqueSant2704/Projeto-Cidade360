@@ -390,10 +390,14 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         return "Localização não informada";
     }
 
+    // Administrador sem a permissão "Ocorrências" vê só as dele, como cidadão
     function ehAdministrador() {
+        const permissoes = estado.usuario?.permissoes;
+
         return String(estado.usuario?.tipo_usuario || "")
             .trim()
-            .toUpperCase() === "ADMIN";
+            .toUpperCase() === "ADMIN"
+            && (!permissoes || permissoes.principal === true || permissoes.ocorrencias === true);
     }
 
 

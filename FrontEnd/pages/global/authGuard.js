@@ -227,7 +227,13 @@ function salvarUsuarioAtual(usuario) {
                 usuario.email,
 
             tipo_usuario:
-                usuario.tipo_usuario
+                usuario.tipo_usuario,
+
+            // Administrador: Ocorrências, Avisos, Equipe e se é o principal.
+            // Sem isso, as páginas que leem daqui achariam que ele tem acesso total.
+            ...(usuario.permissoes
+                ? { permissoes: usuario.permissoes }
+                : {})
         })
     );
 

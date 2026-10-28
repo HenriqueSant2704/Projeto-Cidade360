@@ -187,8 +187,19 @@ API pública (a pessoa ainda não tem login; o token do link é a autorização)
         }
     }
 
+    const NOMES_PERMISSOES = {
+        ocorrencias: "Ocorrências",
+        avisos: "Avisos",
+        equipe: "Equipe"
+    };
+
     function mostrarFormulario(convite) {
         const primeiroNome = String(convite.nome || "").trim().split(/\s+/)[0];
+
+        const permissoes = (convite.permissoes || [])
+            .map((chave) => NOMES_PERMISSOES[chave])
+            .filter(Boolean)
+            .join(", ");
 
         elementos.titulo.textContent = `Olá, ${primeiroNome}!`;
         elementos.subtitulo.textContent = convite.convidado_por
@@ -199,6 +210,7 @@ API pública (a pessoa ainda não tem login; o token do link é a autorização)
             <div class="dados-convite">
                 <div><span>Nome</span><b>${escaparHtml(convite.nome)}</b></div>
                 <div><span>E-mail</span><b>${escaparHtml(convite.email)}</b></div>
+                ${permissoes ? `<div><span>Permissões</span><b>${escaparHtml(permissoes)}</b></div>` : ""}
             </div>
 
             <div class="linha-convite">

@@ -852,7 +852,9 @@ if (
         onda: svg('<path d="M2 12c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/>', 16),
         bolinha: svg('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>', 16),
         cadeado: svg('<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>', 13),
-        seta: svg('<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>', 16)
+        seta: svg('<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>', 16),
+        coroa: svg('<path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/>'),
+        equipe: svg('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>')
     };
 
     const VISUAL_NOTIFICACAO = {
@@ -862,8 +864,19 @@ if (
         resolvido: { classe: "tom-roxo", icone: ICONES.confirmado },
         cancelado: { classe: "tom-vermelho", icone: ICONES.cancelado },
         geral: { classe: "tom-indigo", icone: ICONES.megafone },
-        titulo: { classe: "tom-amarelo", icone: ICONES.medalha }
+        titulo: { classe: "tom-amarelo", icone: ICONES.medalha },
+        // Equipe de administradores
+        admin_promovido: { classe: "tom-verde", icone: ICONES.escudo },
+        admin_removido: { classe: "tom-vermelho", icone: ICONES.usuario },
+        admin_permissoes: { classe: "tom-azul", icone: ICONES.ajustes },
+        admin_principal: { classe: "tom-amarelo", icone: ICONES.coroa },
+        admin_equipe: { classe: "tom-indigo", icone: ICONES.equipe }
     };
+
+    // Avisos da equipe de administradores (ficam na aba "Gerais").
+    // Os da própria pessoa mudam o acesso dela: o menu é atualizado na hora.
+    const TIPOS_ADMIN = ["admin_promovido", "admin_removido", "admin_permissoes", "admin_principal", "admin_equipe"];
+    const TIPOS_MUDAM_MEU_ACESSO = ["admin_promovido", "admin_removido", "admin_permissoes", "admin_principal"];
 
 
     /*---------------------------------------------------------------
@@ -889,7 +902,9 @@ if (
         // Cidadão: { saldo, titulo } vindo de /api/pontos/resumo
         resumoPontos: null,
         resumoPontosEm: 0,
-        carregandoResumoPontos: false
+        carregandoResumoPontos: false,
+        // Notificações de mudança de acesso que já fizeram o usuário ser recarregado
+        acessoConferido: new Set()
     };
 
 
@@ -950,6 +965,15 @@ if (
         return String(estado.usuario?.tipo_usuario || "").trim().toUpperCase() === "ADMIN";
     }
 
+    // Permissões do administrador: "ocorrencias", "avisos" ou "equipe" (o principal tem todas).
+    // Sem a informação (login antigo ou banco sem a migração 012), vale o acesso de antes;
+    // o servidor confere de qualquer jeito.
+    function temPermissao(permissao) {
+        const permissoes = estado.usuario?.permissoes;
+
+        return ehAdministrador() && (!permissoes || permissoes.principal === true || permissoes[permissao] === true);
+    }
+
     function tempoDe(valor) {
         const data = new Date(valor);
         return Number.isNaN(data.getTime()) ? 0 : data.getTime();
@@ -987,7 +1011,11 @@ if (
     }
 
     function nomeTipoUsuario() {
-        return ehAdministrador() ? "Administrador" : "Cidadão";
+        if (!ehAdministrador()) {
+            return "Cidadão";
+        }
+
+        return estado.usuario?.permissoes?.principal ? "Administrador principal" : "Administrador";
     }
 
 
@@ -1067,11 +1095,20 @@ if (
       - Cidadão: cada mudança na ocorrência dele, com os pontos ganhos.
       - Admin: cada ocorrência nova registrada.
       - Todos: cada aviso novo publicado pela prefeitura.
+      - Equipe de administradores: quem foi promovido, removido ou teve
+        as permissões mudadas, e quem cuida da equipe (migração 012).
     ---------------------------------------------------------------*/
 
     function linkDaNotificacao(notificacao) {
         if (notificacao.tipo === "titulo_novo") {
             return PAGINA_PONTOS_TOPO;
+        }
+
+        // Quem cuida da equipe vai para a página Administradores; os outros só leem.
+        if (TIPOS_ADMIN.includes(notificacao.tipo)) {
+            return notificacao.tipo !== "admin_removido" && temPermissao("equipe")
+                ? PAGINA_ADMINISTRADORES_TOPO
+                : null;
         }
 
         if (notificacao.aviso_id) {
@@ -1088,6 +1125,7 @@ if (
     function visualDoServidor(notificacao) {
         if (notificacao.tipo === "titulo_novo") return "titulo";
         if (notificacao.tipo === "aviso_novo") return "geral";
+        if (TIPOS_ADMIN.includes(notificacao.tipo)) return notificacao.tipo;
 
         return VISUAL_NOTIFICACAO[notificacao.status] ? notificacao.status : "recebido";
     }
@@ -1127,7 +1165,9 @@ if (
     function montarNotificacoesDoServidor() {
         estado.notificacoes = estado.doServidor.map((notificacao) => ({
             id: `srv-${notificacao.id}`,
-            tipo: notificacao.tipo === "aviso_novo" || notificacao.tipo === "titulo_novo" ? "geral" : "ocorrencia",
+            tipo: notificacao.tipo === "aviso_novo" || notificacao.tipo === "titulo_novo" || TIPOS_ADMIN.includes(notificacao.tipo)
+                ? "geral"
+                : "ocorrencia",
             visual: visualDoServidor(notificacao),
             titulo: notificacao.titulo,
             texto: notificacao.texto,
@@ -1173,7 +1213,36 @@ if (
             lida: notificacao.lida || lidasAgora.has(`srv-${notificacao.id}`)
         }));
 
+        conferirMudancaDeAcesso();
+
         return true;
+    }
+
+    /*
+      Alguém promoveu, removeu ou mudou as permissões desta pessoa com a página aberta:
+      pede para o authGuard.js buscar o usuário de novo (/api/me). Ele avisa o
+      global.js pelo evento "cidade360:usuario-carregado" e o menu se ajusta.
+      Cada notificação só dispara isso uma vez por página.
+    */
+    function conferirMudancaDeAcesso() {
+        const novas = estado.doServidor.filter((notificacao) =>
+            !notificacao.lida &&
+            TIPOS_MUDAM_MEU_ACESSO.includes(notificacao.tipo) &&
+            !estado.acessoConferido.has(notificacao.id)
+        );
+
+        if (!novas.length) {
+            return;
+        }
+
+        const primeiraConferencia = !estado.jaCarregou;
+
+        novas.forEach((notificacao) => estado.acessoConferido.add(notificacao.id));
+
+        // Ao abrir a página o authGuard.js acabou de buscar o usuário: não precisa repetir.
+        if (!primeiraConferencia && typeof window.verificarAcesso === "function") {
+            window.verificarAcesso();
+        }
     }
 
 
@@ -1194,7 +1263,7 @@ if (
         }
 
         const lidas = lerLidas();
-        const admin = ehAdministrador();
+        const admin = temPermissao("ocorrencias");
 
         const deOcorrencias = estado.ocorrencias
             .map((ocorrencia) => {
@@ -1277,7 +1346,7 @@ if (
                 estado.fonte = "local";
             }
 
-            const base = ehAdministrador()
+            const base = temPermissao("ocorrencias")
                 ? `${API_TOPO}/ocorrencias/admin`
                 : `${API_TOPO}/ocorrencias`;
 
@@ -1459,7 +1528,7 @@ if (
             <div class="corpo-notificacoes">${conteudo}</div>
 
             <a class="rodape-painel-topo" href="${PAGINA_OCORRENCIAS_TOPO}">
-                ${ehAdministrador() ? "Ver todas as ocorrências" : "Ver minhas ocorrências"}
+                ${temPermissao("ocorrencias") ? "Ver todas as ocorrências" : "Ver minhas ocorrências"}
                 ${ICONES.seta}
             </a>
         `;
@@ -1558,14 +1627,16 @@ if (
                 </div>
 
                 ${admin ? `
+                ${temPermissao("ocorrencias") ? `
                 <a class="opcao-topo" role="menuitem" href="${PAGINA_OCORRENCIAS_TOPO}">
                     ${ICONES.prancheta}
                     <span>Todas as ocorrências</span>
-                </a>
+                </a>` : ""}
+                ${temPermissao("equipe") ? `
                 <a class="opcao-topo" role="menuitem" href="${PAGINA_ADMINISTRADORES_TOPO}">
                     ${ICONES.escudo}
                     <span>Administradores</span>
-                </a>` : `
+                </a>` : ""}` : `
                 <a class="opcao-topo" role="menuitem" href="${PAGINA_PONTOS_TOPO}">
                     ${ICONES.medalha}
                     <span>Meus pontos</span>

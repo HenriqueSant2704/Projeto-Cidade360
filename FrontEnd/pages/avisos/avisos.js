@@ -1092,7 +1092,11 @@ document.addEventListener("pointerout", (e) => {
 ---------------------------------------------------------------*/
 
 function aplicarUsuario(usuario) {
-    const perfil = String(usuario?.tipo_usuario || "").trim().toUpperCase() === "ADMIN" ? "admin" : "cidadao";
+    // Administrador sem a permissão "Avisos" vê a página como cidadão
+    const permissoes = usuario?.permissoes;
+    const podePublicar = String(usuario?.tipo_usuario || "").trim().toUpperCase() === "ADMIN"
+        && (!permissoes || permissoes.principal === true || permissoes.avisos === true);
+    const perfil = podePublicar ? "admin" : "cidadao";
     const mudou = perfil !== est.perfil;
     est.perfil = perfil;
 

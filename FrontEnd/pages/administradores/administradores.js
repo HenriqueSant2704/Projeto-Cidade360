@@ -2,13 +2,17 @@
 
  ADMINISTRADORES
 
- Página só do administrador (menu da conta > Administradores).
- - Lista a equipe (administradores ativos e convites pendentes)
- - Adicionar administrador:
+ Página do administrador com a permissão "Equipe" (menu da conta > Administradores).
+ - Lista a equipe (administradores ativos e convites pendentes) com as permissões
+   de cada um: Ocorrências, Avisos e Equipe. O principal tem acesso total.
+ - Adicionar administrador escolhendo as permissões:
      "Já tem conta"       -> busca um cidadão e promove
      "Ainda não tem conta" -> convite por e-mail (a pessoa cria a senha)
- - Remover acesso (a pessoa volta a ser cidadã), reenviar e cancelar convite
- - Histórico de quem deu ou tirou o acesso de quem
+ - Mudar permissões, remover acesso (a pessoa volta a ser cidadã),
+   reenviar e cancelar convite, passar o cargo de principal
+ - Histórico de quem deu, mudou ou tirou o acesso de quem
+
+ Quem pode mexer em quem vem pronto do servidor (pode_gerenciar, pode_dar).
 
  Toda mudança pede a senha de quem está fazendo. As regras valem no
  servidor (BackEnd/src/controllers/administradorController.js); esta
@@ -31,17 +35,28 @@
     ];
 
     const REGRAS = [
-        ["cadeado", "Toda mudança pede a sua senha de novo."],
-        ["escudo", "Ninguém tira o próprio acesso, então o sistema nunca fica sem administrador."],
-        ["voltar", "Remover acesso não apaga a conta: a pessoa volta a ser cidadã."],
-        ["envelope", "A pessoa recebe um e-mail quando ganha ou perde o acesso."]
+        ["coroa", "O administrador principal tem acesso total. Ninguém pode remover ou mudar o acesso dele."],
+        ["equipe", "Quem tem <b>Equipe</b> só mexe em quem não tem Equipe. A permissão Equipe só o principal dá."],
+        ["escudo", "Você só pode dar as permissões que você mesmo tem."],
+        ["cadeado", "Toda mudança pede a sua senha, e ninguém mexe no próprio acesso."],
+        ["voltar", "Remover acesso não apaga a conta: a pessoa volta a ser cidadã."]
+    ];
+
+    // As 3 permissões. Cada uma libera uma parte do sistema (o servidor confere em toda rota).
+    const PERMISSOES = [
+        { chave: "ocorrencias", nome: "Ocorrências", icone: "alerta", descricao: "Ver todas as ocorrências da cidade, mudar o status e cancelar trotes." },
+        { chave: "avisos", nome: "Avisos", icone: "megafone", descricao: "Publicar, editar, fixar e excluir avisos para a população." },
+        { chave: "equipe", nome: "Equipe", icone: "equipe", descricao: "Adicionar administradores, mudar permissões e remover acessos." }
     ];
 
     // Ícones que não existem no icones.js
     const ICONES_EXTRA = {
         escudo: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',
         envelope: '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/>',
-        voltar: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>'
+        voltar: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',
+        coroa: '<path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/>',
+        equipe: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>',
+        passar: '<path d="M4 12h14M13 6l6 6-6 6"/>'
     };
 
     const elementos = {
@@ -99,8 +114,17 @@
         }
     }
 
-    function ehAdministrador() {
-        return String(obterUsuario()?.tipo_usuario || "").trim().toUpperCase() === "ADMIN";
+    // Só quem tem a permissão "Equipe" usa esta página (sem a informação, o servidor decide).
+    function podeAbrirPagina() {
+        const usuario = obterUsuario();
+        const permissoes = usuario?.permissoes;
+
+        return String(usuario?.tipo_usuario || "").trim().toUpperCase() === "ADMIN"
+            && (!permissoes || permissoes.principal === true || permissoes.equipe === true);
+    }
+
+    function nomePermissao(chave) {
+        return PERMISSOES.find((permissao) => permissao.chave === chave)?.nome || chave;
     }
 
     function primeiroNome(nome) {
@@ -122,7 +146,8 @@
         return `${momento.toLocaleDateString("pt-BR")} às ${momento.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
     }
 
-    // Sempre devolve { ok, status, dados }. Sem acesso de administrador: volta para o painel.
+    // Sempre devolve { ok, status, dados }. Sem acesso à página: volta para o painel.
+    // (Um 403 com outro código, como "não pode mexer nessa pessoa", aparece na tela.)
     async function api(caminho, opcoes = {}) {
         const resposta = await fetch(`${API_ADMINS}${caminho}`, {
             method: opcoes.metodo || "GET",
@@ -136,7 +161,7 @@
 
         const dados = await resposta.json().catch(() => null);
 
-        if (resposta.status === 403) {
+        if (resposta.status === 403 && (!dados?.codigo || dados.codigo === "SEM_PERMISSAO")) {
             window.location.replace("/");
         }
 
@@ -186,7 +211,7 @@
                 throw new Error(dados.mensagem);
             }
 
-            estado.dados = dados;
+            estado.dados = adaptarResposta(dados);
             renderizarTudo();
 
         } catch (error) {
@@ -203,13 +228,55 @@
         }
     }
 
-    function renderizarTudo() {
-        elementos.btnAdicionar.disabled = false;
+    /*
+      O servidor manda as permissões de cada administrador como objeto
+      ({ principal, ocorrencias, avisos, equipe }) e não manda se dá para mexer
+      em cada convite. A tela trabalha com lista de chaves e principal no topo.
+    */
+    function listaDePermissoes(permissoes) {
+        if (Array.isArray(permissoes)) {
+            return permissoes;
+        }
 
-        elementos.avisoMigracao.hidden = !estado.dados.migracao_pendente;
+        return PERMISSOES
+            .map((permissao) => permissao.chave)
+            .filter((chave) => permissoes?.[chave] === true);
+    }
+
+    function adaptarResposta(dados) {
+        const eu = dados.eu || {};
+        const tenhoEquipe = !dados.migracao_pendente && (eu.principal || (eu.pode_dar || []).length > 0);
+
+        return {
+            ...dados,
+            administradores: (dados.administradores || []).map((admin) => ({
+                ...admin,
+                principal: Boolean(admin.principal ?? admin.permissoes?.principal),
+                permissoes: listaDePermissoes(admin.permissoes)
+            })),
+            // Convite que dá "Equipe": só o principal reenvia ou cancela (o servidor confere)
+            convites: (dados.convites || []).map((convite) => {
+                const permissoes = listaDePermissoes(convite.permissoes);
+
+                return {
+                    ...convite,
+                    permissoes,
+                    pode_gerenciar: convite.pode_gerenciar
+                        ?? (tenhoEquipe && (eu.principal || !permissoes.includes("equipe")))
+                };
+            })
+        };
+    }
+
+    function renderizarTudo() {
+        const pendente = estado.dados.migracao_pendente;
+
+        elementos.btnAdicionar.disabled = pendente || !(estado.dados.eu?.pode_dar || []).length;
+
+        elementos.avisoMigracao.hidden = !pendente;
         elementos.avisoMigracao.innerHTML = `
             ${C.icone("alerta", 18)}
-            <span>O histórico e os convites por e-mail ainda estão sendo preparados no banco de dados. Por enquanto, dá para promover cidadãos e remover acessos.</span>
+            <span>As permissões, o histórico e os convites ainda estão sendo preparados no banco de dados. Por enquanto, a equipe fica só para consulta.</span>
         `;
 
         renderizarFiltros();
@@ -259,6 +326,48 @@
         `).join("");
     }
 
+    function chipsPermissoes(item) {
+        if (item.principal) {
+            return `<span class="chips-permissao"><span class="chip-permissao total">${icone("coroa", 13)}Acesso total</span></span>`;
+        }
+
+        if (!item.permissoes?.length) {
+            return estado.dados.migracao_pendente ? "" : '<span class="chips-permissao"><span class="chip-permissao vazio">Sem permissões</span></span>';
+        }
+
+        return `<span class="chips-permissao">${item.permissoes.map((chave) => {
+            const permissao = PERMISSOES.find((p) => p.chave === chave);
+            return `<span class="chip-permissao">${icone(permissao.icone, 13)}${permissao.nome}</span>`;
+        }).join("")}</span>`;
+    }
+
+    function travaHtml(texto) {
+        return `<small class="nota-admin trava-admin">${C.icone("cadeado", 14)}<span>${texto}</span></small>`;
+    }
+
+    function acoesAdministrador(admin) {
+        if (estado.dados.migracao_pendente) {
+            return "";
+        }
+
+        if (admin.voce) {
+            return admin.principal
+                ? `<button type="button" class="botao-linha" data-acao="passar">${icone("passar", 15)}Passar o cargo</button>`
+                : '<small class="nota-admin">Peça ao administrador principal se precisar sair.</small>';
+        }
+
+        if (!admin.pode_gerenciar) {
+            return travaHtml(admin.principal
+                ? "Administrador principal: ninguém pode remover nem mudar"
+                : "Tem a permissão Equipe: só o principal pode mexer");
+        }
+
+        return `
+            <button type="button" class="botao-linha" data-acao="permissoes" data-id="${admin.id}">Permissões</button>
+            <button type="button" class="botao-linha perigo" data-acao="remover" data-id="${admin.id}">Remover acesso</button>
+        `;
+    }
+
     function linhaAdministrador(admin) {
         const origem = admin.origem === "promovido"
             ? "Promovido de cidadão"
@@ -277,18 +386,15 @@
                 <span class="avatar-admin" aria-hidden="true">${escaparHtml(C.iniciais(admin.nome))}</span>
 
                 <div class="dados-admin">
-                    <strong>${escaparHtml(admin.nome)} ${admin.voce ? '<em class="selo-voce">Você</em>' : ""}</strong>
+                    <strong>${escaparHtml(admin.nome)} ${admin.principal ? `<em class="selo-principal">${icone("coroa", 13)}Principal</em>` : ""} ${admin.voce ? '<em class="selo-voce">Você</em>' : ""}</strong>
                     <span>${escaparHtml(admin.email)}</span>
                     <small>${detalhes}</small>
+                    ${chipsPermissoes(admin)}
                 </div>
 
                 <span class="situacao-admin ativo">Ativo</span>
 
-                <div class="acoes-admin">
-                    ${admin.voce
-                        ? '<small class="nota-admin">Peça para outro administrador se precisar sair.</small>'
-                        : `<button type="button" class="botao-linha perigo" data-acao="remover" data-id="${admin.id}">Remover acesso</button>`}
-                </div>
+                <div class="acoes-admin">${acoesAdministrador(admin)}</div>
             </li>
         `;
     }
@@ -308,13 +414,15 @@
                     <strong>${escaparHtml(convite.nome)}</strong>
                     <span>${escaparHtml(convite.email)}</span>
                     <small>${detalhes}</small>
+                    ${chipsPermissoes(convite)}
                 </div>
 
                 <span class="situacao-admin ${convite.expirado ? "vencido" : "pendente"}">${convite.expirado ? "Convite vencido" : "Convite pendente"}</span>
 
-                <div class="acoes-admin">
+                <div class="acoes-admin">${convite.pode_gerenciar ? `
                     <button type="button" class="botao-linha" data-acao="reenviar" data-id="${convite.id}">Reenviar</button>
-                    <button type="button" class="botao-linha perigo" data-acao="cancelar" data-id="${convite.id}">Cancelar convite</button>
+                    <button type="button" class="botao-linha perigo" data-acao="cancelar" data-id="${convite.id}">Cancelar convite</button>`
+                    : travaHtml("Convite com a permissão Equipe: só o principal pode mexer")}
                 </div>
             </li>
         `;
@@ -355,10 +463,14 @@
         const quem = escaparHtml(item.nome_feito_por || "Um administrador");
         const pessoa = escaparHtml(item.nome_usuario);
 
+        const detalhe = item.detalhe ? escaparHtml(item.detalhe) : "";
+
         switch (item.acao) {
-            case "PROMOVIDO": return `${quem} promoveu <b>${pessoa}</b> (era cidadão)`;
+            case "PROMOVIDO": return `${quem} promoveu <b>${pessoa}</b> (era cidadão)${detalhe ? `: ${detalhe}` : ""}`;
             case "REMOVIDO": return `${quem} removeu o acesso de <b>${pessoa}</b> (voltou a ser cidadão)`;
-            case "CONVITE_ENVIADO": return `${quem} convidou <b>${pessoa}</b>`;
+            case "CONVITE_ENVIADO": return `${quem} convidou <b>${pessoa}</b>${detalhe ? `: ${detalhe}` : ""}`;
+            case "PERMISSOES_ALTERADAS": return `${quem} mudou as permissões de <b>${pessoa}</b>${detalhe ? `: ${detalhe}` : ""}`;
+            case "PRINCIPAL_TRANSFERIDO": return `${quem} passou o cargo de principal para <b>${pessoa}</b>`;
             case "CONVITE_REENVIADO": return `${quem} reenviou o convite de <b>${pessoa}</b>`;
             case "CONVITE_CANCELADO": return `${quem} cancelou o convite de <b>${pessoa}</b>`;
             case "CONVITE_ACEITO": return `<b>${pessoa}</b> aceitou o convite`;
@@ -794,15 +906,21 @@
 
         botaoCarregando(botao, true, "Continuar");
 
+        // Vai sem senha: o servidor confere o e-mail e para antes de criar o convite.
+        const umaPermissao = (estado.dados?.eu?.pode_dar || []).slice(0, 1);
+
         const { status, dados } = await api("/convites", {
             metodo: "POST",
-            corpo: { nome, email }
+            corpo: { nome, email, permissoes: umaPermissao }
         }).catch(() => ({ status: 0, dados: {} }));
 
         botaoCarregando(botao, false, "Continuar");
 
-        // Sem senha o servidor responde 401 depois de conferir tudo: pode seguir.
-        if (status === 401 && dados.codigo === "SENHA_INCORRETA") {
+        // E-mail livre: o servidor só reclamou da senha (ou das permissões). Pode seguir.
+        if (
+            (status === 400 && (dados.campo === "permissoes" || dados.codigo === "PERMISSOES_INVALIDAS")) ||
+            (status === 401 && dados.codigo === "SENHA_INCORRETA")
+        ) {
             confirmarConvite({ nome, email });
             return;
         }
@@ -822,18 +940,57 @@
       CONFIRMAÇÕES (com senha)
     ---------------------------------------------------------------*/
 
-    function listaPoderes(nome) {
+    // Cartões de permissão. Os que eu não posso dar ficam travados.
+    function cartoesPermissoesHtml(marcadas) {
+        const podeDar = estado.dados?.eu?.pode_dar || [];
+
         return `
-            <div class="poderes-admin">
-                <b>O que ${escaparHtml(primeiroNome(nome))} passa a poder fazer</b>
-                <ul>
-                    <li>Ver todas as ocorrências da cidade</li>
-                    <li>Mudar o status e cancelar trotes</li>
-                    <li>Publicar e editar avisos</li>
-                    <li>Adicionar e remover outros administradores</li>
-                </ul>
-            </div>
+            <fieldset class="permissoes-admin">
+                <legend>Permissões</legend>
+                ${PERMISSOES.map((permissao) => {
+                    const pode = podeDar.includes(permissao.chave);
+                    const marcada = marcadas.includes(permissao.chave);
+                    const motivo = permissao.chave === "equipe"
+                        ? "Só o administrador principal pode dar"
+                        : "Você não tem essa permissão";
+
+                    return `
+                        <label class="opcao-permissao ${pode ? "" : "travada"}">
+                            <input type="checkbox" name="permissaoAdmin" value="${permissao.chave}" ${marcada ? "checked" : ""} ${pode ? "" : "disabled"}>
+                            <span class="icone-permissao" aria-hidden="true">${icone(permissao.icone, 18)}</span>
+                            <span class="texto-permissao">
+                                <b>${permissao.nome}</b>
+                                <small>${permissao.descricao}</small>
+                                ${pode ? "" : `<em>${C.icone("cadeado", 12)}${motivo}</em>`}
+                            </span>
+                        </label>
+                    `;
+                }).join("")}
+            </fieldset>
+            <p class="dica-permissoes" id="dicaPermissoesAdmin" hidden>Marque pelo menos uma permissão.</p>
         `;
+    }
+
+    function permissoesMarcadas(caixa) {
+        return [...caixa.querySelectorAll('input[name="permissaoAdmin"]:checked')].map((entrada) => entrada.value);
+    }
+
+    // Senha digitada + pelo menos uma permissão marcada liberam o botão.
+    function ligarSenhaEPermissoes(caixa, botao) {
+        const senha = ligarSenha(caixa, botao);
+        const dica = caixa.querySelector("#dicaPermissoesAdmin");
+
+        const atualizar = () => {
+            const temPermissao = permissoesMarcadas(caixa).length > 0;
+            dica.hidden = temPermissao;
+            botao.disabled = senha.value.length === 0 || !temPermissao;
+        };
+
+        caixa.addEventListener("change", atualizar);
+        senha.addEventListener("input", atualizar);
+        atualizar();
+
+        return senha;
     }
 
     function confirmarPromocao(cidadao) {
@@ -842,10 +999,10 @@
 
         caixa.innerHTML = `
             <div class="icone-dialogo-admin">${icone("escudo", 22)}</div>
-            <h3 id="tituloDialogoAdmins">Promover ${escaparHtml(nome)} a administrador?</h3>
-            <p>${escaparHtml(cidadao.nome)} · ${escaparHtml(cidadao.email)}</p>
+            <h3 id="tituloDialogoAdmins">O que ${escaparHtml(nome)} vai poder fazer?</h3>
+            <p>${escaparHtml(cidadao.nome)} · ${escaparHtml(cidadao.email)}. Marque só o que a pessoa precisa para o trabalho dela. Dá para mudar depois.</p>
 
-            ${listaPoderes(cidadao.nome)}
+            ${cartoesPermissoesHtml([])}
 
             <div class="aviso-admin info">
                 ${C.icone("alerta", 18)}
@@ -861,7 +1018,7 @@
         `;
 
         const botao = caixa.querySelector('[data-acao="confirmar"]');
-        const senha = ligarSenha(caixa, botao);
+        const senha = ligarSenhaEPermissoes(caixa, botao);
 
         caixa.addEventListener("click", async (event) => {
             const acao = event.target.closest("[data-acao]")?.dataset.acao;
@@ -878,7 +1035,7 @@
 
             const { ok, dados } = await api("/promover", {
                 metodo: "POST",
-                corpo: { usuario_id: cidadao.id, senha_confirmacao: senha.value }
+                corpo: { usuario_id: cidadao.id, permissoes: permissoesMarcadas(caixa), senha_confirmacao: senha.value }
             }).catch(() => ({ ok: false, dados: {} }));
 
             if (!ok) {
@@ -893,7 +1050,7 @@
             carregar();
         });
 
-        focar("#senhaConfirmacaoAdmin");
+        focar('input[name="permissaoAdmin"]:not(:disabled)');
     }
 
     function confirmarConvite({ nome, email }) {
@@ -902,10 +1059,10 @@
 
         caixa.innerHTML = `
             <div class="icone-dialogo-admin">${icone("envelope", 22)}</div>
-            <h3 id="tituloDialogoAdmins">Enviar convite para ${escaparHtml(primeiro)}?</h3>
-            <p>${escaparHtml(email)} vira administrador só depois de aceitar o convite.</p>
+            <h3 id="tituloDialogoAdmins">Convidar ${escaparHtml(primeiro)}</h3>
+            <p>${escaparHtml(email)} vira administrador só depois de aceitar o convite, já com as permissões que você marcar.</p>
 
-            ${listaPoderes(nome)}
+            ${cartoesPermissoesHtml([])}
 
             ${campoSenhaHtml()}
 
@@ -916,7 +1073,7 @@
         `;
 
         const botao = caixa.querySelector('[data-acao="confirmar"]');
-        const senha = ligarSenha(caixa, botao);
+        const senha = ligarSenhaEPermissoes(caixa, botao);
 
         caixa.addEventListener("click", async (event) => {
             const acao = event.target.closest("[data-acao]")?.dataset.acao;
@@ -933,7 +1090,7 @@
 
             const { ok, dados } = await api("/convites", {
                 metodo: "POST",
-                corpo: { nome, email, senha_confirmacao: senha.value }
+                corpo: { nome, email, permissoes: permissoesMarcadas(caixa), senha_confirmacao: senha.value }
             }).catch(() => ({ ok: false, dados: {} }));
 
             if (!ok) {
@@ -948,7 +1105,200 @@
             carregar();
         });
 
-        focar("#senhaConfirmacaoAdmin");
+        focar('input[name="permissaoAdmin"]:not(:disabled)');
+    }
+
+    function editarPermissoes(admin) {
+        const caixa = abrirDialogo("largo");
+        const nome = primeiroNome(admin.nome);
+
+        // O servidor só aceita salvar permissões que eu posso dar. Se a pessoa tem
+        // alguma que eu não tenho, só o principal consegue mudar o acesso dela.
+        const podeDar = estado.dados?.eu?.pode_dar || [];
+        const queNaoPossoDar = admin.permissoes.filter((chave) => !podeDar.includes(chave));
+
+        if (queNaoPossoDar.length) {
+            const nomes = PERMISSOES
+                .filter((permissao) => queNaoPossoDar.includes(permissao.chave))
+                .map((permissao) => permissao.nome)
+                .join(" e ");
+
+            caixa.innerHTML = `
+                <div class="icone-dialogo-admin">${icone("escudo", 22)}</div>
+                <h3 id="tituloDialogoAdmins">Permissões de ${escaparHtml(nome)}</h3>
+                <p>${escaparHtml(admin.nome)} tem ${escaparHtml(nomes)}, que você não pode dar. Por isso, só o administrador principal pode mudar as permissões dessa pessoa.</p>
+
+                ${cartoesPermissoesHtml(admin.permissoes).replace(/<input /g, "<input disabled ")}
+
+                <div class="acoes">
+                    <button class="btn-primario" type="button" data-acao="fechar">Entendi</button>
+                </div>
+            `;
+
+            caixa.querySelector("#dicaPermissoesAdmin")?.remove();
+            caixa.addEventListener("click", (event) => {
+                if (event.target.closest('[data-acao="fechar"]')) {
+                    fecharDialogo();
+                }
+            });
+
+            focar('[data-acao="fechar"]');
+            return;
+        }
+
+        caixa.innerHTML = `
+            <div class="icone-dialogo-admin">${icone("escudo", 22)}</div>
+            <h3 id="tituloDialogoAdmins">Permissões de ${escaparHtml(nome)}</h3>
+            <p>${escaparHtml(admin.nome)} · ${escaparHtml(admin.email)}. A mudança vale na hora, no próximo clique da pessoa.</p>
+
+            ${cartoesPermissoesHtml(admin.permissoes)}
+
+            ${campoSenhaHtml()}
+
+            <div class="acoes">
+                <button class="btn-secundario" type="button" data-acao="fechar">Cancelar</button>
+                <button class="btn-primario" type="button" data-acao="confirmar" disabled>Salvar permissões</button>
+            </div>
+        `;
+
+        caixa.querySelector("#dicaPermissoesAdmin").textContent =
+            "Precisa ficar pelo menos uma. Para tirar tudo, use \"Remover acesso\".";
+
+        const botao = caixa.querySelector('[data-acao="confirmar"]');
+        const senha = ligarSenhaEPermissoes(caixa, botao);
+
+        caixa.addEventListener("click", async (event) => {
+            const acao = event.target.closest("[data-acao]")?.dataset.acao;
+
+            if (acao === "fechar") {
+                fecharDialogo();
+            }
+
+            if (acao !== "confirmar") {
+                return;
+            }
+
+            botaoCarregando(botao, true, "Salvar permissões");
+
+            const { ok, dados } = await api(`/${admin.id}/permissoes`, {
+                metodo: "POST",
+                corpo: { permissoes: permissoesMarcadas(caixa), senha_confirmacao: senha.value }
+            }).catch(() => ({ ok: false, dados: {} }));
+
+            if (!ok) {
+                botaoCarregando(botao, false, "Salvar permissões");
+                mostrarErroDialogo(dados.mensagem || "Não foi possível salvar agora. Tente de novo.");
+                senha.select();
+                return;
+            }
+
+            fecharDialogo();
+            toast(dados.mensagem || "Permissões salvas.");
+            carregar();
+        });
+
+        focar('input[name="permissaoAdmin"]:not(:disabled)');
+    }
+
+    function passarCargo() {
+        const candidatos = estado.dados.administradores.filter((admin) => !admin.voce);
+
+        if (!candidatos.length) {
+            toast("Adicione outro administrador antes de passar o cargo.", "erro");
+            return;
+        }
+
+        const caixa = abrirDialogo("largo");
+
+        caixa.innerHTML = `
+            <div class="icone-dialogo-admin">${icone("coroa", 22)}</div>
+            <h3 id="tituloDialogoAdmins">Passar o cargo de administrador principal</h3>
+            <p>Use quando você for sair da prefeitura ou trocar de função.</p>
+
+            <fieldset class="escolha-principal">
+                <legend>Quem vai ser o novo principal?</legend>
+                ${candidatos.map((admin) => `
+                    <label>
+                        <input type="radio" name="novoPrincipal" value="${admin.id}">
+                        <span class="avatar-admin pequeno" aria-hidden="true">${escaparHtml(C.iniciais(admin.nome))}</span>
+                        <span class="dados-admin">
+                            <strong>${escaparHtml(admin.nome)}</strong>
+                            ${chipsPermissoes(admin)}
+                        </span>
+                    </label>
+                `).join("")}
+            </fieldset>
+
+            <div class="poderes-admin">
+                <b>O que acontece</b>
+                <ul>
+                    <li>A pessoa escolhida ganha acesso total e vira a principal.</li>
+                    <li>Você continua administrador, com as três permissões, mas o novo principal passa a poder mudar ou remover o seu acesso.</li>
+                    <li>Só existe um principal por vez.</li>
+                </ul>
+            </div>
+
+            ${campoSenhaHtml()}
+
+            <div class="acoes">
+                <button class="btn-secundario" type="button" data-acao="fechar">Cancelar</button>
+                <button class="btn-primario" type="button" data-acao="confirmar" disabled>Passar o cargo</button>
+            </div>
+        `;
+
+        const botao = caixa.querySelector('[data-acao="confirmar"]');
+        const senha = ligarSenha(caixa, botao);
+        const escolhido = () => caixa.querySelector('input[name="novoPrincipal"]:checked');
+        const atualizar = () => { botao.disabled = senha.value.length === 0 || !escolhido(); };
+
+        caixa.addEventListener("change", atualizar);
+        senha.addEventListener("input", atualizar);
+
+        caixa.addEventListener("click", async (event) => {
+            const acao = event.target.closest("[data-acao]")?.dataset.acao;
+
+            if (acao === "fechar") {
+                fecharDialogo();
+            }
+
+            if (acao !== "confirmar" || !escolhido()) {
+                return;
+            }
+
+            botaoCarregando(botao, true, "Passar o cargo");
+
+            const { ok, dados } = await api(`/${escolhido().value}/principal`, {
+                metodo: "POST",
+                corpo: { senha_confirmacao: senha.value }
+            }).catch(() => ({ ok: false, dados: {} }));
+
+            if (!ok) {
+                botaoCarregando(botao, false, "Passar o cargo");
+                mostrarErroDialogo(dados.mensagem || "Não foi possível passar o cargo agora. Tente de novo.");
+                senha.select();
+                return;
+            }
+
+            fecharDialogo();
+            toast(dados.mensagem || "Cargo passado.");
+
+            // Meu acesso mudou: atualiza o usuário guardado (menu da conta) e recarrega a página.
+            try {
+                const usuario = obterUsuario();
+
+                if (usuario?.permissoes) {
+                    usuario.permissoes.principal = false;
+                    const onde = localStorage.getItem("cidade360_usuario") ? localStorage : sessionStorage;
+                    onde.setItem("cidade360_usuario", JSON.stringify(usuario));
+                }
+            } catch (error) {
+                // Sem armazenamento, o próximo carregamento busca do servidor.
+            }
+
+            carregar();
+        });
+
+        focar('input[name="novoPrincipal"]');
     }
 
     // Volta para "Adicionar administrador" sem perder o que já foi digitado.
@@ -1074,18 +1424,56 @@
         focar("#senhaConfirmacaoAdmin");
     }
 
-    async function reenviarConvite(convite, botao) {
-        botaoCarregando(botao, true, "Reenviar");
+    function reenviarConvite(convite) {
+        const caixa = abrirDialogo("largo");
 
-        const { ok, dados } = await api(`/convites/${convite.id}/reenviar`, { metodo: "POST" })
-            .catch(() => ({ ok: false, dados: {} }));
+        caixa.innerHTML = `
+            <div class="icone-dialogo-admin">${icone("passar", 22)}</div>
+            <h3 id="tituloDialogoAdmins">Reenviar o convite de ${escaparHtml(primeiroNome(convite.nome))}?</h3>
+            <p>Um link novo vai para ${escaparHtml(convite.email)} e vale por mais ${Number(estado.dados.dias_validade_convite) || 7} dias. O link antigo para de funcionar.</p>
 
-        botaoCarregando(botao, false, "Reenviar");
-        toast(dados.mensagem || (ok ? "Convite reenviado." : "Não foi possível reenviar agora."), ok ? "ok" : "erro");
+            ${campoSenhaHtml()}
 
-        if (ok) {
+            <div class="acoes">
+                <button class="btn-secundario" type="button" data-acao="fechar">Voltar</button>
+                <button class="btn-primario" type="button" data-acao="confirmar" disabled>Reenviar convite</button>
+            </div>
+        `;
+
+        const botao = caixa.querySelector('[data-acao="confirmar"]');
+        const senha = ligarSenha(caixa, botao);
+
+        caixa.addEventListener("click", async (event) => {
+            const acao = event.target.closest("[data-acao]")?.dataset.acao;
+
+            if (acao === "fechar") {
+                fecharDialogo();
+            }
+
+            if (acao !== "confirmar") {
+                return;
+            }
+
+            botaoCarregando(botao, true, "Reenviar convite");
+
+            const { ok, dados } = await api(`/convites/${convite.id}/reenviar`, {
+                metodo: "POST",
+                corpo: { senha_confirmacao: senha.value }
+            }).catch(() => ({ ok: false, dados: {} }));
+
+            if (!ok) {
+                botaoCarregando(botao, false, "Reenviar convite");
+                mostrarErroDialogo(dados.mensagem || "Não foi possível reenviar agora. Tente de novo.");
+                senha.select();
+                return;
+            }
+
+            fecharDialogo();
+            toast(dados.mensagem || "Convite reenviado.");
             carregar();
-        }
+        });
+
+        focar("#senhaConfirmacaoAdmin");
     }
 
 
@@ -1126,8 +1514,16 @@
             confirmarRemocao(estado.dados.administradores.find((admin) => admin.id === id));
         }
 
+        if (botao.dataset.acao === "permissoes") {
+            editarPermissoes(estado.dados.administradores.find((admin) => admin.id === id));
+        }
+
+        if (botao.dataset.acao === "passar") {
+            passarCargo();
+        }
+
         if (botao.dataset.acao === "reenviar") {
-            reenviarConvite(estado.dados.convites.find((convite) => convite.id === id), botao);
+            reenviarConvite(estado.dados.convites.find((convite) => convite.id === id));
         }
 
         if (botao.dataset.acao === "cancelar") {
@@ -1138,10 +1534,10 @@
 
     /*---------------------------------------------------------------
       INÍCIO
-      Cidadão que cair aqui volta para o painel (o servidor também bloqueia).
+      Quem não tem a permissão "Equipe" volta para o painel (o servidor também bloqueia).
     ---------------------------------------------------------------*/
 
-    if (!ehAdministrador()) {
+    if (!podeAbrirPagina()) {
         window.location.replace("/");
         return;
     }

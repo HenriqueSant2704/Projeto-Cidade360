@@ -149,6 +149,10 @@ BASE
     box-shadow: 0 8px 20px rgba(37, 99, 235, .25); transition: background-color .25s, transform .25s var(--spring), box-shadow .25s;
     position: relative; z-index: 1;
 }
+/* O reset ".pagina-avisos button { color: inherit }" é mais forte que ".btn-primario" e deixava o texto preto.
+   Botão azul sempre tem texto branco, como no resto do sistema. */
+.pagina-avisos .btn-primario,
+.av-camadas .btn-primario { color: #fff; }
 .btn-primario:hover { background: var(--accent-strong); transform: translateY(-1px) scale(1.02); }
 .btn-primario:active { transform: scale(.97); }
 .btn-primario[disabled] { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
