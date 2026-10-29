@@ -18,6 +18,16 @@ const enviarEmail =
     require("./enviarEmail");
 
 const {
+    montarEmail,
+    paragrafo,
+    botao,
+    seloStatus,
+    caixaDados,
+    citacao
+} =
+    require("./modeloEmail");
+
+const {
     randomUUID
 } =
     require("crypto");
@@ -167,39 +177,54 @@ function montarMensagem(
     const assunto =
         `Cidade360 | ${protocolo}: ${statusNovo}`;
 
-    const html = `
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atualização da ocorrência</title>
-</head>
-<body style="margin: 0; padding: 24px; background-color: #f4f6f9; font-family: Arial, sans-serif; color: #263238;">
-    <div style="max-width: 600px; margin: 0 auto; padding: 28px; background-color: #ffffff; border-radius: 12px;">
-        <h1 style="margin-top: 0; color: #1565c0; font-size: 24px;">Cidade360</h1>
-        <h2 style="font-size: 20px;">Sua ocorrência foi atualizada</h2>
-        <p>Olá, ${escaparHtml(registro.usuario_nome || "cidadão")}!</p>
-        <p>${escaparHtml(explicacao)}</p>
-        <div style="padding: 18px; background-color: #f0f5ff; border-radius: 8px;">
-            <p style="margin-top: 0;"><strong>Protocolo:</strong> ${escaparHtml(protocolo)}</p>
-            <p><strong>Ocorrência:</strong> ${escaparHtml(registro.titulo)}</p>
-            <p><strong>Status anterior:</strong> ${escaparHtml(statusAnterior)}</p>
-            <p style="margin-bottom: 0;"><strong>Novo status:</strong> ${escaparHtml(statusNovo)}</p>
-        </div>
-        ${observacao ? `
-        <h3 style="font-size: 16px;">Observação da prefeitura</h3>
-        <p style="line-height: 1.6;">${escaparHtml(observacao).replace(/\r?\n/g, "<br>")}</p>
-        ` : ""}
-        ${dataFormatada ? `
-        <p><strong>Atualizado em:</strong> ${escaparHtml(dataFormatada)}</p>
-        ` : ""}
-        <p>Acompanhe os detalhes e o histórico da sua ocorrência pelo Cidade360.</p>
-        <p style="margin-bottom: 0; color: #687684; font-size: 12px;">Esta é uma mensagem automática do Cidade360.</p>
-    </div>
-</body>
-</html>
-    `;
+    const site =
+        String(process.env.APP_URL || "")
+            .trim()
+            .replace(/\/+$/, "");
+
+    const linkOcorrencia =
+        site
+            ? `${site}/FrontEnd/pages/ocorrencia/ocorrencia.html?ocorrencia=${registro.ocorrencia_id}`
+            : "";
+
+    const linhas = [
+        {
+            rotulo: "Protocolo",
+            valor: escaparHtml(protocolo)
+        },
+        {
+            rotulo: "Ocorrência",
+            valor: escaparHtml(registro.titulo)
+        },
+        {
+            rotulo: "Status",
+            valor: `${seloStatus(statusAnterior)}<span style="color: #9aa3b5; padding: 0 8px;">&#8594;</span>${seloStatus(statusNovo)}`
+        }
+    ];
+
+    if (dataFormatada) {
+        linhas.push({
+            rotulo: "Atualizado em",
+            valor: escaparHtml(dataFormatada)
+        });
+    }
+
+    const html =
+        montarEmail({
+            assunto,
+            previa: `${protocolo}: ${explicacao}`,
+            etiqueta: "Atualização da ocorrência",
+            titulo: `Sua ocorrência está: ${statusNovo}`,
+            conteudo: `
+                ${paragrafo(`Olá, <strong style="color: #1f2937;">${escaparHtml(registro.usuario_nome || "cidadão")}</strong>!`)}
+                ${paragrafo(escaparHtml(explicacao))}
+                ${caixaDados(linhas)}
+                ${observacao ? citacao("Observação da prefeitura", escaparHtml(observacao).replace(/\r?\n/g, "<br>")) : ""}
+                ${linkOcorrencia
+                    ? botao("Ver minha ocorrência", linkOcorrencia)
+                    : paragrafo("Acompanhe os detalhes e o histórico da sua ocorrência pelo Cidade360.")}
+            `
+        });
 
     return {
         assunto,

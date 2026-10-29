@@ -19,5 +19,7 @@ module.exports = {
     login: criarLimite(30),
     solicitarCodigo: criarLimite(20),
     confirmarCodigo: criarLimite(30),
-    acaoAdmin: criarLimite(30)
+    acaoAdmin: criarLimite(30),
+    // Meu perfil: tentar adivinhar a senha atual pela troca de senha
+    trocarSenha: criarLimite(10)
 };

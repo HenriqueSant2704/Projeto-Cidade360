@@ -1,0 +1,943 @@
+/*========================================================================================================
+
+MEU PERFIL
+
+Faixa com o resumo da conta, cartão de dados pessoais e cartões de e-mail e senha.
+O menu lateral, o topo, as cores (claro/escuro), os botões e o toast vêm do global.css.
+
+=========================================================================================================*/
+
+.pagina-perfil {
+    width: 100%;
+    max-width: var(--largura-pagina, 1240px);
+    margin: 0 auto;
+    padding: 28px var(--respiro-pagina, 24px) 64px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+
+    color: var(--ink);
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+}
+
+.pagina-perfil *,
+.pagina-perfil *::before,
+.pagina-perfil *::after {
+    box-sizing: border-box;
+}
+
+.pagina-perfil button {
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.pagina-perfil :focus-visible {
+    outline: 3px solid var(--accent-ring);
+    outline-offset: 2px;
+}
+
+.pagina-perfil h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.pagina-perfil [hidden] {
+    display: none !important;
+}
+
+.pagina-perfil .esqueleto {
+    height: 320px;
+    border-radius: 18px;
+    background: linear-gradient(90deg, var(--surface-2) 0%, var(--line) 50%, var(--surface-2) 100%);
+    background-size: 200% 100%;
+    animation: brilho-perfil 1.4s ease-in-out infinite;
+}
+
+.pagina-perfil .esqueleto.alto {
+    height: 120px;
+    width: 100%;
+    background: rgba(255, 255, 255, .12);
+}
+
+@keyframes brilho-perfil {
+    to { background-position: -200% 0; }
+}
+
+
+/*========================================================================================================
+RESUMO (faixa colorida no topo)
+=========================================================================================================*/
+
+.perfil-resumo {
+    position: relative;
+    overflow: hidden;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px 32px;
+
+    padding: 28px 32px;
+
+    border-radius: 28px;
+
+    background: linear-gradient(120deg, var(--hero-a) 0%, var(--hero-b) 100%);
+    color: #ffffff;
+    box-shadow: var(--shadow);
+}
+
+.perfil-resumo::after {
+    content: "";
+    position: absolute;
+    right: -70px;
+    top: -90px;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, .18) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.resumo-identidade {
+    position: relative;
+    z-index: 1;
+
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    min-width: 0;
+}
+
+.avatar-perfil {
+    flex-shrink: 0;
+
+    width: 88px;
+    height: 88px;
+
+    display: grid;
+    place-items: center;
+
+    border: 3px solid rgba(255, 255, 255, .55);
+    border-radius: 50%;
+
+    background: rgba(255, 255, 255, .16);
+    color: #ffffff;
+
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: .5px;
+
+    box-shadow: 0 10px 26px rgba(0, 0, 0, .18);
+}
+
+.resumo-textos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.resumo-textos .rotulo {
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: .3px;
+    opacity: .85;
+}
+
+.nome-resumo {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.email-resumo {
+    font-size: 14px;
+    opacity: .9;
+    overflow-wrap: anywhere;
+}
+
+.chips-resumo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.chip-resumo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    padding: 5px 12px;
+
+    border-radius: 999px;
+
+    background: rgba(255, 255, 255, .16);
+    color: #ffffff;
+
+    font-size: 12.5px;
+    font-weight: 500;
+}
+
+.resumo-pontos {
+    position: relative;
+    z-index: 1;
+
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    padding: 14px 18px;
+
+    border: 1px solid rgba(255, 255, 255, .25);
+    border-radius: 20px;
+
+    background: rgba(255, 255, 255, .12);
+    color: #ffffff;
+    text-decoration: none;
+
+    transition: background-color .2s, transform .25s var(--spring);
+}
+
+.resumo-pontos:hover {
+    background: rgba(255, 255, 255, .2);
+    transform: translateY(-1px);
+}
+
+.medalha-perfil {
+    flex-shrink: 0;
+
+    width: 52px;
+    height: 52px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 16px;
+
+    background: linear-gradient(135deg, #fde68a, #f59e0b);
+    color: #78350f;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, .18);
+}
+
+.medalha-perfil.vazia {
+    background: rgba(255, 255, 255, .16);
+    color: rgba(255, 255, 255, .85);
+    box-shadow: none;
+}
+
+.dados-pontos {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.dados-pontos small {
+    font-size: 12px;
+    opacity: .85;
+}
+
+.dados-pontos strong {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.dados-pontos em {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12.5px;
+    font-style: normal;
+    opacity: .9;
+}
+
+.erro-carregar {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 12px;
+    text-align: center;
+}
+
+.erro-carregar span {
+    font-size: 14px;
+    opacity: .9;
+}
+
+
+/*========================================================================================================
+GRADE: dados pessoais + segurança
+=========================================================================================================*/
+
+.perfil-grade {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 22px;
+    align-items: start;
+}
+
+.perfil-lateral {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.cartao-perfil {
+    padding: 26px;
+
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+}
+
+.cabecalho-cartao {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.cabecalho-cartao p {
+    margin: 3px 0 0;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.icone-cartao {
+    flex-shrink: 0;
+
+    width: 42px;
+    height: 42px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 14px;
+
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+
+/*========================================================================================================
+CAMPOS
+=========================================================================================================*/
+
+.form-perfil,
+.form-seguranca {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.campo-perfil {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+}
+
+.campo-perfil > label {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink-soft);
+}
+
+.entrada-perfil {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.entrada-perfil > svg {
+    position: absolute;
+    left: 15px;
+    color: var(--muted);
+    pointer-events: none;
+    transition: color .2s;
+}
+
+.entrada-perfil input,
+.entrada-perfil select {
+    width: 100%;
+    height: 50px;
+
+    padding: 0 16px 0 46px;
+
+    border: 1px solid var(--line-strong);
+    border-radius: 14px;
+
+    background-color: var(--surface);
+    color: var(--ink);
+
+    font-family: inherit;
+    font-size: 15px;
+
+    outline: none;
+    appearance: none;
+
+    transition: border-color .2s, box-shadow .2s, background-color .2s;
+}
+
+.entrada-perfil input::placeholder {
+    color: var(--muted);
+    opacity: .75;
+}
+
+.entrada-perfil input:hover,
+.entrada-perfil select:hover {
+    border-color: var(--muted);
+}
+
+.entrada-perfil input:focus,
+.entrada-perfil select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-ring);
+}
+
+.entrada-perfil:focus-within > svg {
+    color: var(--accent);
+}
+
+.entrada-perfil select {
+    padding-right: 38px;
+    cursor: pointer;
+}
+
+.entrada-perfil .seta-select {
+    position: absolute;
+    right: 14px;
+    display: grid;
+    color: var(--muted);
+    pointer-events: none;
+}
+
+.entrada-perfil:has(.btn-olho) input {
+    padding-right: 50px;
+}
+
+.btn-olho {
+    position: absolute;
+    right: 6px;
+
+    width: 38px;
+    height: 38px;
+
+    display: grid;
+    place-items: center;
+
+    border: none;
+    border-radius: 10px;
+
+    background: transparent;
+    color: var(--muted);
+}
+
+.btn-olho:hover {
+    background: var(--surface-2);
+    color: var(--ink);
+}
+
+.entrada-perfil.bloqueada input {
+    padding-right: 46px;
+    background-color: var(--surface-2);
+    color: var(--muted);
+    cursor: not-allowed;
+    letter-spacing: .5px;
+}
+
+.entrada-perfil.bloqueada input:hover {
+    border-color: var(--line-strong);
+}
+
+.cadeado-campo {
+    position: absolute;
+    right: 16px;
+    display: grid;
+    color: var(--muted);
+}
+
+.campo-perfil input.com-erro,
+.campo-perfil .com-erro {
+    border-color: var(--danger);
+}
+
+.campo-perfil input.com-erro:focus {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 22%, transparent);
+}
+
+.dica-perfil {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--muted);
+}
+
+.erro-campo {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--danger);
+}
+
+.linha-cidade {
+    display: grid;
+    grid-template-columns: 130px minmax(0, 1fr);
+    gap: 14px;
+}
+
+
+/* Lista de cidades (autocompletar) */
+
+.lista-cidades-perfil {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+
+    max-height: 290px;
+    overflow-y: auto;
+
+    margin: 0;
+    padding: 6px;
+
+    list-style: none;
+
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+}
+
+.lista-cidades-perfil li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+
+    padding: 10px 12px;
+
+    border-radius: 10px;
+
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.lista-cidades-perfil li small {
+    font-size: 11.5px;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.lista-cidades-perfil li small.atendida {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--s-andamento-soft);
+    color: var(--s-andamento);
+    font-weight: 600;
+}
+
+.lista-cidades-perfil li[aria-selected="true"],
+.lista-cidades-perfil li:hover {
+    background: var(--accent-soft);
+}
+
+.lista-cidades-perfil li.vazio,
+.lista-cidades-perfil li.vazio:hover {
+    background: transparent;
+    color: var(--muted);
+    cursor: default;
+}
+
+.aviso-cidade-perfil {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+
+    margin-top: -6px;
+    padding: 11px 14px;
+
+    border-radius: 12px;
+
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.aviso-cidade-perfil svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.aviso-cidade-perfil[data-tipo="ok"] {
+    background: var(--s-andamento-soft);
+    color: var(--s-andamento);
+}
+
+.aviso-cidade-perfil[data-tipo="erro"] {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+
+/*========================================================================================================
+RODAPÉ E BOTÕES
+=========================================================================================================*/
+
+.rodape-form {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+
+    margin-top: 4px;
+    padding-top: 20px;
+
+    border-top: 1px solid var(--line);
+}
+
+.status-form {
+    font-size: 13px;
+    color: var(--s-analise);
+    font-weight: 500;
+}
+
+.botoes-form {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-left: auto;
+}
+
+.pagina-perfil .btn-primario,
+.pagina-perfil .btn-secundario {
+    white-space: nowrap;
+}
+
+.pagina-perfil .btn-primario {
+    padding: 12px 20px;
+    font-size: 15px;
+    color: #ffffff;
+}
+
+.pagina-perfil .btn-primario[disabled]:hover {
+    background-color: var(--accent);
+}
+
+.pagina-perfil .btn-secundario {
+    padding: 11px 18px;
+}
+
+.pagina-perfil .btn-pequeno {
+    flex-shrink: 0;
+    padding: 9px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+}
+
+.rodinha {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, .45);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: girar-perfil .8s linear infinite;
+}
+
+.btn-secundario .rodinha {
+    border-color: var(--line-strong);
+    border-top-color: var(--accent);
+}
+
+@keyframes girar-perfil {
+    to { transform: rotate(360deg); }
+}
+
+.link-perfil {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--accent);
+    font-size: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.link-perfil:disabled {
+    color: var(--muted);
+    text-decoration: none;
+    cursor: default;
+}
+
+.link-perfil.claro {
+    color: #ffffff;
+}
+
+
+/*========================================================================================================
+E-MAIL E SENHA
+=========================================================================================================*/
+
+.linha-valor {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+
+    padding: 16px 18px;
+
+    border: 1px solid var(--line);
+    border-radius: 16px;
+
+    background: var(--surface-2);
+}
+
+.valor-atual {
+    flex: 1 1 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.valor-atual strong {
+    font-size: 15px;
+    font-weight: 600;
+    overflow-wrap: break-word;
+}
+
+.senha-oculta {
+    letter-spacing: 3px;
+    color: var(--ink-soft);
+}
+
+.selo-ok {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+
+    padding: 3px 10px;
+
+    border-radius: 999px;
+
+    background: var(--s-andamento-soft);
+    color: var(--s-andamento);
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.form-seguranca {
+    animation: abrir-form .35s var(--ease) both;
+}
+
+@keyframes abrir-form {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+}
+
+.explicacao {
+    margin: -4px 0 0;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--muted);
+}
+
+.passo-codigo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    padding: 14px 16px;
+
+    border-radius: 16px;
+
+    background: var(--accent-soft);
+}
+
+.passo-codigo p {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    overflow-wrap: anywhere;
+}
+
+.icone-envio {
+    flex-shrink: 0;
+
+    width: 44px;
+    height: 44px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 50%;
+
+    background: var(--accent);
+    color: #ffffff;
+}
+
+.entrada-codigo {
+    width: 100%;
+    height: 60px;
+
+    border: 1px solid var(--line-strong);
+    border-radius: 14px;
+
+    background: var(--surface);
+    color: var(--ink);
+
+    font-family: inherit;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 12px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.entrada-codigo::placeholder {
+    color: var(--line-strong);
+}
+
+.entrada-codigo:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-ring);
+}
+
+.regras-senha {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 14px;
+
+    margin: -8px 0 0;
+    padding: 0;
+
+    list-style: none;
+}
+
+.regras-senha li {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+
+    font-size: 12.5px;
+    color: var(--muted);
+
+    transition: color .2s;
+}
+
+.regras-senha li svg {
+    flex-shrink: 0;
+    padding: 2px;
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    background: var(--line);
+    color: transparent;
+    transition: background-color .2s, color .2s;
+}
+
+.regras-senha li.cumprida {
+    color: var(--s-andamento);
+}
+
+.regras-senha li.cumprida svg {
+    background: var(--s-andamento);
+    color: #ffffff;
+}
+
+
+/*========================================================================================================
+TELAS MENORES
+=========================================================================================================*/
+
+@media (max-width: 1100px) {
+    .perfil-grade {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .pagina-perfil {
+        padding-top: 18px;
+        gap: 16px;
+    }
+
+    .perfil-resumo {
+        padding: 22px 20px;
+        border-radius: 22px;
+    }
+
+    .resumo-identidade {
+        gap: 16px;
+    }
+
+    .avatar-perfil {
+        width: 64px;
+        height: 64px;
+        font-size: 23px;
+    }
+
+    .nome-resumo {
+        font-size: 20px;
+    }
+
+    .resumo-pontos {
+        width: 100%;
+    }
+
+    .cartao-perfil {
+        padding: 20px 18px;
+        border-radius: 20px;
+    }
+
+    .linha-cidade {
+        grid-template-columns: 104px minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .linha-valor {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .regras-senha {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .botoes-form {
+        width: 100%;
+    }
+
+    .botoes-form {
+        flex-direction: column-reverse;
+    }
+
+    .botoes-form > button {
+        width: 100%;
+    }
+
+    .entrada-codigo {
+        letter-spacing: 8px;
+        font-size: 24px;
+    }
+}

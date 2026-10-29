@@ -10,6 +10,11 @@ const gerarToken = require("../utils/gerarToken");
 const enviarEmail = require("../utils/enviarEmail");
 
 const {
+    htmlCodigoCadastro,
+    htmlRecuperacaoSenha
+} = require("../utils/emailsConta");
+
+const {
     invalidarCodigosAnteriores,
     criarCodigoRecuperacao,
     buscarCodigoValido
@@ -1568,88 +1573,10 @@ const AuthController = {
             ============================================================================================*/
 
 
-            const html = `
-                <div
-                    style="
-                        font-family: Arial, sans-serif;
-                        color: #333;
-                        line-height: 1.5;
-                    "
-                >
-
-                    <h2
-                        style="
-                            color: #007BFF;
-                        "
-                    >
-                        Confirme seu email no Cidade360
-                    </h2>
-
-
-                    <p>
-                        Olá!
-                    </p>
-
-
-                    <p>
-                        Recebemos uma solicitação para criar uma conta
-                        no Cidade360 usando este endereço de email.
-                    </p>
-
-
-                    <p>
-                        Para continuar o cadastro, informe o código
-                        abaixo na tela do sistema:
-                    </p>
-
-
-                    <h1
-                        style="
-                            letter-spacing: 4px;
-                            color: #007BFF;
-                            font-size: 32px;
-                        "
-                    >
-
-                        ${codigo}
-
-                    </h1>
-
-
-                    <p>
-                        Este código é válido por
-                        <strong>
-                            15 minutos
-                        </strong>.
-                    </p>
-
-
-                    <p>
-                        Se você não solicitou este cadastro,
-                        apenas ignore este email.
-                    </p>
-
-
-                    <hr
-                        style="
-                            border: none;
-                            border-top: 1px solid #ddd;
-                            margin: 20px 0;
-                        "
-                    >
-
-
-                    <p
-                        style="
-                            font-size: 13px;
-                            color: #777;
-                        "
-                    >
-                        Cidade360 - Verificação de segurança
-                    </p>
-
-                </div>
-            `;
+            const html =
+                htmlCodigoCadastro(
+                    codigo
+                );
 
 
             await enviarEmail(
@@ -2050,105 +1977,11 @@ const AuthController = {
             );
 
 
-            /*
-             * Evita que eventualmente um nome contendo
-             * HTML interfira no conteúdo do email.
-             */
-            const nomeSeguro =
-                escaparHtml(
-                    usuario.nome ||
-                    "usuário"
+            const html =
+                htmlRecuperacaoSenha(
+                    usuario.nome,
+                    codigo
                 );
-
-
-            /*============================================================================================
-            EMAIL
-            ============================================================================================*/
-
-
-            const html = `
-                <div
-                    style="
-                        font-family: Arial, sans-serif;
-                        color: #333;
-                        line-height: 1.5;
-                    "
-                >
-
-                    <h2
-                        style="
-                            color: #007BFF;
-                        "
-                    >
-                        Recuperação de senha - Cidade360
-                    </h2>
-
-
-                    <p>
-                        Olá, ${nomeSeguro}.
-                    </p>
-
-
-                    <p>
-                        Recebemos uma solicitação para redefinir
-                        a senha da sua conta.
-                    </p>
-
-
-                    <p>
-                        Para criar uma nova senha, informe o código
-                        abaixo na tela de recuperação:
-                    </p>
-
-
-                    <h1
-                        style="
-                            letter-spacing: 4px;
-                            color: #007BFF;
-                            font-size: 32px;
-                        "
-                    >
-
-                        ${codigo}
-
-                    </h1>
-
-
-                    <p>
-                        Este código é válido por
-                        <strong>
-                            15 minutos
-                        </strong>.
-                    </p>
-
-
-                    <p>
-                        Se você não solicitou a recuperação de senha,
-                        ignore este email. Sua senha atual continuará
-                        a mesma.
-                    </p>
-
-
-                    <hr
-                        style="
-                            border: none;
-                            border-top: 1px solid #ddd;
-                            margin: 20px 0;
-                        "
-                    >
-
-
-                    <p
-                        style="
-                            font-size: 13px;
-                            color: #777;
-                        "
-                    >
-                        Cidade360 - Segurança da conta
-                    </p>
-
-                </div>
-            `;
 
 
             await enviarEmail(

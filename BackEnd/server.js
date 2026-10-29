@@ -56,6 +56,9 @@ const administradorRoutes =
 const conviteAdminRoutes =
     require("./src/routes/conviteAdminRoutes");
 
+const perfilRoutes =
+    require("./src/routes/perfilRoutes");
+
 
 const app =
     express();
@@ -424,6 +427,13 @@ app.use(
 );
 
 
+// Meu perfil: o usuário logado troca nome, telefone, cidade, e-mail e senha
+app.use(
+    "/api/perfil",
+    perfilRoutes
+);
+
+
 // ============================================================
 // API NÃO ENCONTRADA
 // ============================================================
@@ -533,4 +543,4 @@ async function iniciarServidor() {
 }
 
 
-iniciarServidor();
+iniciarServidor();

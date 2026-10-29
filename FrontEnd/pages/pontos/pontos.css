@@ -372,6 +372,32 @@ HISTÓRICO POR OCORRÊNCIA
     gap: 12px;
 }
 
+/* Paginação do histórico (mesmo visual da lista de ocorrências) */
+
+.paginacao-pontos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    padding-top: 6px;
+
+    color: var(--muted);
+    font-size: 13.5px;
+}
+
+.paginacao-pontos .paginacao-botoes {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.paginacao-pontos .btn-icone[disabled] {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
 .cartao-ocorrencia-pontos {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;

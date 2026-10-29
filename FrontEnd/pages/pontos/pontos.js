@@ -29,6 +29,12 @@
         reabertura: "Reaberta"
     };
 
+    // Histórico paginado: 7 por página no computador/notebook e 5 no
+    // celular/tablet. Mesmo ponto de corte do menu lateral (global.css).
+    const TELA_COMPUTADOR = window.matchMedia("(min-width: 1025px)");
+    const POR_PAGINA_COMPUTADOR = 7;
+    const POR_PAGINA_CELULAR = 5;
+
     const FILTROS = [
         { chave: "todas", nome: "Todas" },
         { chave: "com_pontos", nome: "Com pontos" },
@@ -47,8 +53,13 @@
 
     const estado = {
         dados: null,
-        filtro: "todas"
+        filtro: "todas",
+        pagina: 1
     };
+
+    function limitePorPagina() {
+        return TELA_COMPUTADOR.matches ? POR_PAGINA_COMPUTADOR : POR_PAGINA_CELULAR;
+    }
 
 
     /*---------------------------------------------------------------
@@ -402,7 +413,53 @@
             return;
         }
 
-        elementos.lista.innerHTML = ocorrencias.map(cartaoOcorrencia).join("");
+        // A API já manda as ocorrências mais novas primeiro.
+        const limite = limitePorPagina();
+        const totalPaginas = Math.max(1, Math.ceil(ocorrencias.length / limite));
+
+        estado.pagina = Math.min(Math.max(1, estado.pagina), totalPaginas);
+
+        const inicio = (estado.pagina - 1) * limite;
+        const daPagina = ocorrencias.slice(inicio, inicio + limite);
+
+        elementos.lista.innerHTML =
+            daPagina.map(cartaoOcorrencia).join("") +
+            (totalPaginas > 1 ? montarPaginacao(inicio, daPagina.length, ocorrencias.length, totalPaginas) : "");
+    }
+
+    function montarPaginacao(inicio, quantidade, total, totalPaginas) {
+        const pagina = estado.pagina;
+
+        return `
+            <nav class="paginacao-pontos" aria-label="Páginas do histórico">
+                <span class="paginacao-informacao">
+                    Exibindo ${inicio + 1}-${inicio + quantidade} de ${total}
+                </span>
+
+                <div class="paginacao-botoes">
+                    <button class="btn-icone" data-pagina="anterior" type="button"
+                        aria-label="Página anterior" ${pagina <= 1 ? "disabled" : ""}>
+                        ${C.icone("voltar", 16)}
+                    </button>
+
+                    <span>Página ${pagina} de ${totalPaginas}</span>
+
+                    <button class="btn-icone" data-pagina="proxima" type="button"
+                        aria-label="Próxima página" ${pagina >= totalPaginas ? "disabled" : ""}>
+                        ${C.icone("direita", 16)}
+                    </button>
+                </div>
+            </nav>
+        `;
+    }
+
+    function irParaPagina(pagina) {
+        estado.pagina = pagina;
+        renderizarHistorico();
+
+        // Volta para o começo do histórico, senão a pessoa fica no fim da página.
+        elementos.lista.closest(".pontos-historico")
+            ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
     function renderizarTudo() {
@@ -473,7 +530,32 @@
         }
 
         estado.filtro = botao.dataset.filtro;
+        estado.pagina = 1;
         renderizarFiltros();
+        renderizarHistorico();
+    });
+
+    elementos.lista.addEventListener("click", (event) => {
+        const botao = event.target.closest("[data-pagina]");
+
+        if (!botao || botao.disabled) {
+            return;
+        }
+
+        irParaPagina(estado.pagina + (botao.dataset.pagina === "proxima" ? 1 : -1));
+    });
+
+    // Girou o celular ou mudou o tamanho da janela: troca 7 por 5 (ou o
+    // contrário) mantendo na tela a ocorrência que estava primeiro.
+    TELA_COMPUTADOR.addEventListener("change", (event) => {
+        if (!estado.dados) {
+            return;
+        }
+
+        const limiteAnterior = event.matches ? POR_PAGINA_CELULAR : POR_PAGINA_COMPUTADOR;
+        const primeiroItem = (estado.pagina - 1) * limiteAnterior;
+
+        estado.pagina = Math.floor(primeiroItem / limitePorPagina()) + 1;
         renderizarHistorico();
     });
 

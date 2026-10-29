@@ -30,8 +30,11 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
     const API_USUARIO_ACOMPANHAMENTO = "/api/me";
     const LOGIN_PAGE_ACOMPANHAMENTO = "/FrontEnd/pages/login/login.html";
 
-    // Monitor grande mostra 4 colunas: 12 cards = 3 linhas cheias. Notebook e celular: 6.
-    const LIMITE_POR_PAGINA = window.matchMedia("(min-width: 1440px)").matches ? 12 : 6;
+    // Computador e notebook: 9 cards (3 linhas de 3). Celular e tablet: 5.
+    // Mesmo ponto de corte do menu lateral (global.css). Vale para cidadão e admin.
+    const TELA_COMPUTADOR = window.matchMedia("(min-width: 1025px)");
+    const POR_PAGINA_COMPUTADOR = 9;
+    const POR_PAGINA_CELULAR = 5;
     const TEMPO_BUSCA = 350;
 
     // PONTE TEMPORÁRIA
@@ -652,9 +655,25 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
 
     ====================================================================================================*/
 
+    function limitePorPagina() {
+        return TELA_COMPUTADOR.matches ? POR_PAGINA_COMPUTADOR : POR_PAGINA_CELULAR;
+    }
+
+    // Girou o celular ou mudou o tamanho da janela: troca 9 por 5 (ou o
+    // contrário) e recarrega mantendo na tela a ocorrência que estava primeiro.
+    function registrarMudancaDeTela() {
+        TELA_COMPUTADOR.addEventListener("change", (event) => {
+            const limiteAnterior = event.matches ? POR_PAGINA_CELULAR : POR_PAGINA_COMPUTADOR;
+            const primeiroItem = (estado.pagina - 1) * limiteAnterior;
+
+            estado.pagina = Math.floor(primeiroItem / limitePorPagina()) + 1;
+            carregarLista();
+        });
+    }
+
     function construirUrlListagem({
         pagina = estado.pagina,
-        limite = LIMITE_POR_PAGINA,
+        limite = limitePorPagina(),
         status = estado.filtroStatus,
         busca = estado.busca
     } = {}) {
@@ -725,13 +744,14 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
             (ocorrencia) => obterChaveStatus(ocorrencia.status) === esperado
         );
 
-        const totalPaginas = Math.max(1, Math.ceil(filtradas.length / LIMITE_POR_PAGINA));
+        const limite = limitePorPagina();
+        const totalPaginas = Math.max(1, Math.ceil(filtradas.length / limite));
         const pagina = Math.min(Math.max(1, estado.pagina), totalPaginas);
 
         return {
             ocorrencias: filtradas.slice(
-                (pagina - 1) * LIMITE_POR_PAGINA,
-                pagina * LIMITE_POR_PAGINA
+                (pagina - 1) * limite,
+                pagina * limite
             ),
             paginacao: {
                 pagina,
@@ -952,7 +972,7 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
 
         containerCards.innerHTML =
             estado.ocorrencias.map((ocorrencia, indice) => montarCard(ocorrencia, indice)).join("") +
-            (estado.totalPaginas > 1 || estado.total > LIMITE_POR_PAGINA
+            (estado.totalPaginas > 1 || estado.total > limitePorPagina()
                 ? `<div class="paginacao">${montarPaginacao()}</div>`
                 : "");
     }
@@ -960,12 +980,13 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
     function montarPaginacao() {
         const pagina = estado.pagina;
         const totalPaginas = estado.totalPaginas;
+        const limite = limitePorPagina();
 
         const inicio = estado.total === 0
             ? 0
-            : ((pagina - 1) * LIMITE_POR_PAGINA) + 1;
+            : ((pagina - 1) * limite) + 1;
 
-        const fim = Math.min(pagina * LIMITE_POR_PAGINA, estado.total);
+        const fim = Math.min(pagina * limite, estado.total);
 
         return `
             <span class="paginacao-informacao">
@@ -2243,6 +2264,7 @@ Este arquivo substitui o adminOcorrencias.js, que pode ser apagado.
         criarAreaToast();
 
         registrarEventosLista();
+        registrarMudancaDeTela();
         registrarFiltros();
         registrarTeclado();
         observarFormulario();

@@ -18,6 +18,16 @@ const {
 } =
     require("./validacoesUsuario");
 
+const {
+    montarEmail,
+    paragrafo,
+    botao,
+    linkReserva,
+    listaItens,
+    notaSeguranca
+} =
+    require("./modeloEmail");
+
 
 function primeiroNome(nome) {
     return String(nome || "").trim().split(/\s+/)[0] || "";
@@ -25,124 +35,90 @@ function primeiroNome(nome) {
 
 function resumoPermissoes(permissoes = []) {
     const nomes = {
-        ocorrencias: "Ocorrências: ver todas e mudar status",
-        avisos: "Avisos: publicar e editar comunicados",
-        equipe: "Equipe: gerenciar administradores"
+        ocorrencias: "<strong>Ocorrências:</strong> ver todas e mudar status",
+        avisos: "<strong>Avisos:</strong> publicar e editar comunicados",
+        equipe: "<strong>Equipe:</strong> gerenciar administradores"
     };
-    const itens = permissoes.filter((chave) => nomes[chave]);
-    return `<p>Seu acesso inclui:</p><ul>${itens.map((chave) => `<li>${nomes[chave]}</li>`).join("")}</ul>`;
+    const itens = permissoes.filter((chave) => nomes[chave]).map((chave) => nomes[chave]);
+    return listaItens("Seu acesso inclui:", itens);
 }
 
-
-function moldura(titulo, conteudo) {
-    return `
-        <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 560px;">
-            <h2 style="color: #2563EB; margin: 0 0 16px;">
-                ${titulo}
-            </h2>
-
-            ${conteudo}
-
-            <hr style="border: none; border-top: 1px solid #ddd; margin: 24px 0 16px;">
-
-            <p style="font-size: 13px; color: #777; margin: 0;">
-                Cidade360 - Prefeitura de Jaborandi-SP
-            </p>
-        </div>
-    `;
+function saudacao(nome, pontuacao = "!") {
+    return paragrafo(`Olá, <strong style="color: #1f2937;">${escaparHtml(primeiroNome(nome))}</strong>${pontuacao}`);
 }
 
 
 async function enviarConviteAdministrador({ nome, email, link, convidadoPor, diasValidade, permissoes = [] }) {
-    const html = moldura(
-        "Convite para administrar o Cidade360",
-        `
-            <p>Olá, ${escaparHtml(primeiroNome(nome))}!</p>
+    const assunto = "Cidade360 - Convite para administrador";
 
-            <p>
-                ${escaparHtml(convidadoPor)} convidou você para ser
-                <strong>administrador(a)</strong> do Cidade360.
-            </p>
-
+    const html = montarEmail({
+        assunto,
+        previa: `${convidadoPor} convidou você para administrar o Cidade360.`,
+        etiqueta: "Convite",
+        titulo: "Você foi convidado(a) para administrar o Cidade360",
+        conteudo: `
+            ${saudacao(nome)}
+            ${paragrafo(`<strong style="color: #1f2937;">${escaparHtml(convidadoPor)}</strong> convidou você para ser <strong style="color: #1f2937;">administrador(a)</strong> do Cidade360.`)}
             ${resumoPermissoes(permissoes)}
-
-            <p style="margin: 24px 0;">
-                <a href="${escaparHtml(link)}"
-                   style="background: #2563EB; color: #ffffff; text-decoration: none; padding: 12px 22px; border-radius: 10px; font-weight: bold; display: inline-block;">
-                    Ativar meu acesso
-                </a>
-            </p>
-
-            <p>
-                O convite vale por <strong>${diasValidade} dias</strong>.
-                Se o botão não funcionar, copie este endereço no navegador:<br>
-                <span style="font-size: 13px; color: #555; word-break: break-all;">${escaparHtml(link)}</span>
-            </p>
-
-            <p>Não esperava este e-mail? É só ignorar. Nada acontece sem você clicar.</p>
+            ${botao("Ativar meu acesso", link)}
+            ${paragrafo(`O convite vale por <strong style="color: #1f2937;">${diasValidade} dias</strong>.`)}
+            ${linkReserva(link)}
+            ${notaSeguranca("Não esperava este e-mail? É só ignorar. Nada acontece sem você clicar no botão.")}
         `
-    );
+    });
 
     return enviarEmail(
         email,
-        "Cidade360 - Convite para administrador",
+        assunto,
         html
     );
 }
 
 
 async function enviarAvisoPromovido({ nome, email, feitoPor, permissoes = [] }) {
-    const html = moldura(
-        "Você agora é administrador(a)",
-        `
-            <p>Olá, ${escaparHtml(primeiroNome(nome))}!</p>
+    const assunto = "Cidade360 - Você agora é administrador(a)";
 
-            <p>
-                ${escaparHtml(feitoPor)} deu a você o acesso de
-                <strong>administrador(a)</strong> do Cidade360.
-            </p>
-
-            <p>
-                Entre com o mesmo e-mail e a mesma senha de sempre.
-                As ocorrências que você abriu como cidadão continuam na sua conta.
-            </p>
-
+    const html = montarEmail({
+        assunto,
+        previa: "Seu acesso de administrador(a) já está ativo.",
+        etiqueta: "Acesso de administrador",
+        titulo: "Você agora é administrador(a)",
+        conteudo: `
+            ${saudacao(nome)}
+            ${paragrafo(`<strong style="color: #1f2937;">${escaparHtml(feitoPor)}</strong> deu a você o acesso de <strong style="color: #1f2937;">administrador(a)</strong> do Cidade360.`)}
+            ${paragrafo("Entre com o mesmo e-mail e a mesma senha de sempre. As ocorrências que você abriu como cidadão continuam na sua conta.")}
             ${resumoPermissoes(permissoes)}
-
-            <p>Se você não reconhece essa mudança, avise a prefeitura.</p>
+            ${notaSeguranca("Não reconhece essa mudança? Avise a prefeitura.")}
         `
-    );
+    });
 
     return enviarEmail(
         email,
-        "Cidade360 - Você agora é administrador(a)",
+        assunto,
         html
     );
 }
 
 
 async function enviarAvisoRemovido({ nome, email, feitoPor }) {
-    const html = moldura(
-        "Seu acesso de administrador foi removido",
+    const assunto = "Cidade360 - Acesso de administrador removido";
+
+    const html = montarEmail({
+        assunto,
+        previa: "Sua conta continua ativa como cidadão.",
+        etiqueta: "Acesso de administrador",
+        titulo: "Seu acesso de administrador foi removido",
+        conteudo: `
+            ${saudacao(nome, ".")}
+            ${paragrafo(`<strong style="color: #1f2937;">${escaparHtml(feitoPor)}</strong> removeu o seu acesso de administrador(a) do Cidade360.`)}
+            ${paragrafo("Sua conta continua ativa como cidadão: você pode entrar com o mesmo e-mail e senha para registrar e acompanhar ocorrências.")}
+            ${notaSeguranca("Não reconhece essa mudança? Avise a prefeitura.")}
         `
-            <p>Olá, ${escaparHtml(primeiroNome(nome))}.</p>
-
-            <p>
-                ${escaparHtml(feitoPor)} removeu o seu acesso de administrador(a) do Cidade360.
-            </p>
-
-            <p>
-                Sua conta continua ativa como cidadão: você pode entrar com o mesmo
-                e-mail e senha para registrar e acompanhar ocorrências.
-            </p>
-
-            <p>Se você não reconhece essa mudança, avise a prefeitura.</p>
-        `
-    );
+    });
 
     return enviarEmail(
         email,
-        "Cidade360 - Acesso de administrador removido",
+        assunto,
         html
     );
 }

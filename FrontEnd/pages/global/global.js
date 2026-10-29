@@ -774,6 +774,7 @@ if (
     const PAGINA_OCORRENCIAS_TOPO = "/FrontEnd/pages/ocorrencia/ocorrencia.html";
     const LOGIN_PAGE_TOPO = "/FrontEnd/pages/login/login.html";
     const PAGINA_AVISOS_TOPO = "/FrontEnd/pages/avisos/avisos.html";
+    const PAGINA_PERFIL_TOPO = "/FrontEnd/pages/perfil/perfil.html";
     const PAGINA_PONTOS_TOPO = "/FrontEnd/pages/pontos/pontos.html";
     const PAGINA_ADMINISTRADORES_TOPO = "/FrontEnd/pages/administradores/administradores.html";
 
@@ -1620,11 +1621,10 @@ if (
             </div>
 
             <div class="lista-opcoes-topo" role="menu">
-                <div class="opcao-topo" role="menuitem" aria-disabled="true">
+                <a class="opcao-topo" role="menuitem" href="${PAGINA_PERFIL_TOPO}">
                     ${ICONES.usuario}
                     <span>Meu perfil</span>
-                    <small class="em-breve">Em breve</small>
-                </div>
+                </a>
 
                 ${admin ? `
                 ${temPermissao("ocorrencias") ? `

@@ -164,9 +164,11 @@
     gap: 18px;
 }
 
+/* Monitor grande: no máximo 3 colunas, para os 9 cards da página
+   formarem 3 linhas cheias (com 4 colunas sobraria 1 card sozinho). */
 @media (min-width: 1440px) {
     .grade-ocorrencias {
-        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 
