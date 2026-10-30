@@ -66,14 +66,26 @@
         contagem: document.getElementById("contagemAdmins"),
         filtros: document.getElementById("filtrosAdmins"),
         lista: document.getElementById("listaAdmins"),
+        paginacao: document.getElementById("paginacaoAdmins"),
         regras: document.getElementById("regrasAdmins"),
         historico: document.getElementById("historicoAdmins")
     };
 
+    // Lista paginada: 7 por página no computador/notebook e 5 no
+    // celular/tablet. Mesmo padrão e ponto de corte de "Meus pontos".
+    const TELA_COMPUTADOR = window.matchMedia("(min-width: 1025px)");
+    const POR_PAGINA_COMPUTADOR = 7;
+    const POR_PAGINA_CELULAR = 5;
+
     const estado = {
         dados: null,
-        filtro: "todos"
+        filtro: "todos",
+        pagina: 1
     };
+
+    function limitePorPagina() {
+        return TELA_COMPUTADOR.matches ? POR_PAGINA_COMPUTADOR : POR_PAGINA_CELULAR;
+    }
 
 
     /*---------------------------------------------------------------
@@ -431,6 +443,8 @@
     function renderizarLista() {
         const itens = itensDoFiltro();
 
+        elementos.paginacao.innerHTML = "";
+
         if (itens.length === 0) {
             elementos.lista.innerHTML = `
                 <li class="vazio-admins">
@@ -440,9 +454,57 @@
             return;
         }
 
-        elementos.lista.innerHTML = itens
+        const limite = limitePorPagina();
+        const totalPaginas = Math.max(1, Math.ceil(itens.length / limite));
+
+        // Se alguém foi removido e a última página ficou vazia, volta uma.
+        estado.pagina = Math.min(Math.max(1, estado.pagina), totalPaginas);
+
+        const inicio = (estado.pagina - 1) * limite;
+        const daPagina = itens.slice(inicio, inicio + limite);
+
+        elementos.lista.innerHTML = daPagina
             .map((item) => item.tipo === "admin" ? linhaAdministrador(item) : linhaConvite(item))
             .join("");
+
+        if (totalPaginas > 1) {
+            elementos.paginacao.innerHTML = montarPaginacao(inicio, daPagina.length, itens.length, totalPaginas);
+        }
+    }
+
+    function montarPaginacao(inicio, quantidade, total, totalPaginas) {
+        const pagina = estado.pagina;
+
+        return `
+            <nav class="paginacao-admins" aria-label="Páginas da equipe">
+                <span class="paginacao-informacao">
+                    Exibindo ${inicio + 1}-${inicio + quantidade} de ${total}
+                </span>
+
+                <div class="paginacao-botoes">
+                    <button class="btn-icone" data-pagina="anterior" type="button"
+                        aria-label="Página anterior" ${pagina <= 1 ? "disabled" : ""}>
+                        ${C.icone("voltar", 16)}
+                    </button>
+
+                    <span>Página ${pagina} de ${totalPaginas}</span>
+
+                    <button class="btn-icone" data-pagina="proxima" type="button"
+                        aria-label="Próxima página" ${pagina >= totalPaginas ? "disabled" : ""}>
+                        ${C.icone("direita", 16)}
+                    </button>
+                </div>
+            </nav>
+        `;
+    }
+
+    function irParaPagina(pagina) {
+        estado.pagina = pagina;
+        renderizarLista();
+
+        // Volta para o começo da lista, senão a pessoa fica no fim da página.
+        elementos.lista.closest("section")
+            ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
 
@@ -1491,7 +1553,32 @@
         }
 
         estado.filtro = botao.dataset.filtro;
+        estado.pagina = 1;
         renderizarFiltros();
+        renderizarLista();
+    });
+
+    elementos.paginacao.addEventListener("click", (event) => {
+        const botao = event.target.closest("[data-pagina]");
+
+        if (!botao || botao.disabled) {
+            return;
+        }
+
+        irParaPagina(estado.pagina + (botao.dataset.pagina === "proxima" ? 1 : -1));
+    });
+
+    // Girou o celular ou mudou o tamanho da janela: troca 7 por 5 (ou o
+    // contrário) mantendo na tela quem estava primeiro.
+    TELA_COMPUTADOR.addEventListener("change", (event) => {
+        if (!estado.dados) {
+            return;
+        }
+
+        const limiteAnterior = event.matches ? POR_PAGINA_CELULAR : POR_PAGINA_COMPUTADOR;
+        const primeiroItem = (estado.pagina - 1) * limiteAnterior;
+
+        estado.pagina = Math.floor(primeiroItem / limitePorPagina()) + 1;
         renderizarLista();
     });
 

@@ -35,6 +35,9 @@ const RAIO_OCORRENCIAS_PROXIMAS_KM = 5;
 // Ocorrência resolvida fica no mapa por esse tempo depois da resolução e depois sai
 // (o servidor aplica a mesma regra em /api/ocorrencias-proximas).
 const DIAS_RESOLVIDA_NO_MAPA = 7;
+
+// No celular o balão do pino fica maior que o mapa: lá os detalhes abrem num modal.
+const TELA_CELULAR_PAINEL = window.matchMedia("(max-width: 640px), (max-height: 500px)");
 const UM_DIA_MS = 24 * 60 * 60 * 1000;
 
 const { icone: iconePainel, iconeCategoria, chaveStatus, STATUS, pilula, PINO, tempoRelativo } =
@@ -1338,19 +1341,23 @@ function adicionarMarcadorOcorrenciaPainel(ocorrencia, tipo, indice = 0) {
         riseOnHover: true
     });
 
-    marcador.bindPopup(() => htmlBalaoPainel(ocorrencia, tipo), {
-        className: "balao-mapa",
-        maxWidth: 270,
-        autoPanPadding: [24, 24]
-    });
+    const marcarPino = (aberto) => {
+        marcador.getElement()?.querySelector(".pino")?.classList.toggle("aberto", aberto);
+    };
 
-    marcador.on("popupopen", () => {
-        marcador.getElement()?.querySelector(".pino")?.classList.add("aberto");
-    });
+    // Em tela cheia o modal ficaria por trás do mapa, então lá continua o balão.
+    if (TELA_CELULAR_PAINEL.matches && !document.fullscreenElement) {
+        marcador.on("click", () => abrirDetalheMapaPainel(ocorrencia, tipo, marcarPino));
+    } else {
+        marcador.bindPopup(() => htmlBalaoPainel(ocorrencia, tipo), {
+            className: "balao-mapa",
+            maxWidth: 270,
+            autoPanPadding: [24, 24]
+        });
 
-    marcador.on("popupclose", () => {
-        marcador.getElement()?.querySelector(".pino")?.classList.remove("aberto");
-    });
+        marcador.on("popupopen", () => marcarPino(true));
+        marcador.on("popupclose", () => marcarPino(false));
+    }
 
     marcador.addTo(ehMinha ? estadoPainel.camadaMinhas : estadoPainel.camadaProximas);
 
@@ -1398,6 +1405,61 @@ function htmlBalaoPainel(ocorrencia, tipo) {
             ${ehMinha ? "" : `<span class="privacidade">${iconePainel("cadeado", 12)} Por privacidade, os dados de quem registrou não são exibidos.</span>`}
         </div>
     `;
+}
+
+
+/*
+ * Celular: os detalhes do pino abrem num modal no meio da tela, com letra maior.
+ * Moldura na cor do status e o mesmo conteúdo do balão num cartão branco por dentro.
+ * Fecha no X, tocando fora ou com Esc.
+ */
+function abrirDetalheMapaPainel(ocorrencia, tipo, marcarPino) {
+    fecharDetalheMapaPainel();
+
+    const chave = chaveStatusPainel(ocorrencia.status);
+    const modal = document.createElement("div");
+    modal.id = "modalDetalheMapaPainel";
+    modal.innerHTML = `
+        <div class="fundo" data-fechar-detalhe-mapa></div>
+
+        <div class="dialogo detalhe-mapa st" data-st="${chave}" role="dialog" aria-modal="true" aria-label="Detalhes da ocorrência">
+            <div class="faixa-detalhe-mapa">
+                <span>${iconePainel(STATUS[chave].icone, 20)} ${STATUS[chave].nome}</span>
+                <button class="fechar-dialogo" type="button" aria-label="Fechar" data-fechar-detalhe-mapa>${iconePainel("x", 18)}</button>
+            </div>
+
+            <div class="cartao-detalhe-mapa">
+                ${htmlBalaoPainel(ocorrencia, tipo)}
+            </div>
+        </div>
+    `;
+
+    modal.querySelectorAll("[data-fechar-detalhe-mapa]").forEach((elemento) => {
+        elemento.addEventListener("click", fecharDetalheMapaPainel);
+    });
+
+    estadoPainel.fecharPinoAberto = () => marcarPino(false);
+    marcarPino(true);
+
+    document.body.appendChild(modal);
+    document.body.classList.add("dialogo-aberto");
+
+    modal.querySelector(".fechar-dialogo")?.focus();
+}
+
+
+function fecharDetalheMapaPainel() {
+    const modal = document.getElementById("modalDetalheMapaPainel");
+
+    if (!modal) {
+        return;
+    }
+
+    modal.remove();
+    document.body.classList.remove("dialogo-aberto");
+
+    estadoPainel.fecharPinoAberto?.();
+    estadoPainel.fecharPinoAberto = null;
 }
 
 
@@ -1489,6 +1551,12 @@ async function abrirMapaCompletoPainel() {
 
 document.addEventListener("fullscreenchange", () => {
     setTimeout(() => estadoPainel.mapa?.invalidateSize(), 150);
+
+    // No celular: em tela cheia os pinos usam o balão; fora dela, o modal.
+    if (TELA_CELULAR_PAINEL.matches) {
+        estadoPainel.mapa?.closePopup();
+        renderizarMarcadoresMapaPainel();
+    }
 });
 
 
@@ -1527,6 +1595,17 @@ function registrarEventosPainel() {
         if (event.key === "Escape" && document.getElementById("modalTodasCategoriasPainel")) {
             fecharTodasCategoriasPainel();
         }
+
+        if (event.key === "Escape") {
+            fecharDetalheMapaPainel();
+        }
+    });
+
+    // Girou o celular ou mudou o tamanho da janela: refaz os pinos (balão ou modal).
+    TELA_CELULAR_PAINEL.addEventListener("change", () => {
+        fecharDetalheMapaPainel();
+        estadoPainel.mapa?.closePopup();
+        renderizarMarcadoresMapaPainel();
     });
 
     // O mapa claro/escuro muda só via CSS; aqui só recalculamos o tamanho.

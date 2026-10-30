@@ -230,6 +230,31 @@ O menu lateral, o topo, as cores (claro/escuro), os botões, o .dialogo e o .toa
     padding: 0;
 }
 
+/* Paginação (mesmo visual de Meus pontos) */
+.paginacao-admins {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    padding-top: 14px;
+
+    color: var(--muted);
+    font-size: 13.5px;
+}
+
+.paginacao-admins .paginacao-botoes {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.paginacao-admins .btn-icone[disabled] {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
 .linha-admin {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto auto;
