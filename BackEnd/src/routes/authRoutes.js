@@ -43,7 +43,7 @@ ROTAS DE RECUPERAÇÃO DE SENHA
 
 router.post(
     "/recuperar-senha/enviar-codigo",
-    limiteTentativas.solicitarCodigo,
+    limiteTentativas.recuperarSenhaCpf,
     AuthController.enviarCodigoRecuperacaoSenha
 );
 

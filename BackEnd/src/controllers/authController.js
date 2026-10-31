@@ -543,6 +543,132 @@ function gerarHashTokenVerificacaoEmail(
 
 /*========================================================================================================
 
+RECUPERAÇÃO DE SENHA PELO CPF
+
+A conta é encontrada pelo CPF (só existe uma conta por CPF) e o código vai
+para o email cadastrado nela. A tela mostra o email mascarado (ex.: he***@gmail.com).
+
+Ainda aceita "email" no corpo, para quem estiver com a página antiga em cache.
+
+=========================================================================================================*/
+
+const MAX_ERROS_CODIGO_RECUPERACAO = 5;
+
+/*
+ * Erros de código por usuário (fica na memória do servidor).
+ * Depois de 5 erros o código é cancelado e a pessoa precisa pedir outro.
+ * Se o servidor reiniciar, a contagem zera: tudo bem, o código expira em 15 minutos.
+ */
+const errosCodigoRecuperacao = new Map();
+
+function lerIdentificacaoRecuperacao(corpo) {
+    const cpf =
+        apenasNumeros(
+            corpo?.cpf
+        );
+
+    if (cpf) {
+        if (!validarCpf(cpf)) {
+            return {
+                erro: "Digite um CPF válido para continuar."
+            };
+        }
+
+        return {
+            coluna: "cpf",
+            valor: cpf
+        };
+    }
+
+    const email =
+        normalizarEmail(
+            corpo?.email
+        );
+
+    if (validarEmail(email)) {
+        return {
+            coluna: "email",
+            valor: email
+        };
+    }
+
+    return {
+        erro: "Informe o CPF da sua conta para continuar."
+    };
+}
+
+function buscarUsuarioRecuperacao(identificacao) {
+    if (identificacao.coluna === "cpf") {
+        return UsuarioModel.buscarPorCpf(
+            identificacao.valor
+        );
+    }
+
+    return UsuarioModel.buscarPorEmail(
+        identificacao.valor
+    );
+}
+
+function usuarioInativo(usuario) {
+    return (
+        !usuario ||
+        usuario.ativo === 0 ||
+        usuario.ativo === false
+    );
+}
+
+/*
+ * henriquesantanamiguel@gmail.com -> he*****@gmail.com
+ * Sempre 5 asteriscos, para não entregar o tamanho do email.
+ */
+function mascararEmail(email) {
+    const [usuario, dominio] =
+        String(email || "")
+            .split("@");
+
+    if (!usuario || !dominio) {
+        return "";
+    }
+
+    const visivel =
+        usuario.length <= 2
+            ? usuario.slice(0, 1)
+            : usuario.slice(0, 2);
+
+    return `${visivel}*****@${dominio}`;
+}
+
+/*
+ * Conta um erro de código. Devolve true quando chegou no limite
+ * (e já cancela o código).
+ */
+async function registrarErroCodigoRecuperacao(usuarioId) {
+    const erros =
+        (errosCodigoRecuperacao.get(usuarioId) || 0) + 1;
+
+    if (erros < MAX_ERROS_CODIGO_RECUPERACAO) {
+        errosCodigoRecuperacao.set(usuarioId, erros);
+        return false;
+    }
+
+    errosCodigoRecuperacao.delete(usuarioId);
+
+    await invalidarCodigosAnteriores(
+        usuarioId
+    );
+
+    return true;
+}
+
+const MENSAGEM_CODIGO_BLOQUEADO =
+    "Você errou o código 5 vezes. Por segurança, ele foi cancelado. Volte e peça um novo código.";
+
+const MENSAGEM_CODIGO_INVALIDO =
+    "Código inválido ou expirado. Solicite um novo código, se necessário.";
+
+
+/*========================================================================================================
+
 CONTROLLER
 
 =========================================================================================================*/
@@ -1868,14 +1994,14 @@ const AuthController = {
 
         try {
 
-            const email =
-                normalizarEmail(
-                    req.body?.email
+            const identificacao =
+                lerIdentificacaoRecuperacao(
+                    req.body
                 );
 
 
             if (
-                !validarEmail(email)
+                identificacao.erro
             ) {
 
                 return res
@@ -1885,50 +2011,52 @@ const AuthController = {
                         sucesso: false,
 
                         mensagem:
-                            "Digite um email válido para receber o código."
+                            identificacao.erro
                     });
             }
 
 
             const usuario =
-                await UsuarioModel
-                    .buscarPorEmail(
-                        email
-                    );
+                await buscarUsuarioRecuperacao(
+                    identificacao
+                );
 
 
             /*
-             * Mesma resposta sendo conta existente
-             * ou inexistente.
+             * Decisão do Miguel (31/10/2026): CPF não cadastrado não avança.
+             * A tela fica no CPF com a mensagem abaixo.
+             * Quem tenta "chutar" CPFs é barrado pelo limite de tentativas da rota.
              */
-            const respostaGenerica = {
+            if (
+                usuarioInativo(usuario)
+            ) {
+
+                return res
+                    .status(404)
+                    .json({
+
+                        sucesso: false,
+
+                        mensagem:
+                            identificacao.coluna === "cpf"
+                                ? "CPF não encontrado. Confira os números ou crie uma conta."
+                                : "Email não encontrado. Confira o email ou crie uma conta."
+                    });
+            }
+
+
+            const respostaSucesso = {
 
                 sucesso: true,
 
                 mensagem:
-                    "Se existir uma conta vinculada a este email, enviaremos um código de recuperação."
+                    "Código de recuperação enviado para o email cadastrado.",
+
+                emailMascarado:
+                    mascararEmail(
+                        usuario.email
+                    )
             };
-
-
-            /*
-             * Não informa que a conta não existe.
-             */
-            if (
-
-                !usuario ||
-
-                usuario.ativo === 0 ||
-
-                usuario.ativo === false
-
-            ) {
-
-                return res
-                    .status(200)
-                    .json(
-                        respostaGenerica
-                    );
-            }
 
 
             /*============================================================================================
@@ -1960,6 +2088,11 @@ const AuthController = {
 
 
             await invalidarCodigosAnteriores(
+                usuario.id
+            );
+
+
+            errosCodigoRecuperacao.delete(
                 usuario.id
             );
 
@@ -1997,7 +2130,7 @@ const AuthController = {
             return res
                 .status(200)
                 .json(
-                    respostaGenerica
+                    respostaSucesso
                 );
 
 
@@ -2040,9 +2173,9 @@ const AuthController = {
 
         try {
 
-            const email =
-                normalizarEmail(
-                    req.body?.email
+            const identificacao =
+                lerIdentificacaoRecuperacao(
+                    req.body
                 );
 
 
@@ -2054,7 +2187,7 @@ const AuthController = {
 
 
             if (
-                !validarEmail(email)
+                identificacao.erro
             ) {
 
                 return res
@@ -2064,7 +2197,7 @@ const AuthController = {
                         sucesso: false,
 
                         mensagem:
-                            "Digite um email válido para continuar."
+                            identificacao.erro
                     });
             }
 
@@ -2088,10 +2221,9 @@ const AuthController = {
 
 
             const usuario =
-                await UsuarioModel
-                    .buscarPorEmail(
-                        email
-                    );
+                await buscarUsuarioRecuperacao(
+                    identificacao
+                );
 
 
             if (
@@ -2152,14 +2284,25 @@ const AuthController = {
                 !codigoCorreto
             ) {
 
+                const bloqueou =
+                    await registrarErroCodigoRecuperacao(
+                        usuario.id
+                    );
+
+
                 return res
                     .status(400)
                     .json({
 
                         sucesso: false,
 
+                        codigoCancelado:
+                            bloqueou,
+
                         mensagem:
-                            "Código inválido ou expirado. Solicite um novo código, se necessário."
+                            bloqueou
+                                ? MENSAGEM_CODIGO_BLOQUEADO
+                                : MENSAGEM_CODIGO_INVALIDO
                     });
             }
 
@@ -2222,9 +2365,9 @@ const AuthController = {
 
         try {
 
-            const email =
-                normalizarEmail(
-                    req.body?.email
+            const identificacao =
+                lerIdentificacaoRecuperacao(
+                    req.body
                 );
 
 
@@ -2242,12 +2385,12 @@ const AuthController = {
 
 
             /*============================================================================================
-            EMAIL
+            CPF (ou email, na página antiga)
             ============================================================================================*/
 
 
             if (
-                !validarEmail(email)
+                identificacao.erro
             ) {
 
                 return res
@@ -2257,7 +2400,7 @@ const AuthController = {
                         sucesso: false,
 
                         mensagem:
-                            "Digite um email válido para continuar."
+                            identificacao.erro
                     });
             }
 
@@ -2339,20 +2482,22 @@ const AuthController = {
 
                         id,
 
+                        email,
+
                         senha_hash,
 
                         ativo
 
                     FROM usuarios
 
-                    WHERE email = ?
+                    WHERE ${identificacao.coluna === "cpf" ? "cpf" : "email"} = ?
 
                     LIMIT 1
 
                     FOR UPDATE
                     `,
                     [
-                        email
+                        identificacao.valor
                     ]
                 );
 
@@ -2468,14 +2613,25 @@ const AuthController = {
                 await conexao.rollback();
 
 
+                const bloqueou =
+                    await registrarErroCodigoRecuperacao(
+                        usuario.id
+                    );
+
+
                 return res
                     .status(400)
                     .json({
 
                         sucesso: false,
 
+                        codigoCancelado:
+                            bloqueou,
+
                         mensagem:
-                            "Código inválido ou expirado. Solicite um novo código, se necessário."
+                            bloqueou
+                                ? MENSAGEM_CODIGO_BLOQUEADO
+                                : MENSAGEM_CODIGO_INVALIDO
                     });
             }
 
@@ -2587,6 +2743,11 @@ const AuthController = {
             await conexao.commit();
 
 
+            errosCodigoRecuperacao.delete(
+                usuario.id
+            );
+
+
             return res
                 .status(200)
                 .json({
@@ -2594,7 +2755,11 @@ const AuthController = {
                     sucesso: true,
 
                     mensagem:
-                        "Senha redefinida com sucesso. Você já pode acessar sua conta."
+                        "Senha redefinida com sucesso. Você já pode acessar sua conta.",
+
+                    // A pessoa já provou que tem acesso ao email: pode preencher o login
+                    email:
+                        usuario.email
                 });
 
 

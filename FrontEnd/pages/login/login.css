@@ -559,6 +559,14 @@ button {
     word-break: break-all;
 }
 
+/* Recuperação pelo CPF: dica menor embaixo do email mascarado */
+.codigo-ajuda-suave {
+    margin-top: -4px;
+    font-size: 12px;
+    line-height: 1.5;
+    opacity: .85;
+}
+
 
 /*========================================================================================================
 

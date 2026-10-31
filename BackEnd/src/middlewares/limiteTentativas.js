@@ -18,6 +18,8 @@ function criarLimite(tentativas) {
 module.exports = {
     login: criarLimite(30),
     solicitarCodigo: criarLimite(20),
+    // Recuperar senha pelo CPF: barra quem tenta "chutar" CPFs para descobrir quem tem conta
+    recuperarSenhaCpf: criarLimite(5),
     confirmarCodigo: criarLimite(30),
     acaoAdmin: criarLimite(30),
     // Meu perfil: tentar adivinhar a senha atual pela troca de senha

@@ -1,9 +1,9 @@
 /*========================================================================================================
 
-RECUPERAÇÃO DE SENHA - VERSÃO 1 COM ETAPAS
+RECUPERAÇÃO DE SENHA - VERSÃO 2 (PELO CPF)
 
 Etapas:
-1. Email
+1. CPF (o código vai para o email cadastrado na conta)
 2. Código
 3. Nova senha
 
@@ -13,10 +13,11 @@ const linkEsqueciSenha = document.getElementById("linkEsqueciSenha");
 
 let etapaRecuperacaoSenha = 1;
 
-const NOMES_ETAPAS_RECUPERACAO = ["Email", "Código", "Senha"];
+const NOMES_ETAPAS_RECUPERACAO = ["CPF", "Código", "Senha"];
 
 const dadosRecuperacaoSenha = {
-    email: "",
+    cpf: "",
+    emailMascarado: "",
     codigo: "",
     novaSenha: "",
     confirmarNovaSenha: ""
@@ -54,11 +55,6 @@ function entrarModoRecuperarSenha() {
 
         limparDadosRecuperacaoSenha();
 
-        // Aproveita o email que já estava digitado no login
-        if (validarEmailLogin(emailInput.value)) {
-            dadosRecuperacaoSenha.email = emailInput.value.trim().toLowerCase();
-        }
-
         limparMensagemGeral();
 
         limparErroCampo(emailInput);
@@ -83,17 +79,16 @@ function renderizarEtapaRecuperacaoSenha() {
 
     if (etapaRecuperacaoSenha === 1) {
         tituloFormulario.textContent = "Recuperar Senha";
-        subtituloFormulario.textContent = "Informe o email cadastrado para receber um código.";
+        subtituloFormulario.textContent = "Informe o CPF da sua conta. O código vai para o email cadastrado.";
 
         camposCadastro.innerHTML = campoHTML({
-            id: "emailRecuperacao",
-            rotulo: "Email cadastrado",
-            icone: "email",
-            tipo: "email",
-            placeholder: "Digite o email da sua conta",
-            max: 254,
-            valor: dadosRecuperacaoSenha.email,
-            extra: 'autocomplete="email"'
+            id: "cpfRecuperacao",
+            rotulo: "CPF",
+            icone: "cpf",
+            placeholder: "000.000.000-00",
+            max: 14,
+            valor: formatarCpfRecuperacao(dadosRecuperacaoSenha.cpf),
+            extra: 'inputmode="numeric" autocomplete="off"'
         });
 
         rotuloBotaoPrincipal("Enviar código");
@@ -101,7 +96,7 @@ function renderizarEtapaRecuperacaoSenha() {
 
     if (etapaRecuperacaoSenha === 2) {
         tituloFormulario.textContent = "Código de Segurança";
-        subtituloFormulario.textContent = "Digite o código enviado para seu email.";
+        subtituloFormulario.textContent = "Digite o código enviado para o email da sua conta.";
 
         camposCadastro.innerHTML = `
             <div class="caixa-input codigo-seguranca">
@@ -117,7 +112,12 @@ function renderizarEtapaRecuperacaoSenha() {
             </div>
 
             <p class="codigo-ajuda">
-                Enviado para <b>${escaparTextoLogin(dadosRecuperacaoSenha.email)}</b>
+                Código enviado para o email cadastrado:<br>
+                <b>${escaparTextoLogin(dadosRecuperacaoSenha.emailMascarado)}</b>
+            </p>
+
+            <p class="codigo-ajuda codigo-ajuda-suave">
+                Não chegou? Olhe a caixa de spam. Se não tem mais acesso a esse email, procure a Prefeitura.
             </p>
         `;
 
@@ -174,6 +174,10 @@ function adicionarEventosRecuperacaoSenha() {
                 input.value = input.value.replace(/\D/g, "").slice(0, 6);
             }
 
+            if (input.id === "cpfRecuperacao") {
+                input.value = formatarCpfRecuperacao(input.value);
+            }
+
             salvarDadosRecuperacaoSenha();
 
             limparErroCampo(input);
@@ -189,13 +193,13 @@ SALVAR DADOS DA RECUPERAÇÃO
 =========================================================================================================*/
 
 function salvarDadosRecuperacaoSenha() {
-    const emailRecuperacao = document.getElementById("emailRecuperacao");
+    const cpfRecuperacao = document.getElementById("cpfRecuperacao");
     const codigoRecuperacao = document.getElementById("codigoRecuperacao");
     const novaSenhaRecuperacao = document.getElementById("novaSenhaRecuperacao");
     const confirmarNovaSenhaRecuperacao = document.getElementById("confirmarNovaSenhaRecuperacao");
 
-    if (emailRecuperacao) {
-        dadosRecuperacaoSenha.email = emailRecuperacao.value.trim().toLowerCase();
+    if (cpfRecuperacao) {
+        dadosRecuperacaoSenha.cpf = cpfRecuperacao.value.replace(/\D/g, "").slice(0, 11);
     }
 
     if (codigoRecuperacao) {
@@ -259,22 +263,22 @@ function voltarEtapaRecuperacaoSenha() {
 
 /*========================================================================================================
 
-ENVIAR CÓDIGO PARA EMAIL
+ENVIAR CÓDIGO (BUSCA A CONTA PELO CPF)
 
 =========================================================================================================*/
 
 async function enviarCodigoRecuperacao() {
-    const emailRecuperacao = document.getElementById("emailRecuperacao");
+    const cpfRecuperacao = document.getElementById("cpfRecuperacao");
 
-    limparErroCampo(emailRecuperacao);
+    limparErroCampo(cpfRecuperacao);
 
-    if (!dadosRecuperacaoSenha.email) {
-        mostrarErroCampo(emailRecuperacao, "Informe o email cadastrado na sua conta.");
+    if (!dadosRecuperacaoSenha.cpf) {
+        mostrarErroCampo(cpfRecuperacao, "Informe o CPF da sua conta.");
         return;
     }
 
-    if (!validarEmailLogin(dadosRecuperacaoSenha.email)) {
-        mostrarErroCampo(emailRecuperacao, "Digite um email válido, como nome@exemplo.com.");
+    if (!cpfValidoRecuperacao(dadosRecuperacaoSenha.cpf)) {
+        mostrarErroCampo(cpfRecuperacao, "Digite um CPF válido, com os 11 números.");
         return;
     }
 
@@ -287,13 +291,22 @@ async function enviarCodigoRecuperacao() {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                email: dadosRecuperacaoSenha.email
+                cpf: dadosRecuperacaoSenha.cpf
             })
         });
 
         const dados = await lerRespostaJson(resposta);
 
         if (!resposta.ok || !dados.sucesso) {
+            // CPF inválido ou não encontrado: a tela fica presa no CPF, com o erro embaixo do campo
+            if (resposta.status === 400 || resposta.status === 404) {
+                mostrarErroCampo(
+                    cpfRecuperacao,
+                    dados.mensagem || "CPF não encontrado. Confira os números ou crie uma conta."
+                );
+                return;
+            }
+
             mostrarMensagem(
                 dados.mensagem || "Não foi possível enviar o código de recuperação no momento.",
                 "erro"
@@ -301,13 +314,16 @@ async function enviarCodigoRecuperacao() {
             return;
         }
 
+        dadosRecuperacaoSenha.emailMascarado = dados.emailMascarado || "o email da sua conta";
+        dadosRecuperacaoSenha.codigo = "";
+
         trocarTela(() => {
             etapaRecuperacaoSenha = 2;
 
             renderizarEtapaRecuperacaoSenha();
 
             mostrarMensagem(
-                dados.mensagem || "Enviamos um código de recuperação para o email informado.",
+                dados.mensagem || "Código de recuperação enviado para o email cadastrado.",
                 "sucesso"
             );
         });
@@ -344,7 +360,7 @@ async function validarCodigoEIrParaSenha() {
     salvarDadosRecuperacaoSenha();
 
     if (!dadosRecuperacaoSenha.codigo) {
-        mostrarErroCampo(codigoRecuperacao, "Digite o código enviado para seu email.");
+        mostrarErroCampo(codigoRecuperacao, "Digite o código enviado para o email da sua conta.");
         return;
     }
 
@@ -362,7 +378,7 @@ async function validarCodigoEIrParaSenha() {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                email: dadosRecuperacaoSenha.email,
+                cpf: dadosRecuperacaoSenha.cpf,
                 codigo: dadosRecuperacaoSenha.codigo
             })
         });
@@ -449,7 +465,7 @@ async function redefinirSenha() {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                email: dadosRecuperacaoSenha.email,
+                cpf: dadosRecuperacaoSenha.cpf,
                 codigo: dadosRecuperacaoSenha.codigo,
                 novaSenha: dadosRecuperacaoSenha.novaSenha
             })
@@ -472,7 +488,8 @@ async function redefinirSenha() {
             "sucesso"
         );
 
-        const emailConta = dadosRecuperacaoSenha.email;
+        // O servidor devolve o email da conta só depois que o código foi confirmado
+        const emailConta = dados.email || "";
 
         setTimeout(() => {
             voltarModoLogin();
@@ -480,7 +497,7 @@ async function redefinirSenha() {
             setTimeout(() => {
                 emailInput.value = emailConta;
                 passwordInput.value = "";
-                passwordInput.focus();
+                (emailConta ? passwordInput : emailInput).focus();
             }, 300);
         }, 1200);
 
@@ -510,7 +527,8 @@ LIMPAR DADOS
 =========================================================================================================*/
 
 function limparDadosRecuperacaoSenha() {
-    dadosRecuperacaoSenha.email = "";
+    dadosRecuperacaoSenha.cpf = "";
+    dadosRecuperacaoSenha.emailMascarado = "";
     dadosRecuperacaoSenha.codigo = "";
     dadosRecuperacaoSenha.novaSenha = "";
     dadosRecuperacaoSenha.confirmarNovaSenha = "";
@@ -525,7 +543,7 @@ VALIDAR SENHA
 function validarSenhaRecuperacao(senha) {
     if (typeof validarSenhaForte === "function") {
         return validarSenhaForte(senha, {
-            email: dadosRecuperacaoSenha.email
+            cpf: dadosRecuperacaoSenha.cpf
         });
     }
 
@@ -556,4 +574,33 @@ function validarSenhaRecuperacao(senha) {
     }
 
     return { valido: true };
+}
+
+/*========================================================================================================
+
+CPF: MÁSCARA E VALIDAÇÃO
+
+Usa as funções do cadastro.js quando existem, para não ter duas regras diferentes.
+
+=========================================================================================================*/
+
+function formatarCpfRecuperacao(valor) {
+    const numeros = String(valor || "").replace(/\D/g, "").slice(0, 11);
+
+    if (typeof formatarCPF === "function") {
+        return formatarCPF(numeros);
+    }
+
+    return numeros
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+}
+
+function cpfValidoRecuperacao(cpf) {
+    if (typeof validarCPF === "function") {
+        return validarCPF(cpf);
+    }
+
+    return /^\d{11}$/.test(String(cpf || ""));
 }
