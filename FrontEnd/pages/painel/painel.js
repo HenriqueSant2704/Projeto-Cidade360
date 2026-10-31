@@ -28,7 +28,11 @@ const PAGINA_PONTOS_PAINEL = "/FrontEnd/pages/pontos/pontos.html";
 const API_PONTOS_PAINEL = "/api/pontos/resumo";
 
 const LIMITE_OCORRENCIAS_PAINEL = 50;
-const LIMITE_RECENTES_PAINEL = 5;
+// Ocorrências recentes da cidade: 7 no computador, 5 no celular/tablet (sem paginação).
+// Mesmo corte de tela do menu lateral e das paginações do sistema.
+const LIMITE_RECENTES_COMPUTADOR_PAINEL = 7;
+const LIMITE_RECENTES_CELULAR_PAINEL = 5;
+const TELA_COMPUTADOR_PAINEL = window.matchMedia("(min-width: 1025px)");
 const LIMITE_AVISOS_PAINEL = 5;
 const LIMITE_CATEGORIAS_PAINEL = 6;
 const RAIO_OCORRENCIAS_PROXIMAS_KM = 5;
@@ -55,7 +59,10 @@ const estadoPainel = {
     resumo: null,
     // Cidadão: { saldo, titulo, proximo_titulo } de /api/pontos/resumo
     pontos: null,
+    // Ocorrências do próprio usuário (cidadão) ou do município (admin): usadas no mapa
     ocorrencias: [],
+    // Cidadão: últimas ocorrências da cidade toda, de /api/estatisticas-painel/recentes
+    ocorrenciasRecentes: [],
     ocorrenciasProximas: [],
     categoriasGerais: [],
     avisos: [],
@@ -391,10 +398,15 @@ function ajustarTextosPainel() {
             : "Ocorrências perto de você";
     }
 
+    // A lista mostra as últimas ocorrências da cidade toda (não só as do usuário)
     if (tituloRecentesPainel) {
-        tituloRecentesPainel.textContent = admin
-            ? "Ocorrências recentes"
-            : "Minhas ocorrências recentes";
+        tituloRecentesPainel.textContent = "Ocorrências recentes";
+    }
+
+    // Para o cidadão, "Ver todas" levaria só às ocorrências dele, então o link sai daqui.
+    // As dele continuam no botão "Minhas ocorrências" e nas ações rápidas.
+    if (btnVerTodasOcorrenciasPainel && !admin) {
+        btnVerTodasOcorrenciasPainel.remove();
     }
 
     // Ícones dos links e do botão de tela cheia
@@ -416,11 +428,13 @@ RESUMO
 
 =========================================================================================================*/
 
+// Cidadão: números da cidade toda, sem canceladas (/api/estatisticas-painel/resumo).
+// Admin: resumo do município com canceladas, usado também na taxa de resolução.
 async function carregarResumoPainel() {
     const resposta = await fetchAutenticadoPainel(
         ehAdministradorPainel()
             ? `${API_URL_PAINEL}/ocorrencias/admin/resumo`
-            : `${API_URL_PAINEL}/ocorrencias/resumo`,
+            : `${API_ESTATISTICAS_PAINEL}/resumo`,
         { method: "GET" }
     );
 
@@ -579,13 +593,15 @@ function renderizarKpisPainel(falhou = false) {
         return;
     }
 
-    // Os pontos já aparecem no cartão da boas-vindas, por isso não têm card aqui.
+    // Números da cidade toda (todos os cidadãos), sem as canceladas.
+    // Os cards não são links: a página de Ocorrências do cidadão mostra só as dele,
+    // e o número ali não bateria com o do card.
     // "Em análise" soma Recebido + Em análise (campo "pendentes" do resumo).
     kpisPainel.innerHTML = [
-        { cor: "azul", icone: "lista", valor: valor("total"), titulo: "Minhas ocorrências", sub: "Total registradas", status: "" },
-        { cor: "laranja", icone: "lupa", valor: valor("pendentes"), titulo: "Em análise", sub: "Aguardando a prefeitura", status: "em_analise" },
-        { cor: "verde", icone: "andamento", valor: valor("em_andamento"), titulo: "Em andamento", sub: "Sendo atendidas agora", status: "em_andamento" },
-        { cor: "roxo", icone: "checkCirculo", valor: valor("resolvidas"), titulo: "Resolvidas", sub: "Ocorrências concluídas", status: "resolvido" }
+        { cor: "azul", icone: "lista", valor: valor("total"), titulo: "Ocorrências na cidade", sub: "Total registradas" },
+        { cor: "laranja", icone: "lupa", valor: valor("pendentes"), titulo: "Em análise", sub: "Aguardando a prefeitura" },
+        { cor: "verde", icone: "andamento", valor: valor("em_andamento"), titulo: "Em andamento", sub: "Sendo atendidas agora" },
+        { cor: "roxo", icone: "checkCirculo", valor: valor("resolvidas"), titulo: "Resolvidas", sub: "Concluídas pela prefeitura" }
     ].map(htmlKpiPainel).join("");
 }
 
@@ -630,7 +646,12 @@ async function carregarTodasOcorrenciasPainel() {
 
     estadoPainel.ocorrencias = ocorrencias;
 
-    renderizarOcorrenciasRecentesPainel();
+    // Admin: a lista de recentes sai das ocorrências do município já carregadas.
+    // Cidadão: a lista vem da cidade toda (carregarOcorrenciasRecentesPainel).
+    if (ehAdministradorPainel()) {
+        renderizarOcorrenciasRecentesPainel();
+    }
+
     renderizarMarcadoresMapaPainel();
     renderizarAcoesRapidasPainel();
 
@@ -649,41 +670,103 @@ OCORRÊNCIAS RECENTES
 
 =========================================================================================================*/
 
+// Cidadão: últimas ocorrências da cidade toda. Vêm sem nome ou dados de quem registrou.
+async function carregarOcorrenciasRecentesPainel() {
+    const parametros = new URLSearchParams({
+        limite: String(LIMITE_RECENTES_COMPUTADOR_PAINEL)
+    });
+
+    const resposta = await fetchAutenticadoPainel(
+        `${API_ESTATISTICAS_PAINEL}/recentes?${parametros.toString()}`,
+        { method: "GET" }
+    );
+
+    const dados = await lerRespostaPainel(resposta);
+
+    if (!resposta.ok || !dados?.sucesso || !Array.isArray(dados.ocorrencias)) {
+        throw new Error(dados?.mensagem || "Não foi possível carregar as ocorrências recentes.");
+    }
+
+    estadoPainel.ocorrenciasRecentes = dados.ocorrencias;
+
+    renderizarOcorrenciasRecentesPainel();
+
+    return dados.ocorrencias;
+}
+
+
+function limiteRecentesPainel() {
+    return TELA_COMPUTADOR_PAINEL.matches
+        ? LIMITE_RECENTES_COMPUTADOR_PAINEL
+        : LIMITE_RECENTES_CELULAR_PAINEL;
+}
+
+
+// Canceladas não aparecem para a cidade (mesma regra do mapa).
+function listaRecentesPainel() {
+    const origem = ehAdministradorPainel()
+        ? estadoPainel.ocorrencias
+        : estadoPainel.ocorrenciasRecentes;
+
+    return origem
+        .filter((ocorrencia) => chaveStatusPainel(ocorrencia.status) !== "cancelado")
+        .slice(0, limiteRecentesPainel());
+}
+
+
 function renderizarOcorrenciasRecentesPainel() {
     if (!listaOcorrenciasRecentesPainel) {
         return;
     }
 
-    const recentes = estadoPainel.ocorrencias.slice(0, LIMITE_RECENTES_PAINEL);
+    const admin = ehAdministradorPainel();
+    const recentes = listaRecentesPainel();
 
     if (recentes.length === 0) {
         listaOcorrenciasRecentesPainel.innerHTML = `
-            <li class="vazio-mini">${ehAdministradorPainel()
+            <li class="vazio-mini">${admin
                 ? "As ocorrências registradas no município aparecerão aqui."
-                : "Você ainda não registrou ocorrências."}</li>
+                : "Ainda não há ocorrências registradas na cidade."}</li>
         `;
 
         return;
     }
 
     listaOcorrenciasRecentesPainel.innerHTML = recentes
-        .map((ocorrencia) => {
+        .map((ocorrencia, indice) => {
             const chave = chaveStatusPainel(ocorrencia.status);
             const titulo = ocorrencia.titulo || `Ocorrência #${ocorrencia.id}`;
-            const autor = ehAdministradorPainel() && ocorrencia.usuario_nome
-                ? `${ocorrencia.usuario_nome} · `
-                : "";
+
+            // Só o admin vê quem registrou. Para o cidadão aparece o bairro (o mesmo que o mapa mostra).
+            const detalhe = admin
+                ? ocorrencia.usuario_nome
+                : ocorrencia.minha_ocorrencia ? "Sua ocorrência" : ocorrencia.bairro;
+
+            // O tempo vem antes do bairro/nome para não ser cortado pelo "..." em telas estreitas
+            const sub = [
+                codigoOcorrenciaPainel(ocorrencia),
+                tempoRelativo(ocorrencia.data_criacao || ocorrencia.data_ocorrencia),
+                detalhe
+            ].filter(Boolean).join(" · ");
+
+            const conteudo = `
+                <span class="ico">${iconeCategoria(ocorrencia.categoria, 20)}</span>
+                <span class="textos">
+                    <strong>${escaparHtmlPainel(titulo)}</strong>
+                    <span class="sub">${escaparHtmlPainel(sub)}</span>
+                </span>
+                ${pilula(chave)}
+            `;
+
+            // A ocorrência de outro cidadão não abre o acompanhamento (que é só de quem registrou):
+            // abre os mesmos detalhes do pino do mapa, sem dados pessoais.
+            const abreAcompanhamento = admin || ocorrencia.minha_ocorrencia;
 
             return `
                 <li>
-                    <a class="item-compacto st" data-st="${chave}" href="${linkOcorrenciasPainel({ ocorrencia: Number(ocorrencia.id) || 0 })}" title="${escaparHtmlPainel(titulo)}">
-                        <span class="ico">${iconeCategoria(ocorrencia.categoria, 20)}</span>
-                        <span class="textos">
-                            <strong>${escaparHtmlPainel(titulo)}</strong>
-                            <span class="sub">${codigoOcorrenciaPainel(ocorrencia)} · ${escaparHtmlPainel(autor)}${tempoRelativo(ocorrencia.data_criacao || ocorrencia.data_ocorrencia)}</span>
-                        </span>
-                        ${pilula(chave)}
-                    </a>
+                    ${abreAcompanhamento
+                        ? `<a class="item-compacto st" data-st="${chave}" href="${linkOcorrenciasPainel({ ocorrencia: Number(ocorrencia.id) || 0 })}" title="${escaparHtmlPainel(titulo)}">${conteudo}</a>`
+                        : `<button class="item-compacto st" type="button" data-st="${chave}" data-recente-painel="${indice}" title="${escaparHtmlPainel(titulo)}">${conteudo}</button>`}
                 </li>
             `;
         })
@@ -876,9 +959,11 @@ function renderizarAcoesRapidasPainel() {
     }
 
     const resumo = estadoPainel.resumo || {};
-    const total = estadoPainel.resumo ? numeroPainel(resumo.total) : estadoPainel.ocorrencias.length;
+    const admin = ehAdministradorPainel();
+    // Cidadão: o resumo agora é da cidade, então "Minhas ocorrências" conta a lista dele.
+    const total = admin && estadoPainel.resumo ? numeroPainel(resumo.total) : estadoPainel.ocorrencias.length;
 
-    const acoes = ehAdministradorPainel()
+    const acoes = admin
         ? [
             { cor: "laranja", icone: "lupa", titulo: "Analisar recebidas", sub: `${formatarNumeroPainel(resumo.pendentes)} aguardando`, href: linkOcorrenciasPainel({ status: "recebido" }) },
             podePublicarAvisoPainel()
@@ -1377,7 +1462,7 @@ function htmlBalaoPainel(ocorrencia, tipo) {
 
     const tipoTexto = admin
         ? "Ocorrência do município"
-        : ehMinha ? "Sua ocorrência" : "Ocorrência próxima";
+        : ehMinha ? "Sua ocorrência" : tipo === "recente" ? "Ocorrência na cidade" : "Ocorrência próxima";
 
     const local = [ocorrencia.bairro, ocorrencia.cidade].filter(Boolean).join(" - ") || "Localização registrada";
 
@@ -1438,8 +1523,8 @@ function abrirDetalheMapaPainel(ocorrencia, tipo, marcarPino) {
         elemento.addEventListener("click", fecharDetalheMapaPainel);
     });
 
-    estadoPainel.fecharPinoAberto = () => marcarPino(false);
-    marcarPino(true);
+    estadoPainel.fecharPinoAberto = () => marcarPino?.(false);
+    marcarPino?.(true);
 
     document.body.appendChild(modal);
     document.body.classList.add("dialogo-aberto");
@@ -1571,6 +1656,21 @@ Configurações, notificações e perfil do topo são controlados pelo global.js
 function registrarEventosPainel() {
     btnVerMapaPainel?.addEventListener("click", abrirMapaCompletoPainel);
 
+    // Ocorrência recente de outro cidadão: abre os detalhes no modal, sem sair do painel
+    listaOcorrenciasRecentesPainel?.addEventListener("click", (event) => {
+        const botao = event.target.closest("[data-recente-painel]");
+
+        if (!botao) {
+            return;
+        }
+
+        const ocorrencia = listaRecentesPainel()[Number(botao.dataset.recentePainel)];
+
+        if (ocorrencia) {
+            abrirDetalheMapaPainel(ocorrencia, "recente");
+        }
+    });
+
     btnVerTodasCategoriasPainel?.addEventListener("click", (event) => {
         event.preventDefault();
         abrirTodasCategoriasPainel();
@@ -1608,6 +1708,9 @@ function registrarEventosPainel() {
         renderizarMarcadoresMapaPainel();
     });
 
+    // Passou de computador para celular (ou o contrário): 7 ou 5 recentes.
+    TELA_COMPUTADOR_PAINEL.addEventListener("change", renderizarOcorrenciasRecentesPainel);
+
     // O mapa claro/escuro muda só via CSS; aqui só recalculamos o tamanho.
     window.addEventListener("cidade360:tema", () => {
         setTimeout(() => estadoPainel.mapa?.invalidateSize(), 100);
@@ -1641,7 +1744,8 @@ async function inicializarPainel() {
             carregarTodasOcorrenciasPainel(),
             carregarCategoriasGeraisPainel(),
             carregarAvisosPainel(),
-            carregarPontosPainel()
+            carregarPontosPainel(),
+            ehAdministradorPainel() ? Promise.resolve() : carregarOcorrenciasRecentesPainel()
         ]);
 
         resultados.forEach((resultado) => {
@@ -1658,9 +1762,15 @@ async function inicializarPainel() {
         }
 
         if (resultados[1].status === "rejected") {
-            renderizarErroOcorrenciasPainel();
+            if (ehAdministradorPainel()) {
+                renderizarErroOcorrenciasPainel();
+            }
 
             mostrarMensagemPainel("Não foi possível carregar as ocorrências no mapa e na lista.");
+        }
+
+        if (resultados[5].status === "rejected") {
+            renderizarErroOcorrenciasPainel();
         }
 
         if (resultados[2].status === "rejected") {

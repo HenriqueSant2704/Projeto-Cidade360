@@ -20,6 +20,20 @@ router.use(
 );
 
 
+// Números da cidade toda (sem canceladas)
+router.get(
+    "/resumo",
+    EstatisticasPainelController.resumo
+);
+
+
+// Últimas ocorrências da cidade, sem dados de quem registrou
+router.get(
+    "/recentes",
+    EstatisticasPainelController.listarRecentes
+);
+
+
 // Ranking das categorias mais registradas por todos os cidadãos
 router.get(
     "/categorias",

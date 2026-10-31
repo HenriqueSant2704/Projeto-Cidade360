@@ -631,8 +631,23 @@ html[data-tema="escuro"] .dialogo.detalhe-mapa .fechar-dialogo {
     transition: background-color .2s;
 }
 
+/* Ocorrência de outro cidadão: é um botão (abre os detalhes), com a mesma cara do link */
+button.item-compacto {
+    border: 0;
+    background: none;
+
+    font: inherit;
+
+    cursor: pointer;
+}
+
 .item-compacto:hover {
     background-color: var(--surface-2);
+}
+
+.item-compacto:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
 }
 
 .item-compacto .ico {

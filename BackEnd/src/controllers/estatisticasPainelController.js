@@ -12,6 +12,116 @@ const EstatisticasPainelController = {
 
     /*====================================================================================================
 
+    RESUMO DA CIDADE (cards do painel)
+
+    GET /api/estatisticas-painel/resumo
+
+    =====================================================================================================*/
+
+    async resumo(
+        req,
+        res
+    ) {
+        try {
+            const resumo =
+                await EstatisticasPainelModel
+                    .resumoCidade();
+
+            return res
+                .status(200)
+                .json({
+                    sucesso: true,
+                    resumo
+                });
+
+        } catch (error) {
+            console.error(
+                "Erro ao carregar o resumo da cidade:",
+                error
+            );
+
+            return res
+                .status(500)
+                .json({
+                    sucesso: false,
+
+                    mensagem:
+                        "Não foi possível carregar o resumo da cidade."
+                });
+        }
+    },
+
+
+    /*====================================================================================================
+
+    OCORRÊNCIAS RECENTES DA CIDADE
+
+    GET /api/estatisticas-painel/recentes?limite=7
+
+    =====================================================================================================*/
+
+    async listarRecentes(
+        req,
+        res
+    ) {
+        try {
+            const limiteSolicitado =
+                Number(
+                    req.query.limite
+                );
+
+            const limite =
+                Math.min(
+                    Math.max(
+                        Number.isInteger(
+                            limiteSolicitado
+                        )
+                            ? limiteSolicitado
+                            : 7,
+                        1
+                    ),
+                    20
+                );
+
+            const ocorrencias =
+                await EstatisticasPainelModel
+                    .listarRecentesCidade({
+                        usuarioId:
+                            req.usuario.id,
+                        limite
+                    });
+
+            return res
+                .status(200)
+                .json({
+                    sucesso: true,
+
+                    total:
+                        ocorrencias.length,
+
+                    ocorrencias
+                });
+
+        } catch (error) {
+            console.error(
+                "Erro ao carregar ocorrências recentes da cidade:",
+                error
+            );
+
+            return res
+                .status(500)
+                .json({
+                    sucesso: false,
+
+                    mensagem:
+                        "Não foi possível carregar as ocorrências recentes."
+                });
+        }
+    },
+
+
+    /*====================================================================================================
+
     CATEGORIAS MAIS REGISTRADAS
 
     GET /api/estatisticas-painel/categorias
